@@ -299,6 +299,10 @@ static void msm_restart_prepare(const char *cmd)
 	if (force_warm_reboot)
 		pr_info("Forcing a warm reset of the system\n");
 
+#ifdef CONFIG_QCOM_PRESERVE_MEM
+	need_warm_reset = true;
+#endif
+
 	/* Hard reset the PMIC unless memory contents must be maintained. */
 	if (force_warm_reboot || need_warm_reset || in_panic) {
 		pr_info("a warm reset of the system with in_panic %d or need_warm_reset %d\n", in_panic, need_warm_reset);
