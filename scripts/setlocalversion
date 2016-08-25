@@ -64,7 +64,7 @@ scm_version()
 
 			# If we don't have a tag at all we print -g{commitish}.
 			else
-				printf '%s%s' -g $head
+				printf '%s%s'
 			fi
 		fi
 
@@ -75,7 +75,7 @@ scm_version()
 
 		# Check for uncommitted changes
 		if git diff-index --name-only HEAD | grep -qv "^scripts/package"; then
-			printf '%s' -dirty
+			printf '%s'
 		fi
 
 		# All done with git
