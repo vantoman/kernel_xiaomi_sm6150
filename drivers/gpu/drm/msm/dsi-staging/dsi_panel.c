@@ -535,34 +535,24 @@ static int dsi_panel_power_off(struct dsi_panel *panel)
 
 	return rc;
 }
-static int dsi_panel_tx_cmd_set(struct dsi_panel *panel,
-				enum dsi_cmd_set_type type)
+
+int dsi_panel_cmd_set_transfer(struct dsi_panel *panel,
+			       struct dsi_panel_cmd_set *cmd)
 {
 	int rc = 0, i = 0;
 	ssize_t len;
 	struct dsi_cmd_desc *cmds;
-	u32 count;
-	enum dsi_cmd_set_state state;
-	struct dsi_display_mode *mode;
 	const struct mipi_dsi_host_ops *ops = panel->host->ops;
 
-	if (!panel || !panel->cur_mode)
-		return -EINVAL;
+	cmds = cmd->cmds;
 
-	mode = panel->cur_mode;
-
-	cmds = mode->priv_info->cmd_sets[type].cmds;
-	count = mode->priv_info->cmd_sets[type].count;
-	state = mode->priv_info->cmd_sets[type].state;
-
-	if (count == 0) {
-		pr_debug("[%s] No commands to be sent for state(%d)\n",
-			 panel->name, type);
+	if (cmd->count == 0) {
+		pr_debug("[%s] No commands to be sent\n", panel->name);
 		goto error;
 	}
 
-	for (i = 0; i < count; i++) {
-		if (state == DSI_CMD_SET_STATE_LP)
+	for (i = 0; i < cmd->count; i++) {
+		if (cmd->state == DSI_CMD_SET_STATE_LP)
 			cmds->msg.flags |= MIPI_DSI_MSG_USE_LPM;
 
 		if (cmds->last_command)
@@ -571,7 +561,7 @@ static int dsi_panel_tx_cmd_set(struct dsi_panel *panel,
 		len = ops->transfer(panel->host, &cmds->msg);
 		if (len < 0) {
 			rc = len;
-			pr_err("failed to set cmds(%d), rc=%d\n", type, rc);
+			pr_err("failed to set cmds, rc=%d\n", rc);
 			goto error;
 		}
 		if (cmds->post_wait_ms)
@@ -581,6 +571,20 @@ static int dsi_panel_tx_cmd_set(struct dsi_panel *panel,
 	}
 error:
 	return rc;
+}
+
+static int dsi_panel_tx_cmd_set(struct dsi_panel *panel,
+				enum dsi_cmd_set_type type)
+{
+	struct dsi_display_mode *mode;
+
+	if (!panel || !panel->cur_mode)
+		return -EINVAL;
+
+	mode = panel->cur_mode;
+
+	return dsi_panel_cmd_set_transfer(panel,
+					  &mode->priv_info->cmd_sets[type]);
 }
 
 static int dsi_panel_pinctrl_deinit(struct dsi_panel *panel)
@@ -2180,9 +2184,10 @@ error:
 	return rc;
 }
 
-static int dsi_panel_parse_cmd_sets_dt(struct dsi_panel_cmd_set *cmd,
-				       enum dsi_cmd_set_type type,
-				       struct dsi_parser_utils *utils)
+int dsi_panel_parse_dt_cmd_set(struct device_node *of_node,
+			       const char *cmd_str,
+			       const char *cmd_state_str,
+			       struct dsi_panel_cmd_set *cmd)
 {
 	const char *data;
 	const char *state;
@@ -2190,31 +2195,25 @@ static int dsi_panel_parse_cmd_sets_dt(struct dsi_panel_cmd_set *cmd,
 	u32 length = 0;
 	int rc;
 
-	pr_debug("type=%d, name=%s, length=%d\n", type,
-		cmd_set_prop_map[type], length);
-
-	data = utils->get_property(utils->data, cmd_set_prop_map[type],
-			&length);
+	data = of_get_property(of_node, cmd_str, &length);
 	if (!data) {
-		pr_debug("%s commands not defined\n", cmd_set_prop_map[type]);
-		rc = -ENOTSUPP;
-		goto error;
+		pr_debug("%s commands not defined\n", cmd_str);
+		return -ENOTSUPP;
 	}
 
-	pr_debug("type=%d, name=%s, length=%d\n", type,
-		cmd_set_prop_map[type], length);
+	pr_debug("name=%s, length=%d\n", cmd_str, length);
 
 	print_hex_dump_debug("", DUMP_PREFIX_NONE,
 		       8, 1, data, length, false);
 
-	state = utils->get_property(utils->data, cmd_set_state_map[type], NULL);
+	state = of_get_property(of_node, cmd_state_str, NULL);
 	if (!state || !strcmp(state, "dsi_lp_mode")) {
 		st = DSI_CMD_SET_STATE_LP;
 	} else if (!strcmp(state, "dsi_hs_mode")) {
 		st = DSI_CMD_SET_STATE_HS;
 	} else {
 		pr_err("[%s] command state unrecognized-%s\n",
-		       cmd_set_state_map[type], state);
+		       cmd_state_str, state);
 		return -ENOTSUPP;
 	}
 
@@ -2225,6 +2224,14 @@ static int dsi_panel_parse_cmd_sets_dt(struct dsi_panel_cmd_set *cmd,
 	cmd->state = st;
 
 	return 0;
+}
+
+static int dsi_panel_parse_cmd_sets_dt(struct dsi_panel_cmd_set *cmd,
+				       enum dsi_cmd_set_type type,
+				       struct dsi_parser_utils *utils)
+{
+	return dsi_panel_parse_dt_cmd_set(utils->data, cmd_set_prop_map[type],
+					  cmd_set_state_map[type], cmd);
 }
 
 static int dsi_panel_parse_cmd_sets(
