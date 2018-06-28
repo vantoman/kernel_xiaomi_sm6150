@@ -41,6 +41,7 @@
 #include <linux/of_platform.h>
 #include <linux/platform_device.h>
 #include <linux/pm_wakeup.h>
+#include <linux/pm_qos.h>
 #include <linux/power_supply.h>
 #include <linux/proc_fs.h>
 #include <linux/regulator/consumer.h>
@@ -475,6 +476,9 @@ struct goodix_ts_core {
 	struct notifier_block msm_drm_notifier;
 	struct notifier_block power_supply_notifier;
 	struct notifier_block bl_notifier;
+
+	struct pm_qos_request pm_qos_req;
+
 	struct workqueue_struct *event_wq;
 	struct work_struct suspend_work;
 	struct work_struct resume_work;
