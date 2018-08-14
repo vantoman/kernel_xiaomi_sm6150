@@ -1805,15 +1805,54 @@ static int qg_psy_set_property(struct power_supply *psy,
 	return 0;
 }
 
+#define FG_RATE_LIM_MS (5 * MSEC_PER_SEC)
+
 static int qg_psy_get_property(struct power_supply *psy,
 			       enum power_supply_property psp,
 			       union power_supply_propval *pval)
 {
 	struct qpnp_qg *chip = power_supply_get_drvdata(psy);
+	struct qg_saved_data *sd = chip->saved_data + psp;
+	union power_supply_propval typec_sts = { .intval = -1 };
 	int rc = 0;
 	int64_t temp = 0;
 
 	pval->intval = 0;
+
+	switch (psp) {
+	case POWER_SUPPLY_PROP_RESISTANCE_ID:
+	case POWER_SUPPLY_PROP_CHARGE_NOW:
+	case POWER_SUPPLY_PROP_CHARGE_FULL:
+	case POWER_SUPPLY_PROP_CHARGE_FULL_DESIGN:
+	case POWER_SUPPLY_PROP_SOC_REPORTING_READY:
+	case POWER_SUPPLY_PROP_DEBUG_BATTERY:
+	case POWER_SUPPLY_PROP_RESISTANCE_NOW:
+	case POWER_SUPPLY_PROP_RESISTANCE_CAPACITIVE:
+	case POWER_SUPPLY_PROP_VOLTAGE_MIN:
+	case POWER_SUPPLY_PROP_VOLTAGE_MAX:
+	case POWER_SUPPLY_PROP_BATT_FULL_CURRENT:
+	case POWER_SUPPLY_PROP_BATT_PROFILE_VERSION:
+	case POWER_SUPPLY_PROP_ESR_ACTUAL:
+	case POWER_SUPPLY_PROP_ESR_NOMINAL:
+	case POWER_SUPPLY_PROP_SOH:
+		/* These props don't require a fg query; don't ratelimit them */
+		break;
+	default:
+		if (!sd->last_req_expires) {
+			break;
+		}
+
+		if (is_usb_present(chip))
+			power_supply_get_property(chip->usb_psy,
+				POWER_SUPPLY_PROP_TYPEC_MODE, &typec_sts);
+
+		if (typec_sts.intval == POWER_SUPPLY_TYPEC_NONE &&
+			time_before(jiffies, sd->last_req_expires)) {
+			*pval = sd->val;
+			return 0;
+		}
+		break;
+	}
 
 	switch (psp) {
 	case POWER_SUPPLY_PROP_CAPACITY:
@@ -1924,6 +1963,9 @@ static int qg_psy_get_property(struct power_supply *psy,
 		pr_debug("Unsupported property %d\n", psp);
 		break;
 	}
+
+	sd->val = *pval;
+	sd->last_req_expires = jiffies + msecs_to_jiffies(FG_RATE_LIM_MS);
 
 	return rc;
 }
