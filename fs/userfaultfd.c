@@ -911,7 +911,7 @@ wakeup:
 	 */
 	spin_lock(&ctx->fault_pending_wqh.lock);
 	__wake_up_locked_key(&ctx->fault_pending_wqh, TASK_NORMAL, &range);
-	__wake_up_locked_key(&ctx->fault_wqh, TASK_NORMAL, &range);
+	__wake_up(&ctx->fault_wqh, TASK_NORMAL, 1, &range);
 	spin_unlock(&ctx->fault_pending_wqh.lock);
 
 	/* Flush pending events that may still wait on event_wqh */
@@ -1077,7 +1077,7 @@ static ssize_t userfaultfd_ctx_read(struct userfaultfd_ctx *ctx, int no_wait,
 			 * anyway.
 			 */
 			list_del(&uwq->wq.entry);
-			__add_wait_queue(&ctx->fault_wqh, &uwq->wq);
+			add_wait_queue(&ctx->fault_wqh, &uwq->wq);
 
 			write_seqcount_end(&ctx->refile_seq);
 
@@ -1226,7 +1226,7 @@ static void __wake_userfault(struct userfaultfd_ctx *ctx,
 		__wake_up_locked_key(&ctx->fault_pending_wqh, TASK_NORMAL,
 				     range);
 	if (waitqueue_active(&ctx->fault_wqh))
-		__wake_up_locked_key(&ctx->fault_wqh, TASK_NORMAL, range);
+		__wake_up(&ctx->fault_wqh, TASK_NORMAL, 1, range);
 	spin_unlock(&ctx->fault_pending_wqh.lock);
 }
 
