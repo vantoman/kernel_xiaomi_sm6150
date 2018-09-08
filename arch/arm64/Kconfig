@@ -1480,3 +1480,47 @@ source "arch/arm64/crypto/Kconfig"
 endif
 
 source "lib/Kconfig"
+
+menu "Xiaomi configuration options"
+
+config MACH_XIAOMI
+        bool "Xiaomi board"
+        depends on ARCH_QCOM
+        help
+          Support for Xiaomi boards.
+
+config MACH_XIAOMI_SDMMAGPIE
+        bool "Xiaomi SDMMAGPIE boards"
+        depends on ARCH_SDMMAGPIE
+        select MACH_XIAOMI
+        help
+          Support for Sdmmagpie-based Xiaomi variants
+
+menu "Xiaomi board selection"
+
+config MACH_XIAOMI_DAVINCI
+        bool "davinci board"
+        select MACH_XIAOMI_SDMMAGPIE
+        help
+          Support for Redmi K20, condenamed davinci.
+
+config MACH_XIAOMI_PHOENIX
+        bool "phoenix board"
+        select MACH_XIAOMI_SDMMAGPIE
+        help
+          Support for Redmi K30, codenamed phoenix.
+
+config MACH_XIAOMI_TOCO
+        bool "toco board"
+        select MACH_XIAOMI_SDMMAGPIE
+        help
+          Support for MI Note 10 Lite, codenamed phoenix.
+
+config MACH_XIAOMI_TUCANA
+        bool "tucana board"
+        select MACH_XIAOMI_SDMMAGPIE
+        help
+          Support for MI CC9 Pro, codenamed phoenix.
+endmenu
+
+endmenu
