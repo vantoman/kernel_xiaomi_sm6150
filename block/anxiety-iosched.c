@@ -1,6 +1,6 @@
 /*
- * Anxiety I/O scheduler
- * Copywrite (C) 2018 Draco (Tyler Nijmeh) <tylernij@gmail.com>
+ * Anxiety IO scheduler
+ * Copyright (C) 2018 Draco (Tyler Nijmeh) <tylernij@gmail.com>
  */
 #include <linux/blkdev.h>
 #include <linux/elevator.h>
