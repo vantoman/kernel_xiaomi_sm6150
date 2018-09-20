@@ -660,6 +660,7 @@ config TCP_CONG_CDG
 	  D.A. Hayes and G. Armitage. "Revisiting TCP congestion control using
 	  delay gradients." In Networking 2011. Preprint: http://goo.gl/No3vdg
 
+
 config TCP_CONG_BBR
 	tristate "BBR TCP"
 	default n
@@ -674,6 +675,14 @@ config TCP_CONG_BBR
 	control, and can operate with shallow buffers, deep buffers,
 	bufferbloat, policers, or AQM schemes that do not provide a delay
 	signal. It requires the fq ("Fair Queue") pacing packet scheduler.
+
+config TCP_CONG_SOCIOPATH
+        tristate "TCP Sociopath"
+        default n
+        ---help---
+        This is basically TCP Reno with no slow start and a much more
+        aggressive ssthresh recalculation (lowers it by 5% instead of 50%).
+        Use responsibly!
 
 choice
 	prompt "Default TCP congestion control"
@@ -700,8 +709,11 @@ choice
 	config DEFAULT_VENO
 		bool "Veno" if TCP_CONG_VENO=y
 
-	config DEFAULT_WESTWOOD
-		bool "Westwood" if TCP_CONG_WESTWOOD=y
+    config DEFAULT_WESTWOOD
+        bool "Westwood" if TCP_CONG_WESTWOOD=y
+
+	config DEFAULT_SOCIOPATH
+		bool "Sociopath" if TCP_CONG_SOCIOPATH=y
 
 	config DEFAULT_DCTCP
 		bool "DCTCP" if TCP_CONG_DCTCP=y
@@ -736,6 +748,7 @@ config DEFAULT_TCP_CONG
 	default "dctcp" if DEFAULT_DCTCP
 	default "cdg" if DEFAULT_CDG
 	default "bbr" if DEFAULT_BBR
+	default "sociopath" if DEFAULT_SOCIOPATH
 	default "cubic"
 
 config TCP_MD5SIG
