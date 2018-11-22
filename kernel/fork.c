@@ -2266,8 +2266,6 @@ long _do_fork(unsigned long clone_flags,
 		struct completion vfork;
 		struct pid *pid;
 
-		cpufreq_task_times_alloc(p);
-
 		trace_sched_process_fork(current, p);
 
 		pid = get_task_pid(p, PIDTYPE_PID);
