@@ -188,6 +188,13 @@ config DRM_MSM_KCAL_CTRL
 	  This will adjust every atomic operation pcc and hsic call
 	  configuration with the values from kernel.
 
+config EXPOSURE_ADJUSTMENT
+	bool "Enable exposure adjustment driver"
+	depends on DRM_MSM
+	help
+          The EXPOSURE ADJUSTMENT provides exposure adjustment function without change
+          panel hardware brightness to avoid PWM flicker on OLED devices.
+
 config DRM_SDE_EVTLOG_DEBUG
 	bool "Enable event logging in MSM DRM"
 	depends on DRM_MSM
