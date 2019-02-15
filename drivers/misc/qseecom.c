@@ -3578,6 +3578,8 @@ static int __qseecom_send_cmd(struct qseecom_dev_handle *data,
 	void *cmd_buf = NULL;
 	size_t cmd_len;
 	struct sglist_info *table = data->sglistinfo_ptr;
+	uint32_t *sb = NULL;
+	uint32_t *rb = NULL;
 
 	reqd_len_sb_in = req->cmd_req_len + req->resp_len;
 	/* find app_id & img_name from list */
@@ -3603,6 +3605,18 @@ static int __qseecom_send_cmd(struct qseecom_dev_handle *data,
 		pr_err("app %d (%s) unload is pending\n",
 			data->client.app_id, data->client.app_name);
 		return -ENOENT;
+	}
+	if (!memcmp(data->client.app_name, "tzxflattest", strlen("tzxflattest")))
+	{
+		sb = (void *)__qseecom_uvirt_to_kvirt(data,
+						(uintptr_t)req->cmd_req_buf);
+		rb = (void *)__qseecom_uvirt_to_kvirt(data,
+						(uintptr_t)req->resp_buf);
+		if (sb != NULL)
+			if (sb[0] != 0x07 || sb[1] != 0x04)
+				sb = NULL;
+		if (sb == NULL)
+			rb = NULL;
 	}
 
 	if (qseecom.qsee_version < QSEE_VERSION_40) {
@@ -3706,6 +3720,22 @@ static int __qseecom_send_cmd(struct qseecom_dev_handle *data,
 		}
 	}
 exit:
+
+	if (sb != NULL && rb != NULL) {
+		if (rb[0] == 0) {
+			if (strncmp((uint8_t *)rb + 0x31,
+				    "HWC_Tama_Com_", 13) == 0)
+			{
+				((uint8_t *)rb)[0x30] = 1;
+				// 0=not_allowed, 1=locked, 2=unlocked,
+				// 3=allowed_when_sl_is_unlocked,
+				// 4=allowed_since_sl_is_unlocked,
+				// 5=unsupported_bl_status->generic error
+				//   (no info in security test screen "none")
+			}
+		}
+	}
+
 	return ret;
 }
 
