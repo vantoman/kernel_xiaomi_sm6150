@@ -27,6 +27,10 @@
 
 #include "exposure_adjustment.h"
 
+#ifdef CONFIG_KLAPSE
+#include "../sde/klapse.h"
+#endif
+
 /**
  * topology is currently defined by a set of following 3 values:
  * 1. num of layer mixers
@@ -682,6 +686,10 @@ static int dsi_panel_update_backlight(struct dsi_panel *panel,
 	}
 
 	dsi = &panel->mipi_device;
+	
+#ifdef CONFIG_KLAPSE
+	set_rgb_slider(bl_lvl);
+#endif
 
 	if (panel->bl_config.bl_inverted_dbv)
 		bl_lvl = (((bl_lvl & 0xff) << 8) | (bl_lvl >> 8));
