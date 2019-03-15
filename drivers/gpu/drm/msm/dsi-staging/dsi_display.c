@@ -7760,6 +7760,9 @@ wait_failure:
 		mutex_unlock(&display->display_lock);
 	}
 
+	if (display->panel->funcs && display->panel->funcs->pre_kickoff)
+		display->panel->funcs->pre_kickoff(display->panel);
+
 	return rc;
 }
 
