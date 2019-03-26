@@ -24,6 +24,7 @@
 #include "dsi_display.h"
 #include "dsi_ctrl_hw.h"
 #include "dsi_parser.h"
+#include "sde_trace.h"
 
 #include <linux/double_click.h>
 
@@ -5098,3 +5099,25 @@ int dsi_panel_get_lockdowninfo_for_tp(unsigned char *plockdowninfo)
 	}
 }
 EXPORT_SYMBOL(dsi_panel_get_lockdowninfo_for_tp);
+
+int dsi_panel_idle(struct dsi_panel *panel)
+{
+	if (unlikely(!panel))
+		return -EINVAL;
+
+	if (panel->funcs && panel->funcs->idle)
+		return panel->funcs->idle(panel);
+
+	return 0;
+}
+
+int dsi_panel_wakeup(struct dsi_panel *panel)
+{
+	if (unlikely(!panel))
+		return -EINVAL;
+
+	if (panel->funcs && panel->funcs->wakeup)
+		return panel->funcs->wakeup(panel);
+
+	return 0;
+}

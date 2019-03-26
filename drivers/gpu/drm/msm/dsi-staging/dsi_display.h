@@ -761,4 +761,11 @@ struct dsi_display *get_main_display(void);
 
 void dsi_display_set_fod_ui(struct dsi_display *display, bool status);
 
+/**
+ * dsi_display_set_idle_hint - gives hint to display whether display is idle
+ * @display: Pointer to private display handle
+ * @is_idle: true if display is idle, false otherwise
+ */
+void dsi_display_set_idle_hint(void *display, bool is_idle);
+
 #endif /* _DSI_DISPLAY_H_ */
