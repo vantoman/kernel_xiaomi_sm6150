@@ -1,4 +1,4 @@
-static const char wlan_cfg[] = {
+static const char wlan_cfg[] __initconst = {
 	"gEnableImps=1\n"
 	"gEnableBmps=1\n"
 	"gDot11Mode=0\n"
@@ -77,6 +77,8 @@ static const char wlan_cfg[] = {
 	"gVhtMpduLen=2\n"
 	"gEnableMCCAdaptiveScheduler=1\n"
 	"isP2pDeviceAddrAdministrated=0\n"
+	"TxPower2g=10\n"
+	"TxPower5g=10\n"
 	"gEnableOverLapCh=0\n"
 	"gEnableVhtFor24GHzBand=1\n"
 	"ssdp=0\n"
@@ -150,6 +152,7 @@ static const char wlan_cfg[] = {
 	"enable_ftopen=0\n"
 	"g_sta_sap_scc_on_lte_coex_chan=1\n"
 	"gcmp_enabled=1\n"
+	"drop_bcn_on_chan_mismatch=0\n"
 	"enable_rtt_mac_randomization=1\n"
 	"gEnableConcurrentSTA=wlan1\n"
 	"gDualMacFeatureDisable=0\n"
@@ -161,6 +164,5 @@ static const char wlan_cfg[] = {
 	"g_sta_sap_scc_on_dfs_chan=1\n"
 	"gActiveUcBpfMode=1\n"
 	"gActiveMcBcBpfMode=1\n"
-	"gAutoBmpsTimerValue=90\n"
 	"END\n"
 };
