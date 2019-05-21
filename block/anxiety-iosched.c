@@ -62,14 +62,14 @@ static int anxiety_dispatch(struct request_queue *q, int force)
 
 static void anxiety_add_request(struct request_queue *q, struct request *rq)
 {
-	const uint8_t dir = rq_data_dir(rq);
+	const uint8_t dir = rq_is_sync(rq);
 
 	list_add_tail(&rq->queuelist, &((struct anxiety_data *) q->elevator->elevator_data)->queue[dir]);
 }
 
 static struct request *anxiety_former_request(struct request_queue *q, struct request *rq)
 {
-	const uint8_t dir = rq_data_dir(rq);
+	const uint8_t dir = rq_is_sync(rq);
 
 	if (rq->queuelist.prev == &((struct anxiety_data *) q->elevator->elevator_data)->queue[dir])
 		return NULL;
@@ -79,7 +79,7 @@ static struct request *anxiety_former_request(struct request_queue *q, struct re
 
 static struct request *anxiety_latter_request(struct request_queue *q, struct request *rq)
 {
-	const uint8_t dir = rq_data_dir(rq);
+	const uint8_t dir = rq_is_sync(rq);
 
 	if (rq->queuelist.next == &((struct anxiety_data *) q->elevator->elevator_data)->queue[dir])
 		return NULL;
