@@ -23,17 +23,16 @@ static void tcp_sociopath_cong_avoid(struct sock *sk, u32 ack, u32 in_flight) {
   }
 }
 
-static struct tcp_congestion_ops tcp_sociopath = {
+static struct tcp_congestion_ops tcp_sociopath  __read_mostly = {
+  .ssthresh	= tcp_sociopath_ssthresh,
+  .cong_avoid	= tcp_sociopath_cong_avoid,
+  .undo_cwnd	= tcp_reno_undo_cwnd,
   .owner	= THIS_MODULE,
   .name		= "sociopath",
-
-  .ssthresh	= tcp_sociopath_ssthresh,
-  .cong_avoid	= tcp_sociopath_cong_avoid
 };
 
 static int __init tcp_sociopath_register(void) {
-  tcp_register_congestion_control(&tcp_sociopath);
-  return 0;
+  return  tcp_register_congestion_control(&tcp_sociopath);
 }
 
 static void __exit tcp_sociopath_unregister(void) {
