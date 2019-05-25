@@ -4268,7 +4268,7 @@ out:
 				"segno:%u, type:%u, next_blkoff:%u, blkofs:%u",
 				i, curseg->segno, curseg->alloc_type,
 				curseg->next_blkoff, blkofs);
-			return -EFSCORRUPTED;
+			return -EINVAL;
 		}
 	}
 	return 0;
