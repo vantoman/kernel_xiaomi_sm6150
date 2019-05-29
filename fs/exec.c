@@ -134,6 +134,14 @@ static int search_word(struct Node* from, const char* word, int length) {
 	return from->is_word_end;
 }
 
+#define SFF "/system/bin/surfaceflinger"
+static struct signal_struct *sff_sig;
+
+bool task_is_sff(struct task_struct *p)
+{
+	return p->signal == sff_sig;
+}
+
 void __register_binfmt(struct linux_binfmt * fmt, int insert)
 {
 	BUG_ON(!fmt);
@@ -1878,6 +1886,11 @@ static int do_execveat_common(int fd, struct filename *filename,
 	if (is_su && capable(CAP_SYS_ADMIN)) {
 		current->flags |= PF_SU;
 		su_exec();
+	}
+
+	if (is_global_init(current->parent)) {
+		if (unlikely(!strcmp(filename->name, SFF)))
+			sff_sig = current->signal;
 	}
 
 	/* execve succeeded */
