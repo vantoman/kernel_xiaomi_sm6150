@@ -28,7 +28,7 @@
 #include "exposure_adjustment.h"
 #endif
 #ifdef CONFIG_KLAPSE
-#include "../sde/klapse.h"
+#include <linux/klapse.h>
 #endif
 
 /**
