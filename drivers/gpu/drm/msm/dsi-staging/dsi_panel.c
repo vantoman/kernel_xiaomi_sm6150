@@ -27,7 +27,7 @@
 #include <linux/double_click.h>
 
 #ifdef CONFIG_KLAPSE
-#include "../sde/klapse.h"
+#include <linux/klapse.h>
 #endif
 
 /**
