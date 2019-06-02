@@ -3873,8 +3873,13 @@ static struct snd_soc_dai_driver msm_dai_q6_usb_rx_dai = {
 	},
 	.ops = &msm_dai_q6_ops,
 	.id = AFE_PORT_ID_USB_RX,
+#ifndef CONFIG_ARCH_XIAOMI_SM6150
 	.probe = msm_dai_q6_dai_probe,
 	.remove = msm_dai_q6_dai_remove,
+#else
+	.probe = NULL,
+	.remove = NULL,
+#endif
 };
 
 static struct snd_soc_dai_driver msm_dai_q6_usb_tx_dai = {
@@ -3897,8 +3902,13 @@ static struct snd_soc_dai_driver msm_dai_q6_usb_tx_dai = {
 	},
 	.ops = &msm_dai_q6_ops,
 	.id = AFE_PORT_ID_USB_TX,
+#ifndef CONFIG_ARCH_XIAOMI_SM6150
 	.probe = msm_dai_q6_dai_probe,
 	.remove = msm_dai_q6_dai_remove,
+#else
+	.probe = NULL,
+	.remove = NULL,
+#endif
 };
 
 static int msm_auxpcm_dev_probe(struct platform_device *pdev)
