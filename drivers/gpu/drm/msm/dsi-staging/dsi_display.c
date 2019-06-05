@@ -6803,7 +6803,10 @@ void dsi_display_set_idle_hint(void *dsi_display, bool is_idle)
 {
 	const struct dsi_display *display = dsi_display;
 
-	if (unlikely(!display))
+	if (unlikely(!display || !display->panel))
+		return;
+
+	if (display->panel->power_mode != DRM_MODE_DPMS_ON)
 		return;
 
 	if (is_idle)
