@@ -1005,7 +1005,11 @@ int kgsl_pwrscale_init(struct device *dev, const char *governor)
 
 	ret = sysfs_create_link(&device->dev->kobj,
 			&devfreq->dev.kobj, "devfreq");
-
+	/*
+	* Prevert userspace from messing
+	* with min kgsl frequency
+	*/
+	devfreq->is_boost_device = true;
 	pwrscale->devfreq_wq = create_freezable_workqueue("kgsl_devfreq_wq");
 	INIT_WORK(&pwrscale->devfreq_suspend_ws, do_devfreq_suspend);
 	INIT_WORK(&pwrscale->devfreq_resume_ws, do_devfreq_resume);
