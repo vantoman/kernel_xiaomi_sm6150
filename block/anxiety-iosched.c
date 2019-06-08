@@ -67,26 +67,6 @@ static void anxiety_add_request(struct request_queue *q, struct request *rq)
 	list_add_tail(&rq->queuelist, &((struct anxiety_data *) q->elevator->elevator_data)->queue[dir]);
 }
 
-static struct request *anxiety_former_request(struct request_queue *q, struct request *rq)
-{
-	const uint8_t dir = rq_is_sync(rq);
-
-	if (rq->queuelist.prev == &((struct anxiety_data *) q->elevator->elevator_data)->queue[dir])
-		return NULL;
-
-	return list_prev_entry(rq, queuelist);
-}
-
-static struct request *anxiety_latter_request(struct request_queue *q, struct request *rq)
-{
-	const uint8_t dir = rq_is_sync(rq);
-
-	if (rq->queuelist.next == &((struct anxiety_data *) q->elevator->elevator_data)->queue[dir])
-		return NULL;
-
-	return list_next_entry(rq, queuelist);
-}
-
 static int anxiety_init_queue(struct request_queue *q, struct elevator_type *elv)
 {
 	struct anxiety_data *data;
@@ -145,11 +125,11 @@ static struct elv_fs_entry anxiety_attrs[] = {
 static struct elevator_type elevator_anxiety = {
 	.ops = {
 		.elevator_merge_req_fn	= anxiety_merged_requests,
-		.elevator_dispatch_fn		= anxiety_dispatch,
-		.elevator_add_req_fn		= anxiety_add_request,
-		.elevator_former_req_fn	= anxiety_former_request,
-		.elevator_latter_req_fn	= anxiety_latter_request,
-		.elevator_init_fn				= anxiety_init_queue,
+		.elevator_dispatch_fn	= anxiety_dispatch,
+		.elevator_add_req_fn	= anxiety_add_request,
+		.elevator_former_req_fn	= elv_rb_former_request,
+		.elevator_latter_req_fn	= elv_rb_latter_request,
+		.elevator_init_fn	= anxiety_init_queue,
 	},
 	.elevator_name = "anxiety",
 	.elevator_attrs = anxiety_attrs,
