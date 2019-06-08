@@ -63,8 +63,9 @@ static int anxiety_dispatch(struct request_queue *q, int force)
 static void anxiety_add_request(struct request_queue *q, struct request *rq)
 {
 	const uint8_t dir = rq_is_sync(rq);
+	struct anxiety_data *adata = q->elevator->elevator_data;
 
-	list_add_tail(&rq->queuelist, &((struct anxiety_data *) q->elevator->elevator_data)->queue[dir]);
+	list_add_tail(&rq->queuelist, &adata->queue[dir]);
 }
 
 static int anxiety_init_queue(struct request_queue *q, struct elevator_type *elv)
