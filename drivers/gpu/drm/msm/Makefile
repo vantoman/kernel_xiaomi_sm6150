@@ -226,5 +226,3 @@ msm_drm-$(CONFIG_DRM_MSM) += \
 
 obj-$(CONFIG_DRM_MSM)	+= msm_drm.o
 
-msm_drm-$(CONFIG_KLAPSE) += sde/klapse.o
-
