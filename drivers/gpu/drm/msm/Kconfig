@@ -213,10 +213,3 @@ config DRM_SDE_RSC
 	  can vote their active state. Any active request from any client
 	  avoids the display core power collapse. A client can also register
 	  for display core power collapse events on rsc.
-
-config KLAPSE
-    bool CONFIG_KLAPSE
-    depends on DRM_MSM
-    default n
-    help
-        A simple rgb dynamic lapsing module similar to LineageOS' livedisplay
