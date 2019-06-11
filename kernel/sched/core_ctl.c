@@ -98,7 +98,11 @@ static ssize_t store_min_cpus(struct cluster_data *state,
 	if (sscanf(buf, "%u\n", &val) != 1)
 		return -EINVAL;
 
-	state->min_cpus = min(val, state->max_cpus);
+	if (!IS_ENABLED(CONFIG_CPU_INPUT_BOOST))
+		state->min_cpus = min(val, state->max_cpus);
+	else
+		state->min_cpus = min((unsigned int)NR_CPUS, state->max_cpus);
+
 	cpuset_next(state);
 	wake_up_core_ctl_thread(state);
 
@@ -118,7 +122,11 @@ static ssize_t store_max_cpus(struct cluster_data *state,
 	if (sscanf(buf, "%u\n", &val) != 1)
 		return -EINVAL;
 
-	val = min(val, state->num_cpus);
+	if (!IS_ENABLED(CONFIG_CPU_INPUT_BOOST))
+		val = min(val, state->num_cpus);
+	else
+		val = min((unsigned int)NR_CPUS, state->num_cpus);
+
 	state->max_cpus = val;
 	state->min_cpus = min(state->min_cpus, state->max_cpus);
 	cpuset_next(state);
