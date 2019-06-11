@@ -211,7 +211,7 @@ static void qcom_smp2p_do_ssr_ack(struct qcom_smp2p *smp2p)
 	u32 ack;
 	u32 val;
 
-	smp2p->ssr_ack = ack = !smp2p->ssr_ack;
+	ack = !smp2p->ssr_ack;
 	ack = ack << SMP2P_FLAGS_RESTART_ACK_BIT;
 
 	val = out->flags & ~BIT(SMP2P_FLAGS_RESTART_ACK_BIT);
