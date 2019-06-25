@@ -114,10 +114,12 @@ EXPORT_SYMBOL(high_memory);
  *   as ancient (libc5 based) binaries can segfault. )
  */
 int randomize_va_space __read_mostly =
-#ifdef CONFIG_COMPAT_BRK
+#if defined(CONFIG_ASLR_FULL)
+					2;
+#elif defined(CONFIG_ASLR_PARTIAL)
 					1;
 #else
-					2;
+					0;
 #endif
 
 static int __init disable_randmaps(char *s)
