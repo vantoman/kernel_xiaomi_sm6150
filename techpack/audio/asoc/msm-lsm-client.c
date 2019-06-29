@@ -779,7 +779,7 @@ static int msm_lsm_check_and_set_lab_controls(struct snd_pcm_substream *substrea
 	struct lsm_priv *prtd = runtime->private_data;
 	struct snd_soc_pcm_runtime *rtd = substream->private_data;
 	struct lsm_hw_params *out_hw_params = &prtd->lsm_client->out_hw_params;
-	u8 chmap[out_hw_params->num_chs];
+	u8 chmap[16];
 	u32 ch_idx;
 	int rc = 0, stage_idx = p_info->stage_idx;
 
@@ -813,7 +813,7 @@ static int msm_lsm_check_and_set_lab_controls(struct snd_pcm_substream *substrea
 			prtd->lsm_client->stage_cfg[stage_idx].lab_enable = enable;
 	}
 
-	memset(chmap, 0, out_hw_params->num_chs);
+	memset(chmap, 0, sizeof(chmap));
 	/*
 	 * First channel to be read from lab is always the
 	 * best channel (0xff). For second channel onwards,
