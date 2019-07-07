@@ -462,7 +462,7 @@ struct goodix_ts_esd {
  * @suspended: suspend/resume flag
  * @ts_notifier: generic notifier
  * @ts_esd: esd protector structure
- * @fb_notifier: framebuffer notifier
+ * @msm_drm_notifier: msm drm notifier
  * @early_suspend: early suspend
  */
 struct goodix_ts_core {
@@ -514,7 +514,7 @@ struct goodix_ts_core {
 	struct dentry *debugfs;
 
 #ifdef CONFIG_DRM
-	struct notifier_block fb_notifier;
+	struct notifier_block msm_drm_notifier;
 #elif defined(CONFIG_HAS_EARLYSUSPEND)
 	struct early_suspend early_suspend;
 #endif
@@ -815,7 +815,7 @@ int goodix_ts_irq_enable(struct goodix_ts_core *core_data, bool enable);
 struct kobj_type *goodix_get_default_ktype(void);
 
 /**
- * fb_notifier_call_chain - notify clients of fb_events
+ * msm_drm_notifier_call_chain - notify clients of fb_events
  *	see enum ts_notify_event in goodix_ts_core.h
  */
 int goodix_ts_blocking_notify(enum ts_notify_event evt, void *v);
@@ -841,7 +841,7 @@ int goodix_ts_esd_init(struct goodix_ts_core *core);
 
 int goodix_ts_register_notifier(struct notifier_block *nb);
 
-int goodix_ts_fb_notifier_callback(struct notifier_block *self,
+int goodix_ts_msm_drm_notifier_callback(struct notifier_block *self,
 			unsigned long event, void *data);
 int goodix_set_i2c_doze_mode(struct goodix_ts_device *dev, int enable);
 
