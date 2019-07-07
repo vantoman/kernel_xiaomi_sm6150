@@ -39,8 +39,6 @@ static int f2fs_filemap_fault(struct vm_fault *vmf)
 	err = filemap_fault(vmf);
 	up_read(&F2FS_I(inode)->i_mmap_sem);
 
-	trace_f2fs_filemap_fault(inode, vmf->pgoff, (unsigned long)err);
-
 	return err;
 }
 
@@ -2000,8 +1998,6 @@ out:
 	if (in != F2FS_GOING_DOWN_FULLSYNC)
 		mnt_drop_write_file(filp);
 
-	trace_f2fs_shutdown(sbi, in, ret);
-
 	return ret;
 }
 
@@ -3108,8 +3104,6 @@ static ssize_t f2fs_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
 	}
 	inode_unlock(inode);
 out:
-	trace_f2fs_file_write_iter(inode, iocb->ki_pos,
-					iov_iter_count(from), ret);
 	if (ret > 0)
 		ret = generic_write_sync(iocb, ret);
 	return ret;

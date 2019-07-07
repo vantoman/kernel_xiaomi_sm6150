@@ -25,6 +25,7 @@
 #include <crypto/hash.h>
 #include <linux/overflow.h>
 
+#define __FS_HAS_ENCRYPTION IS_ENABLED(CONFIG_F2FS_FS_ENCRYPTION)
 #include <linux/fscrypt.h>
 
 #ifdef CONFIG_F2FS_CHECK_FS
@@ -3675,7 +3676,8 @@ static inline bool f2fs_force_buffered_io(struct inode *inode,
 	struct f2fs_sb_info *sbi = F2FS_I_SB(inode);
 	int rw = iov_iter_rw(iter);
 
-	if (f2fs_post_read_required(inode))
+	if (f2fs_encrypted_file(inode) && 
+		!fscrypt_using_hardware_encryption(inode))
 		return true;
 	if (f2fs_is_multi_device(sbi))
 		return true;
@@ -3692,6 +3694,16 @@ static inline bool f2fs_force_buffered_io(struct inode *inode,
 		return true;
 
 	return false;
+}
+
+static inline bool f2fs_may_encrypt_bio(struct inode *inode,
+		struct f2fs_io_info *fio)
+{
+	if (fio && (fio->type != DATA || fio->encrypted_page))
+		return false;
+
+	return (f2fs_encrypted_file(inode) &&
+			fscrypt_using_hardware_encryption(inode));
 }
 
 #ifdef CONFIG_F2FS_FAULT_INJECTION
