@@ -229,6 +229,12 @@ int dsi_display_set_backlight(struct drm_connector *connector,
 	if (rc)
 		pr_err("unable to set backlight\n");
 
+	if (panel->doze_state) {
+		rc = dsi_panel_set_doze_backlight(panel, (u32)bl_temp);
+		if (rc)
+			pr_err("unable to set doze backlight\n");
+	}
+
 	rc = dsi_display_clk_ctrl(dsi_display->dsi_clk_handle,
 			DSI_CORE_CLK, DSI_CLK_OFF);
 	if (rc) {
