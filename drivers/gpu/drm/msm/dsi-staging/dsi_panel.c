@@ -620,6 +620,9 @@ static int dsi_panel_update_backlight(struct dsi_panel *panel,
 		return -EINVAL;
 	}
 
+	if (panel->fod_hbm_status)
+		return 0;
+
 	dsi = &panel->mipi_device;
 
 	if (panel->bl_config.dcs_type_ss)
@@ -647,6 +650,48 @@ int dsi_panel_set_doze_backlight(struct dsi_panel *panel, u32 bl_lvl)
 		if (rc)
 			pr_err("[%s] failed to send DSI_CMD_SET_DOZE_LBM cmd, rc=%d\n",
 					panel->name, rc);
+	}
+
+	return rc;
+}
+
+int dsi_panel_set_normal_backlight(struct dsi_panel *panel, u32 bl_lvl)
+{
+	int rc = 0;
+
+	rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_DIMMINGOFF);
+	if (rc)
+		pr_err("[%s] failed to send DSI_CMD_SET_DISP_DIMMINGOFF cmd, rc=%d\n",
+				panel->name, rc);
+
+	return rc;
+}
+
+int dsi_panel_set_fod_hbm_backlight(struct dsi_panel *panel, bool status) {
+	u32 bl_level;
+	int rc = 0;
+
+	if (status == panel->fod_hbm_status)
+		return 0;
+
+	if (status) {
+		bl_level = panel->bl_config.bl_max_level;
+
+		if (panel->doze_state) {
+			dsi_panel_set_normal_backlight(panel, bl_level);
+		}
+
+		dsi_panel_update_backlight(panel, bl_level);
+		panel->fod_hbm_status = true;
+	} else {
+		bl_level = panel->bl_config.bl_level;
+
+		panel->fod_hbm_status = false;
+		dsi_panel_update_backlight(panel, panel->bl_config.bl_level);
+
+		if (panel->doze_state) {
+			dsi_panel_set_doze_backlight(panel, bl_level);
+		}
 	}
 
 	return rc;
@@ -1597,6 +1642,7 @@ const char *cmd_set_prop_map[DSI_CMD_SET_MAX] = {
 	"qcom,mdss-dsi-qsync-off-commands",
 	"qcom,mdss-dsi-doze-hbm-command",
 	"qcom,mdss-dsi-doze-lbm-command",
+	"qcom,mdss-dsi-dispparam-dimmingoff-command",
 };
 
 const char *cmd_set_state_map[DSI_CMD_SET_MAX] = {
@@ -1625,6 +1671,7 @@ const char *cmd_set_state_map[DSI_CMD_SET_MAX] = {
 	"qcom,mdss-dsi-qsync-off-commands-state",
 	"qcom,mdss-dsi-doze-hbm-command-state",
 	"qcom,mdss-dsi-doze-lbm-command-state",
+	"qcom,mdss-dsi-dispparam-dimmingoff-command-state",
 };
 
 static int dsi_panel_get_cmd_pkt_count(const char *data, u32 length, u32 *cnt)
@@ -3087,6 +3134,7 @@ static int dsi_panel_parse_mi_config(struct dsi_panel *panel,
 	}
 
 	panel->doze_state = false;
+	panel->fod_hbm_status = false;
 
 	return rc;
 }
@@ -3656,6 +3704,7 @@ exit:
 
 int dsi_panel_set_lp2(struct dsi_panel *panel)
 {
+	u32 bl_level;
 	int rc = 0;
 
 	if (!panel) {
@@ -4040,6 +4089,7 @@ int dsi_panel_disable(struct dsi_panel *panel)
 		}
 	}
 	panel->panel_initialized = false;
+	panel->fod_hbm_status = false;
 
 	mutex_unlock(&panel->panel_lock);
 	return rc;

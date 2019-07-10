@@ -207,6 +207,8 @@ struct dsi_panel {
 	bool sync_broadcast_en;
 
 	bool doze_state;
+	bool fod_hbm_status;
+
 	u32 doze_backlight_threshold;
 };
 
@@ -316,5 +318,7 @@ int dsi_panel_parse_esd_reg_read_configs(struct dsi_panel *panel);
 void dsi_panel_ext_bridge_put(struct dsi_panel *panel);
 
 int dsi_panel_set_doze_backlight(struct dsi_panel *panel, u32 bl_lvl);
+
+int dsi_panel_set_fod_hbm_backlight(struct dsi_panel *panel, bool status);
 
 #endif /* _DSI_PANEL_H_ */
