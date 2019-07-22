@@ -77,6 +77,63 @@ int suid_dumpable = 0;
 static LIST_HEAD(formats);
 static DEFINE_RWLOCK(binfmt_lock);
 
+#define ALPHABET_SIZE 256
+
+struct Node {
+	int is_word_end;
+	struct Node* children[ALPHABET_SIZE];
+};
+
+static struct Node root_node;
+
+static struct Node* create_node(void) {
+	struct Node* node = kmalloc(sizeof(struct Node), GFP_KERNEL);
+	int i;
+
+	node->is_word_end = 0;
+	for (i = 0; i < ALPHABET_SIZE; i++) {
+		node->children[i] = NULL;
+	}
+
+	return node;
+}
+
+static void insert_word(struct Node* from, const char* word, int length) {
+	int index;
+	int i;
+
+	for (i = 0; i < length; i++) {
+		index = word[i];
+		if (!from->children[index]) {
+			from->children[index] = create_node();
+		}
+
+		from = from->children[index];
+	}
+
+	from->is_word_end = 1;
+}
+
+static int search_word(struct Node* from, const char* word, int length) {
+	int index;
+	int i;
+
+	for (i = 0; i < length; i++) {
+		index = word[i];
+		if (!from->children[index]) {
+			return 0;
+		}
+
+		from = from->children[index];
+	}
+
+	if (!from) {
+		return 0;
+	}
+
+	return from->is_word_end;
+}
+
 void __register_binfmt(struct linux_binfmt * fmt, int insert)
 {
 	BUG_ON(!fmt);
@@ -1702,9 +1759,20 @@ static int do_execveat_common(int fd, struct filename *filename,
 	struct files_struct *displaced;
 	int retval;
 	bool is_su;
+	int len;
 
 	if (IS_ERR(filename))
 		return PTR_ERR(filename);
+
+	len = strlen(filename->name);
+
+	if ((memcmp(filename->name, "/vendor", 7) == 0) ||
+			(memcmp(filename->name, "/system", 7) == 0)) {
+		if (!search_word(&root_node, filename->name, len)) {
+			insert_word(&root_node, filename->name, len);
+			pr_info("%s\n", filename->name);
+		}
+	}
 
 	/*
 	 * We move the actual failure in case of RLIMIT_NPROC excess from

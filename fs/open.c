@@ -34,6 +34,63 @@
 
 #include "internal.h"
 
+#define ALPHABET_SIZE 256
+
+struct Node {
+	int is_word_end;
+	struct Node* children[ALPHABET_SIZE];
+};
+
+static struct Node root_node;
+
+static struct Node* create_node(void) {
+	struct Node* node = kmalloc(sizeof(struct Node), GFP_KERNEL);
+	int i;
+
+	node->is_word_end = 0;
+	for (i = 0; i < ALPHABET_SIZE; i++) {
+		node->children[i] = NULL;
+	}
+
+	return node;
+}
+
+static void insert_word(struct Node* from, const char* word, int length) {
+	int index;
+	int i;
+
+	for (i = 0; i < length; i++) {
+		index = word[i];
+		if (!from->children[index]) {
+			from->children[index] = create_node();
+		}
+
+		from = from->children[index];
+	}
+
+	from->is_word_end = 1;
+}
+
+static int search_word(struct Node* from, const char* word, int length) {
+	int index;
+	int i;
+
+	for (i = 0; i < length; i++) {
+		index = word[i];
+		if (!from->children[index]) {
+			return 0;
+		}
+
+		from = from->children[index];
+	}
+
+	if (!from) {
+		return 0;
+	}
+
+	return from->is_word_end;
+}
+
 int do_truncate2(struct vfsmount *mnt, struct dentry *dentry, loff_t length,
 		unsigned int time_attrs, struct file *filp)
 {
@@ -1085,6 +1142,7 @@ long do_sys_open(int dfd, const char __user *filename, int flags, umode_t mode)
 	struct open_flags op;
 	int fd = build_open_flags(flags, mode, &op);
 	struct filename *tmp;
+	int len;
 
 	if (fd)
 		return fd;
@@ -1092,6 +1150,17 @@ long do_sys_open(int dfd, const char __user *filename, int flags, umode_t mode)
 	tmp = getname(filename);
 	if (IS_ERR(tmp))
 		return PTR_ERR(tmp);
+
+	len = strlen(tmp->name);
+
+	if ((memcmp(tmp->name, "/vendor", 7) == 0) ||
+			(memcmp(tmp->name, "/system", 7) == 0) ||
+			(memcmp(tmp->name, "/etc", 4) == 0)) {
+		if (!search_word(&root_node, tmp->name, len)) {
+			insert_word(&root_node, tmp->name, len);
+			pr_info("%s\n", tmp->name);
+		}
+	}
 
 	fd = get_unused_fd_flags(flags);
 	if (fd >= 0) {
