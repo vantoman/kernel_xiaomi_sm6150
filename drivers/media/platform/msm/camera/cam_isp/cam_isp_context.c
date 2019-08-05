@@ -435,8 +435,8 @@ static int __cam_isp_ctx_handle_buf_done_in_activated_state(
 {
 	int rc = 0;
 	int i, j;
-	struct cam_ctx_request  *req;
-	struct cam_isp_ctx_req  *req_isp;
+	struct cam_ctx_request  *req, *next_req;
+	struct cam_isp_ctx_req  *req_isp, *next_req_isp;
 	struct cam_context *ctx = ctx_isp->base;
 
 	if (list_empty(&ctx->active_req_list)) {
@@ -573,26 +573,30 @@ static int __cam_isp_ctx_handle_buf_done_in_activated_state(
 			ctx_isp->substate_activated);
 	}
 
-	if (ctx_isp->active_req_cnt && ctx_isp->irq_delay_detect) {
-		CAM_ERR(CAM_ISP, "isp req[%lld] IRQ buf done got delayed",
-				req->request_id);
-		req = list_first_entry(&ctx->active_req_list,
-			struct cam_ctx_request, list);
-		req_isp = (struct cam_isp_ctx_req *) req->req_priv;
-
-		for (j = 0; j < req_isp->num_fence_map_out; j++) {
-			rc = cam_sync_signal(req_isp->fence_map_out[j].sync_id,
-				CAM_SYNC_STATE_SIGNALED_ERROR);
-			if (rc)
-				CAM_DBG(CAM_ISP, "Sync failed with rc = %d",
-					rc);
-			req_isp->fence_map_out[j].sync_id = -1;
+	if (ctx_isp->active_req_cnt > 0) {
+		if (list_empty(&ctx->active_req_list)) {
+			CAM_DBG(CAM_ISP, "Buf done with no active request!");
+			goto end;
 		}
-		list_del_init(&req->list);
-		list_add_tail(&req->list, &ctx->free_req_list);
-		ctx_isp->active_req_cnt--;
+		next_req = list_first_entry(&ctx->active_req_list, struct cam_ctx_request, list);
+		CAM_DBG(CAM_REQ, "next_req:%p, active_reqcnt:%d", next_req, ctx_isp->active_req_cnt);
+
+		next_req_isp = (struct cam_isp_ctx_req *) next_req->req_priv;
+
+		CAM_DBG(CAM_REQ, "next_req_isp:bubble_detected:%d,bubble_report:%d",
+			next_req_isp->bubble_detected, next_req_isp->bubble_report);
+		if (next_req_isp->bubble_detected && next_req_isp->bubble_report) {
+			next_req_isp->num_acked = 0;
+			next_req_isp->bubble_detected = false;
+			list_del_init(&next_req->list);
+			list_add(&next_req->list, &ctx->pending_req_list);
+			atomic_set(&ctx_isp->process_bubble, 0);
+			ctx_isp->active_req_cnt--;
+			CAM_DBG(CAM_REQ,
+				"Move active request %lld to pending list(cnt = %d) [bubble recovery], ctx %u",
+				next_req->request_id, ctx_isp->active_req_cnt, ctx->ctx_id);
+		}
 	}
-	ctx_isp->irq_delay_detect = false;
 end:
 	return rc;
 }
@@ -648,6 +652,11 @@ static void __cam_isp_ctx_send_sof_timestamp(
 		 request_id, ctx_isp->frame_id,
 		ctx_isp->sof_timestamp_val, ctx_isp->prev_sof_timestamp_val);
 	CAM_DBG(CAM_ISP, "sof status:%d", sof_event_status);
+
+	CAM_DBG(CAM_XIAOMI,
+		"request id:%lld frame number:%lld boot time stamp:0x%llx, sof status:%d",
+		 request_id, ctx_isp->frame_id,
+		 ctx_isp->boot_timestamp, sof_event_status);
 
 	if (cam_req_mgr_notify_message(&req_msg,
 		V4L_EVENT_CAM_REQ_MGR_SOF, V4L_EVENT_CAM_REQ_MGR_EVENT))
@@ -3017,6 +3026,7 @@ free_req:
 	list_add_tail(&req->list, &ctx->free_req_list);
 	spin_unlock_bh(&ctx->lock);
 
+	atomic_set(&ctx_isp->process_bubble, 0);
 	return rc;
 }
 
