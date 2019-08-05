@@ -293,7 +293,14 @@ DTC_FLAGS += -Wno-simple_bus_reg \
 	-Wno-avoid_default_addr_size \
 	-Wno-interrupts_property \
 	-Wno-reg_format \
-	-Wno-gpios_property
+	-Wno-gpios_property \
+	-Wno-cooling_device_property \
+	-Wno-io_channels_property \
+	-Wno-clocks_property \
+	-Wno-iommus_property \
+	-Wno-interrupts_extended_property \
+	-Wno-thermal_sensors_property \
+	-Wno-pwms_property
 endif
 
 ifeq ($(KBUILD_ENABLE_EXTRA_GCC_CHECKS),2)
