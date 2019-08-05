@@ -13,7 +13,7 @@
 #ifndef __STEP_CHG_H__
 #define __STEP_CHG_H__
 
-#define MAX_STEP_CHG_ENTRIES	8
+#define MAX_STEP_CHG_ENTRIES	5
 
 struct step_chg_jeita_param {
 	u32			psy_prop;

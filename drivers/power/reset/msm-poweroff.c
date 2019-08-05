@@ -46,7 +46,7 @@
 #define SCM_DLOAD_FULLDUMP		0X10
 #define SCM_EDLOAD_MODE			0X01
 #define SCM_DLOAD_CMD			0x10
-#define SCM_DLOAD_MINIDUMP		0X20
+#define SCM_DLOAD_MINIDUMP		0xC0
 #define SCM_DLOAD_BOTHDUMPS	(SCM_DLOAD_MINIDUMP | SCM_DLOAD_FULLDUMP)
 
 static int restart_mode;
@@ -63,7 +63,7 @@ static void scm_disable_sdi(void);
  * There is no API from TZ to re-enable the registers.
  * So the SDI cannot be re-enabled when it already by-passed.
  */
-static int download_mode = 1;
+int download_mode = 1;
 static struct kobject dload_kobj;
 
 #ifdef CONFIG_QCOM_DLOAD_MODE
@@ -74,7 +74,7 @@ static struct kobject dload_kobj;
 #endif
 
 static int in_panic;
-static int dload_type = SCM_DLOAD_FULLDUMP;
+static int dload_type = SCM_DLOAD_BOTHDUMPS;
 static void *dload_mode_addr;
 static bool dload_mode_enabled;
 static void *emergency_dload_mode_addr;
@@ -300,12 +300,15 @@ static void msm_restart_prepare(const char *cmd)
 		pr_info("Forcing a warm reset of the system\n");
 
 	/* Hard reset the PMIC unless memory contents must be maintained. */
-	if (force_warm_reboot || need_warm_reset)
+	if (force_warm_reboot || need_warm_reset || in_panic) {
+		pr_info("a warm reset of the system with in_panic %d or need_warm_reset %d\n", in_panic, need_warm_reset);
 		qpnp_pon_system_pwr_off(PON_POWER_OFF_WARM_RESET);
-	else
+	} else
 		qpnp_pon_system_pwr_off(PON_POWER_OFF_HARD_RESET);
 
-	if (cmd != NULL) {
+	if (in_panic) {
+		qpnp_pon_set_restart_reason(PON_RESTART_REASON_PANIC);
+	} else if (cmd != NULL) {
 		if (!strncmp(cmd, "bootloader", 10)) {
 			qpnp_pon_set_restart_reason(
 				PON_RESTART_REASON_BOOTLOADER);
@@ -339,10 +342,15 @@ static void msm_restart_prepare(const char *cmd)
 				__raw_writel(0x6f656d00 | (code & 0xff),
 					     restart_reason);
 		} else if (!strncmp(cmd, "edl", 3)) {
-			enable_emergency_dload_mode();
+			if (0)
+				enable_emergency_dload_mode();
 		} else {
+			qpnp_pon_set_restart_reason(PON_RESTART_REASON_NORMAL);
 			__raw_writel(0x77665501, restart_reason);
 		}
+	} else {
+		qpnp_pon_set_restart_reason(PON_RESTART_REASON_NORMAL);
+		__raw_writel(0x77665501, restart_reason);
 	}
 
 	flush_cache_all();

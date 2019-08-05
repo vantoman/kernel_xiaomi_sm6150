@@ -41,7 +41,7 @@
 #include "qg-battery-profile.h"
 #include "qg-defs.h"
 
-static int qg_debug_mask;
+static int qg_debug_mask = QG_DEBUG_PON | QG_DEBUG_PROFILE | QG_DEBUG_SOC | QG_DEBUG_STATUS;
 module_param_named(
 	debug_mask, qg_debug_mask, int, 0600
 );
@@ -1023,7 +1023,7 @@ static void process_udata_work(struct work_struct *work)
 {
 	struct qpnp_qg *chip = container_of(work,
 			struct qpnp_qg, udata_work);
-	int rc;
+	int rc, batt_temp = 0;
 
 	if (chip->udata.param[QG_CC_SOC].valid)
 		chip->cc_soc = chip->udata.param[QG_CC_SOC].data;
@@ -1079,10 +1079,14 @@ static void process_udata_work(struct work_struct *work)
 	if (!chip->dt.esr_disable)
 		qg_store_esr_params(chip);
 
-	qg_dbg(chip, QG_DEBUG_STATUS, "udata update: batt_soc=%d cc_soc=%d full_soc=%d qg_esr=%d\n",
+	rc = qg_get_battery_temp(chip, &batt_temp);
+	if ((batt_temp > 600) && is_batt_available(chip))
+		power_supply_changed(chip->batt_psy);
+
+	qg_dbg(chip, QG_DEBUG_STATUS, "udata update: batt_soc=%d cc_soc=%d full_soc=%d qg_esr=%d batt_temp=%d\n",
 		(chip->batt_soc != INT_MIN) ? chip->batt_soc : -EINVAL,
 		(chip->cc_soc != INT_MIN) ? chip->cc_soc : -EINVAL,
-		chip->full_soc, chip->esr_last);
+		chip->full_soc, chip->esr_last, batt_temp);
 	vote(chip->awake_votable, UDATA_READY_VOTER, false, 0);
 }
 
@@ -1792,6 +1796,9 @@ static int qg_psy_set_property(struct power_supply *psy,
 	case POWER_SUPPLY_PROP_FG_RESET:
 		qg_reset(chip);
 		break;
+	case POWER_SUPPLY_PROP_VOLTAGE_MAX:
+		chip->bp.float_volt_uv = pval->intval;
+		break;
 	default:
 		break;
 	}
@@ -1874,9 +1881,13 @@ static int qg_psy_get_property(struct power_supply *psy,
 			pval->intval = (int)temp;
 		break;
 	case POWER_SUPPLY_PROP_CHARGE_FULL_DESIGN:
-		rc = qg_get_nominal_capacity((int *)&temp, 250, true);
-		if (!rc)
-			pval->intval = (int)temp;
+		if (-EINVAL != chip->bp.nom_cap_uah) {
+			pval->intval = chip->bp.nom_cap_uah * 1000;
+		} else {
+			rc = qg_get_nominal_capacity((int *)&temp, 250, true);
+			if (!rc)
+				pval->intval = (int)temp;
+		}
 		break;
 	case POWER_SUPPLY_PROP_CYCLE_COUNTS:
 		rc = get_cycle_counts(chip->counter, &pval->strval);
@@ -1926,6 +1937,7 @@ static int qg_property_is_writeable(struct power_supply *psy,
 	case POWER_SUPPLY_PROP_ESR_NOMINAL:
 	case POWER_SUPPLY_PROP_SOH:
 	case POWER_SUPPLY_PROP_FG_RESET:
+	case POWER_SUPPLY_PROP_VOLTAGE_MAX:
 		return 1;
 	default:
 		break;
@@ -2015,6 +2027,24 @@ static int qg_charge_full_update(struct qpnp_qg *chip)
 			/* terminated in JEITA */
 			qg_dbg(chip, QG_DEBUG_STATUS, "Terminated charging @ msoc=%d\n",
 					chip->msoc);
+		} else if (health == POWER_SUPPLY_HEALTH_GOOD && chip->msoc <= recharge_soc) {
+			bool usb_present = is_usb_present(chip);
+
+			/*
+			 * force a recharge only if SOC <= recharge SOC and
+			 * we have not started charging.
+			 */
+			if ((chip->wa_flags & QG_RECHARGE_SOC_WA) &&
+				usb_present) {
+				/* Force recharge */
+				prop.intval = 0;
+				rc = power_supply_set_property(chip->batt_psy,
+							POWER_SUPPLY_PROP_FORCE_RECHARGE, &prop);
+				if (rc < 0)
+					pr_err("Failed to force recharge rc=%d\n", rc);
+				else
+					qg_dbg(chip, QG_DEBUG_STATUS, "Forced recharge before\n");
+			}
 		}
 	} else if ((!chip->charge_done || chip->msoc <= recharge_soc)
 				&& chip->charge_full) {
@@ -2620,6 +2650,13 @@ static int qg_load_battery_profile(struct qpnp_qg *chip)
 		chip->bp.fastchg_curr_ma = -EINVAL;
 	}
 
+	rc = of_property_read_u32(profile_node, "qcom,nom-batt-capacity-mah",
+			&chip->bp.nom_cap_uah);
+	if (rc < 0) {
+		pr_err("battery nominal capacity unavailable, rc:%d\n", rc);
+		chip->bp.nom_cap_uah = -EINVAL;
+	}
+
 	rc = of_property_read_u32(profile_node, "qcom,qg-batt-profile-ver",
 				&chip->bp.qg_profile_version);
 	if (rc < 0) {
@@ -2734,15 +2771,30 @@ static struct ocv_all ocv[] = {
 	[SDAM_PON_OCV] = { 0, 0, "SDAM_PON_OCV"},
 };
 
+static bool qg_is_usb_present(struct qpnp_qg *chip)
+{
+	int rc;
+	u8 stat;
+
+	rc = qg_read(chip, 0x1310, &stat, 1);
+	if (rc < 0)
+		pr_err("Failed to read usb presence, rc=%d\n", rc);
+
+	return  (bool)(stat & 0x10);
+}
+
+
 #define S7_ERROR_MARGIN_UV		20000
 static int qg_determine_pon_soc(struct qpnp_qg *chip)
 {
 	int rc = 0, batt_temp = 0, i, shutdown_temp = 0;
 	bool use_pon_ocv = true;
 	unsigned long rtc_sec = 0;
-	u32 ocv_uv = 0, soc = 0, pon_soc = 0, full_soc = 0, cutoff_soc = 0;
+	u32 ocv_uv = 0, soc = 0, pon_soc = 0, full_soc = 0, cutoff_soc = 0, calcualte_soc = 0;
 	u32 shutdown[SDAM_MAX] = {0};
 	char ocv_type[20] = "NONE";
+	int state = 0;
+	bool input_present = qg_is_usb_present(chip);
 
 	if (!chip->profile_loaded) {
 		qg_dbg(chip, QG_DEBUG_PON, "No Profile, skipping PON soc\n");
@@ -2800,31 +2852,32 @@ static int qg_determine_pon_soc(struct qpnp_qg *chip)
 	 * 2. The device was powered off for < ignore_shutdown_time
 	 * 2. Batt temp has not changed more than shutdown_temp_diff
 	 */
-	if (!shutdown[SDAM_VALID])
+	if (!shutdown[SDAM_VALID]) {
+		pr_err("SDAM_VALID\n");
 		goto use_pon_ocv;
-
+	}
 	if (!is_between(0, chip->dt.ignore_shutdown_soc_secs,
-			(rtc_sec - shutdown[SDAM_TIME_SEC])))
-		goto use_pon_ocv;
-
+			(rtc_sec - shutdown[SDAM_TIME_SEC]))) {
+		state = 1;
+		pr_err("ignore_shutdown_soc_secs\n");
+	}
 	if (!is_between(0, chip->dt.shutdown_temp_diff,
 			abs(shutdown_temp -  batt_temp)) &&
-			(shutdown_temp < 0 || batt_temp < 0))
+			(shutdown_temp < 0 || batt_temp < 0)) {
+		pr_err("shutdown_temp_diff\n");
 		goto use_pon_ocv;
-
-	if ((chip->dt.shutdown_soc_threshold != -EINVAL) &&
+	}
+	if ((state == 1) && (chip->dt.shutdown_soc_threshold != -EINVAL) &&
 			!is_between(0, chip->dt.shutdown_soc_threshold,
-			abs(pon_soc - shutdown[SDAM_SOC])))
+			abs(pon_soc - shutdown[SDAM_SOC]))) {
+		pr_err("shutdown_soc_threshold\n");
 		goto use_pon_ocv;
+	}
 
 	use_pon_ocv = false;
-	ocv_uv = shutdown[SDAM_OCV_UV];
-	soc = shutdown[SDAM_SOC];
-	strlcpy(ocv_type, "SHUTDOWN_SOC", 20);
-	qg_dbg(chip, QG_DEBUG_PON, "Using SHUTDOWN_SOC @ PON\n");
 
 use_pon_ocv:
-	if (use_pon_ocv == true) {
+//	if (use_pon_ocv == true) {
 		if (chip->wa_flags & QG_PON_OCV_WA) {
 			if (ocv[S3_LAST_OCV].ocv_raw == FIFO_V_RESET_VAL) {
 				if (!ocv[SDAM_PON_OCV].ocv_uv) {
@@ -2884,22 +2937,40 @@ use_pon_ocv:
 		}
 
 		if ((full_soc > cutoff_soc) && (pon_soc > cutoff_soc)) {
-			soc = DIV_ROUND_UP(((pon_soc - cutoff_soc) * 100),
+			calcualte_soc = DIV_ROUND_UP(((pon_soc - cutoff_soc) * 100),
 						(full_soc - cutoff_soc));
-			soc = CAP(0, 100, soc);
+ 			calcualte_soc = CAP(0, 100, calcualte_soc);
 		} else {
-			soc = pon_soc;
+			calcualte_soc = pon_soc;
 		}
 
-		qg_dbg(chip, QG_DEBUG_PON, "v_float=%d v_cutoff=%d FULL_SOC=%d CUTOFF_SOC=%d PON_SYS_SOC=%d pon_soc=%d\n",
-			chip->bp.float_volt_uv, chip->dt.vbatt_cutoff_mv * 1000,
-			full_soc, cutoff_soc, soc, pon_soc);
+//	}
+
+	if (use_pon_ocv == false) {
+		if (input_present == true)
+			soc = shutdown[SDAM_SOC];
+		else
+			soc = calcualte_soc < shutdown[SDAM_SOC] ? (shutdown[SDAM_SOC] - 1) : shutdown[SDAM_SOC];
+
+		soc = (soc == 0) ? 1 : soc;
+		ocv_uv = shutdown[SDAM_OCV_UV];
+		strlcpy(ocv_type, "SHUTDOWN_SOC", 20);
+		qg_dbg(chip, QG_DEBUG_PON, "Using SHUTDOWN_SOC @ PON\n");
+	} else {
+		soc = calcualte_soc;
 	}
+
+	qg_dbg(chip, QG_DEBUG_PON, "v_float=%d v_cutoff=%d FULL_SOC=%d CUTOFF_SOC=%d calcualte_soc=%d pon_soc=%d shutdown[SDAM_SOC]=%d final soc = %d ibat = %d\n",
+		chip->bp.float_volt_uv, chip->dt.vbatt_cutoff_mv * 1000,
+		full_soc, cutoff_soc, calcualte_soc, pon_soc, shutdown[SDAM_SOC], soc, shutdown[SDAM_IBAT_UA]);
+
 done:
 	if (rc < 0) {
 		pr_err("Failed to get %s @ PON, rc=%d\n", ocv_type, rc);
 		return rc;
 	}
+
+	chip->sdam_data[SDAM_IBAT_UA] = 0;
 
 	chip->last_adj_ssoc = chip->catch_up_soc = chip->msoc = soc;
 	chip->kdata.param[QG_PON_OCV_UV].data = ocv_uv;
@@ -3359,7 +3430,7 @@ static int qg_alg_init(struct qpnp_qg *chip)
 #define DEFAULT_CL_MIN_LIM_DECIPERC	500
 #define DEFAULT_CL_MAX_LIM_DECIPERC	100
 #define DEFAULT_CL_DELTA_BATT_SOC	10
-#define DEFAULT_SHUTDOWN_TEMP_DIFF	60	/* 6 degC */
+#define DEFAULT_SHUTDOWN_TEMP_DIFF	50	/* 5 degC */
 #define DEFAULT_ESR_QUAL_CURRENT_UA	130000
 #define DEFAULT_ESR_QUAL_VBAT_UV	7000
 #define DEFAULT_ESR_DISABLE_SOC		1000
