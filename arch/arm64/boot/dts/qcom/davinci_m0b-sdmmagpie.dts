@@ -12,17 +12,12 @@
  */
 
 /dts-v1/;
-/plugin/;
 
-#include <dt-bindings/interrupt-controller/arm-gic.h>
-#include <dt-bindings/clock/qcom,camcc-sm6150.h>
-
-#include "sm6150-idp.dtsi"
-#include "sm6150-audio-overlay.dtsi"
+#include "sdmmagpie.dtsi"
+#include "davinci-sdmmagpie.dtsi"
 
 / {
-	model = "IDP";
-	compatible = "qcom,sm6150-idp", "qcom,sm6150", "qcom,idp";
-	qcom,msm-id = <355 0x0>;
-	qcom,board-id = <34 0>;
+	model = "Qualcomm Technologies, Inc. SDMMAGPIE PM6150 QRD";
+	compatible = "qcom,sdmmagpie-qrd", "qcom,sdmmagpie", "qcom,qrd";
+	qcom,board-id = <41 0>;
 };

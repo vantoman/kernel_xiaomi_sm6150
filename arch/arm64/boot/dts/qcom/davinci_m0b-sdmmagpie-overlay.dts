@@ -15,14 +15,19 @@
 /plugin/;
 
 #include <dt-bindings/interrupt-controller/arm-gic.h>
-#include <dt-bindings/clock/qcom,camcc-sm6150.h>
+#include <dt-bindings/clock/qcom,camcc-sdmmagpie.h>
 
-#include "sm6150-idp.dtsi"
-#include "sm6150-audio-overlay.dtsi"
+#include "davinci-audio-overlay.dtsi"
+#include "davinci-sdmmagpie.dtsi"
+#include "davinci-nfc-overlay.dtsi"
 
 / {
-	model = "IDP";
-	compatible = "qcom,sm6150-idp", "qcom,sm6150", "qcom,idp";
-	qcom,msm-id = <355 0x0>;
-	qcom,board-id = <34 0>;
+	model = "DAVINCI";
+	compatible = "qcom,sdmmagpie-qrd", "qcom,sdmmagpie", "qcom,qrd";
+	qcom,msm-id = <365 0x0>;
+	qcom,board-id = <41 0>;
+};
+
+&dsi_sw43404_amoled_video_display {
+	qcom,dsi-display-active;
 };
