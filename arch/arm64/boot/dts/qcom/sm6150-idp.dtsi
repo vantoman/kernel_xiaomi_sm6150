@@ -19,11 +19,11 @@
 #include "sm6150-sde-display.dtsi"
 #include <dt-bindings/clock/qcom,gcc-sm6150.h>
 
-/*&qupv3_se3_i2c {
+&qupv3_se3_i2c {
 	status = "ok";
 	#include "smb1390.dtsi"
 	#include "smb1355.dtsi"
-};*/
+};
 
 &pm6150l_gpios {
 	key_vol_up {

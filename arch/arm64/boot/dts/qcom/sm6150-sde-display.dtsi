@@ -180,7 +180,18 @@
 		qcom,dsi-panel = <&dsi_td4328_truly_cmd>;
 	};
 
-	dsi_rm69298_truly_amoled_vid_display: qcom,dsi-display@5 {
+	dsi_tianma_fhd_nt36672a_video_display: qcom,dsi-display@5 {
+		label = "dsi_tianma_fhd_nt36672a_video_display";
+		qcom,display-type = "primary";
+
+		qcom,dsi-ctrl-num = <0>;
+		qcom,dsi-phy-num = <0>;
+		qcom,dsi-select-clocks = "mux_byte_clk0", "mux_pixel_clk0";
+
+		qcom,dsi-panel = <&dsi_tianma_fhd_nt36672a_video>;
+	};
+
+	dsi_rm69298_truly_amoled_vid_display: qcom,dsi-display@6 {
 		label = "dsi_rm69298_truly_amoled_vid_display";
 		qcom,display-type = "primary";
 
@@ -191,7 +202,7 @@
 		qcom,dsi-panel = <&dsi_rm69298_truly_amoled_video>;
 	};
 
-	dsi_rm69298_truly_amoled_cmd_display: qcom,dsi-display@6 {
+	dsi_rm69298_truly_amoled_cmd_display: qcom,dsi-display@7 {
 		label = "dsi_rm69298_truly_amoled_cmd_display";
 		qcom,display-type = "primary";
 
@@ -202,7 +213,7 @@
 		qcom,dsi-panel = <&dsi_rm69298_truly_amoled_cmd>;
 	};
 
-	dsi_sharp_split_link_wuxga_vid_display: qcom,dsi-display@7 {
+	dsi_sharp_split_link_wuxga_vid_display: qcom,dsi-display@8 {
 		label = "dsi_sharp_split_link_wuxga_vid_display";
 		qcom,display-type = "primary";
 
@@ -213,7 +224,7 @@
 		qcom,dsi-panel = <&dsi_sharp_split_link_wuxga_video>;
 	};
 
-	dsi_tianma_fhd_ft8719_video_display: qcom,dsi-display@8 {
+	dsi_tianma_fhd_ft8719_video_display: qcom,dsi-display@9 {
 		label = "dsi_tianma_fhd_ft8719_video_display";
 		qcom,display-type = "primary";
 
