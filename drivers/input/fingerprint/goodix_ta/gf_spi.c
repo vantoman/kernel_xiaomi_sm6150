@@ -617,7 +617,7 @@ static int gf_open(struct inode *inode, struct file *filp)
 #endif
 
 	if (status == 0) {
-		rc = gpio_request(gf_dev->reset_gpio, "gpio-reset");
+		rc = gpio_request(gf_dev->reset_gpio, "goodix_reset");
 
 		if (rc) {
 			dev_err(&gf_dev->spi->dev, "Failed to request RESET GPIO. rc = %d\n", rc);
@@ -627,7 +627,7 @@ static int gf_open(struct inode *inode, struct file *filp)
 		}
 
 		gpio_direction_output(gf_dev->reset_gpio, 0);
-		rc = gpio_request(gf_dev->irq_gpio, "gpio-irq");
+		rc = gpio_request(gf_dev->irq_gpio, "goodix_irq");
 
 		if (rc) {
 			dev_err(&gf_dev->spi->dev, "Failed to request IRQ GPIO. rc = %d\n", rc);
