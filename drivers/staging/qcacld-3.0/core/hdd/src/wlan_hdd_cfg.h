@@ -161,5 +161,6 @@ static const char wlan_cfg[] = {
 	"g_sta_sap_scc_on_dfs_chan=1\n"
 	"gActiveUcBpfMode=1\n"
 	"gActiveMcBcBpfMode=1\n"
+	"gAutoBmpsTimerValue=90\n"
 	"END\n"
 };
