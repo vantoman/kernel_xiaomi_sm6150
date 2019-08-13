@@ -196,7 +196,6 @@ void set_ops_defaults(struct tfa_device_ops *ops)
 	ops->set_mute = tfa_set_mute_nodsp;
 	ops->faim_protect = tfa_faim_protect;
 	ops->set_osc_powerdown = tfa_set_osc_powerdown;
-	ops->update_lpm = tfa_update_lpm;
 }
 
 /***********************************************************************************/

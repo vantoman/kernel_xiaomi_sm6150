@@ -129,9 +129,6 @@ static int wcd937x_init_reg(struct snd_soc_codec *codec)
 	snd_soc_update_bits(codec, WCD937X_RX_OCP_CTL, 0x0F, 0x02);
 	snd_soc_update_bits(codec, WCD937X_HPH_SURGE_HPHLR_SURGE_EN, 0xFF,
 			    0xD9);
-	snd_soc_update_bits(codec, WCD937X_MICB1_TEST_CTL_1, 0xFF, 0xFA);
-	snd_soc_update_bits(codec, WCD937X_MICB2_TEST_CTL_1, 0xFF, 0xFA);
-	snd_soc_update_bits(codec, WCD937X_MICB3_TEST_CTL_1, 0xFF, 0xFA);
 	return 0;
 }
 
@@ -1387,6 +1384,7 @@ static int wcd937x_get_logical_addr(struct swr_device *swr_dev)
 		dev_err(&swr_dev->dev,
 			"%s get devnum %d for dev addr %lx failed\n",
 			__func__, devnum, swr_dev->addr);
+		swr_remove_device(swr_dev);
 		return ret;
 	}
 	swr_dev->dev_num = devnum;
@@ -1680,8 +1678,8 @@ static const struct snd_kcontrol_new wcd937x_snd_controls[] = {
 	SOC_SINGLE_EXT("HPHR_COMP Switch", SND_SOC_NOPM, 1, 1, 0,
 		wcd937x_get_compander, wcd937x_set_compander),
 
-	SOC_SINGLE_TLV("HPHL Volume", WCD937X_HPH_L_EN, 0, 20, 1, line_gain),
-	SOC_SINGLE_TLV("HPHR Volume", WCD937X_HPH_R_EN, 0, 20, 1, line_gain),
+	SOC_SINGLE_TLV("HPHL Volume", WCD937X_HPH_L_EN, 0, 24, 1, line_gain),
+	SOC_SINGLE_TLV("HPHR Volume", WCD937X_HPH_R_EN, 0, 24, 1, line_gain),
 	SOC_SINGLE_TLV("ADC1 Volume", WCD937X_ANA_TX_CH1, 0, 20, 0, analog_gain),
 	SOC_SINGLE_TLV("ADC2 Volume", WCD937X_ANA_TX_CH2, 0, 20, 0, analog_gain),
 	SOC_SINGLE_TLV("ADC3 Volume", WCD937X_ANA_TX_CH3, 0, 20, 0, analog_gain),
@@ -2478,7 +2476,7 @@ struct wcd937x_pdata *wcd937x_populate_dt_data(struct device *dev)
 {
 	struct wcd937x_pdata *pdata = NULL;
 
-	pdata = kzalloc(sizeof(struct wcd937x_pdata),
+	pdata = devm_kzalloc(dev, sizeof(struct wcd937x_pdata),
 				GFP_KERNEL);
 	if (!pdata)
 		return NULL;
@@ -2535,7 +2533,7 @@ static int wcd937x_bind(struct device *dev)
 	struct wcd937x_pdata *pdata = NULL;
 	struct wcd_ctrl_platform_data *plat_data = NULL;
 
-	wcd937x = kzalloc(sizeof(struct wcd937x_priv), GFP_KERNEL);
+	wcd937x = devm_kzalloc(dev, sizeof(struct wcd937x_priv), GFP_KERNEL);
 	if (!wcd937x)
 		return -ENOMEM;
 
@@ -2554,35 +2552,31 @@ static int wcd937x_bind(struct device *dev)
 	if (!wcd937x->supplies) {
 		dev_err(dev, "%s: Cannot init wcd supplies\n",
 			__func__);
-		goto err_bind_all;
+		return ret;
 	}
 
 	plat_data = dev_get_platdata(dev->parent);
 	if (!plat_data) {
 		dev_err(dev, "%s: platform data from parent is NULL\n",
 			__func__);
-		ret = -EINVAL;
-		goto err_bind_all;
+		return -EINVAL;
 	}
 	wcd937x->handle = (void *)plat_data->handle;
 	if (!wcd937x->handle) {
 		dev_err(dev, "%s: handle is NULL\n", __func__);
-		ret = -EINVAL;
-		goto err_bind_all;
+		return -EINVAL;
 	}
 	wcd937x->update_wcd_event = plat_data->update_wcd_event;
 	if (!wcd937x->update_wcd_event) {
 		dev_err(dev, "%s: update_wcd_event api is null!\n",
 			__func__);
-		ret = -EINVAL;
-		goto err_bind_all;
+		return -EINVAL;
 	}
 	wcd937x->register_notifier = plat_data->register_notifier;
 	if (!wcd937x->register_notifier) {
 		dev_err(dev, "%s: register_notifier api is null!\n",
 			__func__);
-		ret = -EINVAL;
-		goto err_bind_all;
+		return -EINVAL;
 	}
 
 	ret = msm_cdc_enable_static_supplies(dev, wcd937x->supplies,
@@ -2591,7 +2585,7 @@ static int wcd937x_bind(struct device *dev)
 	if (ret) {
 		dev_err(dev, "%s: wcd static supply enable failed!\n",
 			__func__);
-		goto err_bind_all;
+		return ret;
 	}
 
 	wcd937x_reset(dev);
@@ -2607,7 +2601,7 @@ static int wcd937x_bind(struct device *dev)
 	if (ret) {
 		dev_err(dev, "%s: Slave bind failed, ret = %d\n",
 			__func__, ret);
-		goto err_bind_all;
+		return ret;
 	}
 
 	ret = wcd937x_parse_port_mapping(dev, "qcom,rx_swr_ch_map", CODEC_RX);
@@ -2682,26 +2676,18 @@ err_irq:
 	wcd_irq_exit(&wcd937x->irq_info, wcd937x->virq);
 err:
 	component_unbind_all(dev, wcd937x);
-err_bind_all:
-	dev_set_drvdata(dev, NULL);
-	kfree(pdata);
-	kfree(wcd937x);
 	return ret;
 }
 
 static void wcd937x_unbind(struct device *dev)
 {
 	struct wcd937x_priv *wcd937x = dev_get_drvdata(dev);
-	struct wcd937x_pdata *pdata = dev_get_platdata(wcd937x->dev);
 
 	wcd_irq_exit(&wcd937x->irq_info, wcd937x->virq);
 	snd_soc_unregister_codec(dev);
 	component_unbind_all(dev, wcd937x);
 	mutex_destroy(&wcd937x->micb_lock);
 	mutex_destroy(&wcd937x->ana_tx_clk_lock);
-	dev_set_drvdata(dev, NULL);
-	kfree(pdata);
-	kfree(wcd937x);
 }
 
 static const struct of_device_id wcd937x_dt_match[] = {
@@ -2771,8 +2757,6 @@ static int wcd937x_probe(struct platform_device *pdev)
 static int wcd937x_remove(struct platform_device *pdev)
 {
 	component_master_del(&pdev->dev, &wcd937x_comp_ops);
-	dev_set_drvdata(&pdev->dev, NULL);
-
 	return 0;
 }
 
