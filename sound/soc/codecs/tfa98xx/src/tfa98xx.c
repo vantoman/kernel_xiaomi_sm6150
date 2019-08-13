@@ -2903,7 +2903,7 @@ static int tfa98xx_mute(struct snd_soc_dai *dai, int mute, int stream)
 		mutex_unlock(&tfa98xx->dsp_lock);
 	}
 	else {
-		if (stream == SNDRV_PCM_STREAM_PLAYBACK)
+		if (stream == SNDRV_PCM_STREAM_PLAYBACK) {
 			tfa98xx->pstream = 1;
 #ifdef TFA_NON_DSP_SOLUTION
 			if (tfa98xx->tfa->is_probus_device) {
