@@ -1,10 +1,6 @@
-/*
- * Copyright (C) 2014 NXP Semiconductors, All Rights Reserved.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
+/** Filename: Tfa98xx_genregs.h
+ *  This file was generated automatically on 07/01/15 at 10:25:08. 
+ *  Source file: TFA9891_I2C_list_V11.xls
  */
 
 #ifndef TFA9891_GENREGS_H

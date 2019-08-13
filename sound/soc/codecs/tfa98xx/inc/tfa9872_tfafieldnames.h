@@ -1,10 +1,6 @@
-/*
- * Copyright (C) 2014 NXP Semiconductors, All Rights Reserved.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
+/** Filename: Tfa9872_TfaFieldnames.h
+ *  This file was generated automatically on 10/11/16 at 10:19:27. 
+ *  Source file: TFA9872N1B2_DefaultI2CSettings -v16.xlsx
  */
 
 #ifndef _TFA9872_TFAFIELDNAMES_H

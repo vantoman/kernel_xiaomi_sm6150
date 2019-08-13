@@ -1,10 +1,6 @@
-/*
- * Copyright (C) 2014 NXP Semiconductors, All Rights Reserved.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
+/** Filename: tfa9894_tfaFieldnames.h
+ *  This file was generated automatically on 09/06/17 at 14:51:37. 
+ *  Source file: TFA9894_N1A1_I2C_RegisterMap.xlsx
  */
 
 #ifndef _TFA9894_TFAFIELDNAMES_H
