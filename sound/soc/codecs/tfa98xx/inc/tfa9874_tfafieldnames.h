@@ -7,7 +7,7 @@
 #define _TFA9874_TFAFIELDNAMES_H
 
 
-#define TFA9874_I2CVERSION    1.16
+#define TFA9874_I2CVERSION    1
 
 typedef enum nxpTfa9874BfEnumList {
     TFA9874_BF_PWDN  = 0x0000,    /*!< Powerdown selection                                */
@@ -159,7 +159,6 @@ typedef enum nxpTfa9874BfEnumList {
     TFA9874_BF_DCTRACK= 0x7430,    /*!< Boost algorithm selection, effective only when boost_intelligent is set to 1 */
     TFA9874_BF_DCTRIP= 0x7444,    /*!< 1st Adaptive boost trip levels, effective only when DCIE is set to 1 */
     TFA9874_BF_DCHOLD= 0x7494,    /*!< Hold time for DCDC booster, effective only when boost_intelligent is set to 1 */
-    TFA9874_BF_DCINT = 0x74e0,    /*!< Selection of data for adaptive boost algorithm, effective only when boost_intelligent is set to 1 */
     TFA9874_BF_DCTRIP2= 0x7534,    /*!< 2nd Adaptive boost trip levels, effective only when DCIE is set to 1 */
     TFA9874_BF_DCTRIPT= 0x7584,    /*!< Track Adaptive boost trip levels, effective only when boost_intelligent is set to 1 */
     TFA9874_BF_DCTRIPHYSTE= 0x75f0,    /*!< Enable hysteresis on booster trip levels           */

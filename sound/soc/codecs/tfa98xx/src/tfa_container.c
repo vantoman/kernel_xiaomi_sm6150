@@ -666,64 +666,13 @@ enum Tfa98xx_Error tfaContWriteFile(struct tfa_device *tfa, nxpTfaFileDsc_t *fil
 	enum Tfa98xx_Error err = Tfa98xx_Error_Ok;
 	nxpTfaHeader_t *hdr = (nxpTfaHeader_t *)file->data;
 	nxpTfaHeaderType_t type;
-	int size, i;
-	char subVerString[8] = { 0 };
-	int subversion = 0;
+	int size;
 
 	if (tfa->verbose) {
 		tfaContShowHeader(hdr);
 	}
 
-	type = (nxpTfaHeaderType_t)hdr->id;
-	if ((type == msgHdr) || ((type == volstepHdr) && (tfa->tfa_family == 2)))
-	{
-		subVerString[0] = hdr->subversion[0];
-		subVerString[1] = hdr->subversion[1];
-		subVerString[2] = '\0';
-
-			sscanf(subVerString, "%d", &subversion);
-
-        if ((subversion > 0) &&
-            (((hdr->customer[0]) == 'A') && ((hdr->customer[1]) == 'P') &&
-             ((hdr->customer[2]) == 'I') && ((hdr->customer[3]) == 'V')))
-		{
-			if (tfa->is_probus_device)
-			{
-                /* Temporary workaround (example: For climax --calibrate scenario for probus devices) */
-                err = tfaGetFwApiVersion(tfa, (unsigned char *)&tfa->fw_itf_ver[0]);
-                if (err) {
-                    pr_debug("[%s] cannot get FWAPI error = %d \n", __FUNCTION__, err);
-                    return err;
-                }
-				for (i = 0; i<3; i++)
-				{
-					if (tfa->fw_itf_ver[i] != hdr->customer[i + 4]) //+4 to skip "?PIV" string part in the .msg file.
-					{
-						ERRORMSG("Error: tfaContWriteFile: Expected FW API version = %d.%d.%d, Msg File version: %d.%d.%d \n",
-							tfa->fw_itf_ver[0],
-							tfa->fw_itf_ver[1],
-							tfa->fw_itf_ver[2],
-							hdr->customer[4],
-							hdr->customer[5],
-							hdr->customer[6]);
-						return Tfa98xx_Error_Bad_Parameter;
-					}
-				}
-			}
-			else if ((tfa->fw_itf_ver[2] != hdr->customer[4]) || (tfa->fw_itf_ver[1] != hdr->customer[5]) || ((tfa->fw_itf_ver[0] >> 6) & 0x03) != hdr->customer[6])
-			{
-
-				ERRORMSG("Error: tfaContWriteFile: Expected FW API version = %d.%d.%d, Msg File version: %d.%d.%d \n",
-					(tfa->fw_itf_ver[2]) & 0xff,
-					(tfa->fw_itf_ver[1]) & 0xff,
-					(tfa->fw_itf_ver[0] >> 6) & 0x03,
-					hdr->customer[4],
-					hdr->customer[5],
-					hdr->customer[6]);
-				return Tfa98xx_Error_Bad_Parameter;
-			}
-		}
-	}
+	type = (nxpTfaHeaderType_t) hdr->id;
 
 	switch (type) {
 	case msgHdr: /* generic DSP message */
