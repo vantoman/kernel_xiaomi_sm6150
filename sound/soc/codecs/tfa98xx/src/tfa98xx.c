@@ -2583,8 +2583,6 @@ static void tfa98xx_interrupt(struct work_struct *work)
 {
 	struct tfa98xx *tfa98xx = container_of(work, struct tfa98xx, interrupt_work.work);
 
-	pr_info("\n");
-
 	if (tfa98xx->flags & TFA98XX_FLAG_TAPDET_AVAILABLE) {
 		/* check for tap interrupt */
 		if (tfa_irq_get(tfa98xx->tfa, tfa9912_irq_sttapdet)) {
@@ -3232,7 +3230,7 @@ static int tfa98xx_misc_device_profile_open(struct inode *inode, struct file *fi
 {
 	struct tfa98xx *tfa98xx = container_of(file->private_data,
 					struct tfa98xx, tfa98xx_profile);
-	pr_info("entry  tfa98xx=%p\n", tfa98xx);
+	//pr_info("entry  tfa98xx=%p\n", tfa98xx);
 	if (tfa98xx) {
 		file->private_data = tfa98xx;
 		return 0;
@@ -3250,7 +3248,7 @@ static ssize_t tfa98xx_misc_device_profile_write(struct file *file, const char _
 	int ret = 0;
 	int profileID = 0;
 
-	pr_info("entry count=%d\n", (int)count);
+	//pr_info("entry count=%d\n", (int)count);
 
 	if (NULL == tfa98xx) {
 		pr_err("%s    tfa98xx is NULL.\n", __func__);
@@ -3262,7 +3260,7 @@ static ssize_t tfa98xx_misc_device_profile_write(struct file *file, const char _
 	}*/
 	memset(name, 0x00, sizeof(name));
 	ret = copy_from_user(name, user_buf, count);
-	pr_info("profile name=%s\n", name);
+	//pr_info("profile name=%s\n", name);
 
 	/* search profile name and return ID. */
 	profileID = get_profile_id_by_name(name, strlen(name));
@@ -3278,7 +3276,7 @@ static ssize_t tfa98xx_misc_device_profile_write(struct file *file, const char _
 			tfa98xx_mixer_profile = profileID;
 			tfa98xx->profile = prof_idx;
 			tfa98xx->vstep = tfa98xx->prof_vsteps[prof_idx];
-			pr_info("update profile index (%d:%d) succeeded\n", profileID, prof_idx);
+			//pr_info("update profile index (%d:%d) succeeded\n", profileID, prof_idx);
 		}
 	}
 
@@ -3305,7 +3303,7 @@ static ssize_t tfa98xx_misc_device_reg_write(struct file *file, const char __use
 	u8 address = 0;
 	int ret = 0;
 
-	pr_info("entry    count=%d\n", (int)count);
+	//pr_info("entry    count=%d\n", (int)count);
 
 	if (NULL == tfa98xx) {
 		pr_err("tfa98xx is NULL.\n");
@@ -3323,7 +3321,7 @@ static ssize_t tfa98xx_misc_device_reg_write(struct file *file, const char __use
 	}
 
 	tfa98xx->reg = address;
-	pr_info("tfa98xx->reg=0x%x\n", tfa98xx->reg);
+	//pr_info("tfa98xx->reg=0x%x\n", tfa98xx->reg);
 
 	return count;
 }
@@ -3364,7 +3362,7 @@ static ssize_t tfa98xx_misc_device_rw_read(struct file *file, char __user *user_
 	int ret;
 	int retries = I2C_RETRIES;
 
-	pr_info("entry    count=%d\n", (int)count);
+	//pr_info("entry    count=%d\n", (int)count);
 
 	data = kmalloc(count+1, GFP_KERNEL);
 	if (data == NULL) {
@@ -3376,7 +3374,7 @@ static ssize_t tfa98xx_misc_device_rw_read(struct file *file, char __user *user_
 
 retry:
 	ret = i2c_transfer(tfa98xx->i2c->adapter, msgs, ARRAY_SIZE(msgs));
-	pr_info("i2c_transfer  ret=%d\n", ret);
+	//pr_info("i2c_transfer  ret=%d\n", ret);
 
 	if (ret < 0) {
 		pr_warn("i2c error, retries left: %d\n", retries);
@@ -3408,7 +3406,7 @@ static ssize_t tfa98xx_misc_device_rw_write(struct file *file, const char __user
 	u8 *data;
 	int ret;
 	int retries = I2C_RETRIES;
-	pr_info("entry    count=%d\n", (int)count);
+	//pr_info("entry    count=%d\n", (int)count);
 
 	data = kmalloc(count+1, GFP_KERNEL);
 	if (data == NULL) {
@@ -3416,7 +3414,7 @@ static ssize_t tfa98xx_misc_device_rw_write(struct file *file, const char __user
 		return  -ENOMEM;
 	}
 
-	pr_info("tfa98xx->reg=0x%x\n", tfa98xx->reg);
+	//pr_info("tfa98xx->reg=0x%x\n", tfa98xx->reg);
 
 	data[0] = tfa98xx->reg;
 	if (copy_from_user(&data[1], user_buf, count)) {
@@ -3732,7 +3730,7 @@ static long tfa98xx_misc_device_control_ioctl(struct file *file,
 	struct tfa98xx *tfa98xx = NULL;
 	int result = 0;
 
-	pr_info("entry  cmd=%d    arg=%p\n", cmd, (void*)arg);
+	//pr_info("entry  cmd=%d    arg=%p\n", cmd, (void*)arg);
 	if (!arg) {
 		pr_err("arg is NULL!\n");
 		return -EINVAL;
@@ -3802,7 +3800,7 @@ static long tfa98xx_misc_device_control_ioctl(struct file *file,
 			break;
 	}
 
-	pr_info("exit  result=%d\n", result);
+	//pr_info("exit  result=%d\n", result);
 	return result;
 }
 
@@ -3811,7 +3809,7 @@ static long tfa98xx_misc_device_control_compat_ioctl(struct file *file,
 													unsigned int cmd,
 													unsigned long arg)
 {
-	pr_info("%s entry  cmd=%d    arg=%p\n", __func__, cmd, (void*)arg);
+	//pr_info("%s entry  cmd=%d    arg=%p\n", __func__, cmd, (void*)arg);
 
 	if (!arg) {
 		pr_err("%s No data send to driver!\n", __func__);
@@ -4226,18 +4224,17 @@ MODULE_DEVICE_TABLE(i2c, tfa98xx_i2c_id);
 
 #ifdef CONFIG_OF
 static struct of_device_id tfa98xx_dt_match[] = {
-	{.compatible = "nxp,tfa98xx" },
-	{.compatible = "nxp,tfa9872" },
-	{.compatible = "nxp,tfa9874" },
-	{.compatible = "nxp,tfa9878" },
-	{.compatible = "nxp,tfa9888" },
-	{.compatible = "nxp,tfa9890" },
-	{.compatible = "nxp,tfa9891" },
-	{.compatible = "nxp,tfa9894" },
-	{.compatible = "nxp,tfa9895" },
-	{.compatible = "nxp,tfa9896" },
-	{.compatible = "nxp,tfa9897" },
-	{.compatible = "nxp,tfa9912" },
+	{ .compatible = "nxp,tfa98xx" },
+	{ .compatible = "nxp,tfa9872" },
+	{ .compatible = "nxp,tfa9874" },
+	{ .compatible = "nxp,tfa9888" },
+	{ .compatible = "nxp,tfa9890" },
+	{ .compatible = "nxp,tfa9891" },
+	{ .compatible = "nxp,tfa9894" },
+	{ .compatible = "nxp,tfa9895" },
+	{ .compatible = "nxp,tfa9896" },
+	{ .compatible = "nxp,tfa9897" },
+	{ .compatible = "nxp,tfa9912" },
 	{ },
 };
 #endif
