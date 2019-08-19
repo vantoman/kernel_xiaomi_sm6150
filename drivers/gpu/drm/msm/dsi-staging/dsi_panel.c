@@ -434,6 +434,7 @@ static int dsi_panel_power_on(struct dsi_panel *panel)
 	int rc = 0;
 
 	rc = dsi_pwr_enable_regulator(&panel->power_info, true);
+ 	mdelay(12);
 	if (rc) {
 		pr_err("[%s] failed to enable vregs, rc=%d\n", panel->name, rc);
 		goto exit;
@@ -491,6 +492,7 @@ static int dsi_panel_power_off(struct dsi_panel *panel)
 		pr_err("[%s] failed set pinctrl state, rc=%d\n", panel->name,
 		       rc);
 	}
+ 	mdelay(20);
 
 	rc = dsi_pwr_enable_regulator(&panel->power_info, false);
 	if (rc)
