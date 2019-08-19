@@ -110,7 +110,10 @@ struct dsi_backlight_config {
 	u32 bl_scale_ad;
 
 	int en_gpio;
-	bool dcs_type_ss;
+
+	bool dcs_type_ss_ea;
+	bool dcs_type_ss_eb;
+
 	/* PWM params */
 	bool pwm_pmi_control;
 	u32 pwm_pmic_bank;
