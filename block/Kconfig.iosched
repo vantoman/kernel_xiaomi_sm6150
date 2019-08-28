@@ -147,16 +147,6 @@ choice
 		select SCSI
 		select SCSI_MQ_DEFAULT
 
-config DEFAULT_IOSCHED
-        string
-        default "deadline" if DEFAULT_DEADLINE
-        default "anxiety" if DEFAULT_ANXIETY
-        default "cfq" if DEFAULT_CFQ
-        default "zen" if DEFAULT_ZEN
-        default "noop" if DEFAULT_NOOP
-        default "fiops" if DEFAULT_FIOPS
-        default "sio" if DEFAULT_SIO
-
 endchoice
 
 config MQ_IOSCHED_DEADLINE
