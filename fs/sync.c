@@ -24,7 +24,7 @@
 #endif
 
 bool fsync_enabled = true;
-module_param(fsync_enabled, bool, 0755);
+module_param(fsync_enabled, bool, 0664);
 
 #define VALID_FLAGS (SYNC_FILE_RANGE_WAIT_BEFORE|SYNC_FILE_RANGE_WRITE| \
 			SYNC_FILE_RANGE_WAIT_AFTER)
