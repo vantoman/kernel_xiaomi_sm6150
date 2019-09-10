@@ -154,7 +154,6 @@ static const char wlan_cfg[] __initconst = {
 	"gcmp_enabled=1\n"
 	"drop_bcn_on_chan_mismatch=0\n"
 	"enable_rtt_mac_randomization=1\n"
-	"gEnableConcurrentSTA=wlan1\n"
 	"gDualMacFeatureDisable=0\n"
 	"gEnableSNRMonitoring=1\n"
 	"wlm_latency_enable=1\n"
