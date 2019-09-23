@@ -2530,16 +2530,21 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 					tb[QCA_WLAN_VENDOR_ATTR_ACS_CH_LIST]);
 		if (sap_config->acs_cfg.ch_list_count) {
 			sap_config->acs_cfg.ch_list = qdf_mem_malloc(
-					sizeof(uint8_t) *
 					sap_config->acs_cfg.ch_list_count);
-			if (!sap_config->acs_cfg.ch_list) {
-				hdd_err("ACS config alloc fail");
+			sap_config->acs_cfg.master_ch_list = qdf_mem_malloc(
+					sap_config->acs_cfg.ch_list_count);
+			if (!sap_config->acs_cfg.ch_list ||
+			    !sap_config->acs_cfg.master_ch_list) {
 				ret = -ENOMEM;
 				goto out;
 			}
 
 			qdf_mem_copy(sap_config->acs_cfg.ch_list, tmp,
-					sap_config->acs_cfg.ch_list_count);
+				     sap_config->acs_cfg.ch_list_count);
+			qdf_mem_copy(sap_config->acs_cfg.master_ch_list, tmp,
+				     sap_config->acs_cfg.ch_list_count);
+			sap_config->acs_cfg.master_ch_list_count =
+					sap_config->acs_cfg.ch_list_count;
 		}
 	} else if (tb[QCA_WLAN_VENDOR_ATTR_ACS_FREQ_LIST]) {
 		uint32_t *freq =
@@ -2550,8 +2555,10 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 		if (sap_config->acs_cfg.ch_list_count) {
 			sap_config->acs_cfg.ch_list = qdf_mem_malloc(
 				sap_config->acs_cfg.ch_list_count);
-			if (!sap_config->acs_cfg.ch_list) {
-				hdd_err("ACS config alloc fail");
+			sap_config->acs_cfg.master_ch_list = qdf_mem_malloc(
+					sap_config->acs_cfg.ch_list_count);
+			if (!sap_config->acs_cfg.ch_list ||
+			    !sap_config->acs_cfg.master_ch_list) {
 				ret = -ENOMEM;
 				goto out;
 			}
@@ -2560,6 +2567,11 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 			for (i = 0; i < sap_config->acs_cfg.ch_list_count; i++)
 				sap_config->acs_cfg.ch_list[i] =
 					ieee80211_frequency_to_channel(freq[i]);
+			qdf_mem_copy(sap_config->acs_cfg.master_ch_list,
+				     sap_config->acs_cfg.ch_list,
+				     sap_config->acs_cfg.ch_list_count);
+			sap_config->acs_cfg.master_ch_list_count =
+					sap_config->acs_cfg.ch_list_count;
 		}
 	}
 
@@ -2780,6 +2792,13 @@ void wlan_hdd_undo_acs(struct hdd_adapter *adapter)
 		adapter->session.ap.sap_config.acs_cfg.ch_list = NULL;
 	}
 	adapter->session.ap.sap_config.acs_cfg.ch_list_count = 0;
+	if (adapter->session.ap.sap_config.acs_cfg.master_ch_list) {
+		hdd_debug("Clear acs cfg channel list");
+		qdf_mem_free(
+			adapter->session.ap.sap_config.acs_cfg.master_ch_list);
+		adapter->session.ap.sap_config.acs_cfg.master_ch_list = NULL;
+	}
+	adapter->session.ap.sap_config.acs_cfg.master_ch_list_count = 0;
 }
 
 /**
@@ -5802,9 +5821,6 @@ __wlan_hdd_cfg80211_get_wifi_info(struct wiphy *wiphy,
 	struct nlattr *tb_vendor[QCA_WLAN_VENDOR_ATTR_WIFI_INFO_GET_MAX + 1];
 	tSirVersionString driver_version;
 	tSirVersionString firmware_version;
-	const char *hw_version;
-	uint32_t major_spid = 0, minor_spid = 0, siid = 0, crmid = 0;
-	uint32_t sub_id = 0;
 	int status;
 	struct sk_buff *reply_skb;
 	uint32_t skb_len = 0, count = 0;
@@ -5838,13 +5854,15 @@ __wlan_hdd_cfg80211_get_wifi_info(struct wiphy *wiphy,
 
 	if (tb_vendor[QCA_WLAN_VENDOR_ATTR_WIFI_INFO_FIRMWARE_VERSION]) {
 		hdd_debug("Rcvd req for FW version");
-		hdd_get_fw_version(hdd_ctx, &major_spid, &minor_spid, &siid,
-				   &crmid);
-		sub_id = (hdd_ctx->target_fw_vers_ext & 0xf0000000) >> 28;
-		hw_version = hdd_ctx->target_hw_name;
 		snprintf(firmware_version, sizeof(firmware_version),
-			"FW:%d.%d.%d.%d.%d HW:%s", major_spid, minor_spid,
-			siid, crmid, sub_id, hw_version);
+			"FW:%d.%d.%d.%d.%d.%d HW:%s",
+			hdd_ctx->fw_version_info.major_spid,
+			hdd_ctx->fw_version_info.minor_spid,
+			hdd_ctx->fw_version_info.siid,
+			hdd_ctx->fw_version_info.rel_id,
+			hdd_ctx->fw_version_info.crmid,
+			hdd_ctx->fw_version_info.sub_id,
+			hdd_ctx->target_hw_name);
 		skb_len += strlen(firmware_version) + 1;
 		count++;
 	}
@@ -16396,7 +16414,7 @@ static int __wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 	hdd_debug("Device_mode = %d, IFTYPE = 0x%x",
 	       adapter->device_mode, type);
 
-	status = hdd_psoc_idle_restart(hdd_ctx);
+	status = hdd_trigger_psoc_idle_restart(hdd_ctx);
 	if (status) {
 		hdd_err("Failed to start modules");
 		return -EINVAL;
