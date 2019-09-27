@@ -22,7 +22,7 @@ extern unsigned long nr_iowait(void);
 extern unsigned long nr_iowait_cpu(int cpu);
 extern void get_iowait_load(unsigned long *nr_waiters, unsigned long *load);
 
-#ifdef CONFIG_SMP
+#ifdef CONFIG_SCHED_WALT
 extern void sched_update_nr_prod(int cpu, long delta, bool inc);
 extern unsigned int sched_get_cpu_util(int cpu);
 extern u64 sched_get_cpu_last_busy_time(int cpu);
