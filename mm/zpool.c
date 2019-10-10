@@ -358,6 +358,30 @@ void zpool_unmap_handle(struct zpool *zpool, unsigned long handle)
 	zpool->driver->unmap(zpool->pool, handle);
 }
 
+ /**
+ * zpool_compact() - try to run compaction over zpool
+ * @pool       The zpool to compact
+ *
+ * Returns: the number of migrated pages
+ */
+unsigned long zpool_compact(struct zpool *zpool)
+{
+	return zpool->driver->compact ? zpool->driver->compact(zpool->pool) : 0;
+}
+
+
+/**
+ * zpool_get_num_compacted() - get the number of migrated/compacted pages
+ * @pool       The zpool to get compaction statistic for
+ *
+ * Returns: the total number of migrated pages for the pool
+ */
+unsigned long zpool_get_num_compacted(struct zpool *zpool)
+{
+	return zpool->driver->get_num_compacted ?
+		zpool->driver->get_num_compacted(zpool->pool) : 0;
+}
+
 /**
  * zpool_get_total_size() - The total size of the pool
  * @zpool:	The zpool to check
@@ -372,29 +396,15 @@ u64 zpool_get_total_size(struct zpool *zpool)
 }
 
 /**
- * zpool_compact() - trigger backend-specific pool compaction
- * @pool	The zpool to compact
+ * zpool_huge_class_size() - get size for the "huge" class
+ * @pool	The zpool to check
  *
- * This returns the total size in bytes of the pool.
- *
- * Returns: Number of pages compacted
+ * Returns: size of the huge class
  */
-unsigned long zpool_compact(struct zpool *zpool)
+size_t zpool_huge_class_size(struct zpool *zpool)
 {
-	return zpool->driver->compact ?
-		zpool->driver->compact(zpool->pool) : 0;
-}
-
-/**
- * zpool_get_num_compacted() - get the number of migrated/compacted pages
- * @stats       stats to fill in
- *
- * Returns: the total number of migrated pages for the pool
- */
-unsigned long zpool_get_num_compacted(struct zpool *zpool)
-{
-	return zpool->driver->get_num_compacted ?
-		zpool->driver->get_num_compacted(zpool->pool) : 0;
+	return zpool->driver->huge_class_size ?
+		zpool->driver->huge_class_size(zpool->pool) : 0;
 }
 
 MODULE_LICENSE("GPL");
