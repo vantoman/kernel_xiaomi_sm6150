@@ -244,7 +244,6 @@ static int goodix_parse_firmware(struct firmware_data *fw_data)
 	ts_info("Firmware chip type:0x%02X", fw_info->chip_type);
 	ts_info("Firmware size:%u", fw_info->size);
 	ts_info("Firmware subsystem num:%u", fw_info->subsys_num);
-#ifdef CONFIG_GOODIX_DEBUG
 	for (i = 0; i < fw_info->subsys_num; i++) {
 		ts_debug("------------------------------------------");
 		ts_debug("Index:%d", i);
@@ -254,7 +253,6 @@ static int goodix_parse_firmware(struct firmware_data *fw_data)
 		ts_debug("Subsystem Ptr:%p", fw_info->subsys[i].data);
 	}
 	ts_debug("------------------------------------------");
-#endif
 
 err_size:
 	return r;
