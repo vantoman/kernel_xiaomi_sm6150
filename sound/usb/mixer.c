@@ -83,6 +83,7 @@ struct mixer_build {
 	unsigned char *buffer;
 	unsigned int buflen;
 	DECLARE_BITMAP(unitbitmap, MAX_ID_ELEMS);
+	DECLARE_BITMAP(termbitmap, MAX_ID_ELEMS);
 	struct usb_audio_term oterm;
 	const struct usbmix_name_map *map;
 	const struct usbmix_selector_map *selector_map;
@@ -728,15 +729,24 @@ static int get_term_name(struct mixer_build *state, struct usb_audio_term *iterm
  * parse the source unit recursively until it reaches to a terminal
  * or a branched unit.
  */
-static int check_input_term(struct mixer_build *state, int id,
+static int __check_input_term(struct mixer_build *state, int id,
 			    struct usb_audio_term *term)
 {
 	int err;
 	void *p1;
+	unsigned char *hdr;
 
 	memset(term, 0, sizeof(*term));
-	while ((p1 = find_audio_control_unit(state, id)) != NULL) {
-		unsigned char *hdr = p1;
+	for (;;) {
+		/* a loop in the terminal chain? */
+		if (test_and_set_bit(id, state->termbitmap))
+			return -EINVAL;
+
+		p1 = find_audio_control_unit(state, id);
+		if (!p1)
+			break;
+
+		hdr = p1;
 		term->id = id;
 		switch (hdr[2]) {
 		case UAC_INPUT_TERMINAL:
@@ -751,7 +761,7 @@ static int check_input_term(struct mixer_build *state, int id,
 
 				/* call recursively to verify that the
 				 * referenced clock entity is valid */
-				err = check_input_term(state, d->bCSourceID, term);
+				err = __check_input_term(state, d->bCSourceID, term);
 				if (err < 0)
 					return err;
 
@@ -766,7 +776,7 @@ static int check_input_term(struct mixer_build *state, int id,
 			} else { /* UAC_VERSION_3 */
 				struct uac3_input_terminal_descriptor *d = p1;
 
-				err = check_input_term(state,
+				err = __check_input_term(state,
 							d->bCSourceID, term);
 				if (err < 0)
 					return err;
@@ -824,7 +834,7 @@ static int check_input_term(struct mixer_build *state, int id,
 			} else {
 				struct uac_selector_unit_descriptor *d = p1;
 				/* call recursively to retrieve channel info */
-				err = check_input_term(state,
+				err = __check_input_term(state,
 							d->baSourceID[0], term);
 				if (err < 0)
 					return err;
@@ -886,6 +896,15 @@ static int check_input_term(struct mixer_build *state, int id,
 		}
 	}
 	return -ENODEV;
+}
+
+
+static int check_input_term(struct mixer_build *state, int id,
+			    struct usb_audio_term *term)
+{
+	memset(term, 0, sizeof(*term));
+	memset(state->termbitmap, 0, sizeof(state->termbitmap));
+	return __check_input_term(state, id, term);
 }
 
 /*
@@ -1948,7 +1967,9 @@ static int parse_audio_mixer_unit(struct mixer_build *state, int unitid,
 	} else {
 		input_pins = desc->bNrInPins;
 		num_outs = uac_mixer_unit_bNrChannels(desc);
-		if (desc->bLength < 11 || !input_pins || !num_outs) {
+		if (desc->bLength < 11 || !input_pins ||
+		    desc->bLength < sizeof(*desc) + desc->bNrInPins ||
+		    !num_outs) {
 			usb_audio_err(state->chip,
 				      "invalid MIXER UNIT descriptor %d\n",
 				      unitid);
@@ -2142,7 +2163,7 @@ static int build_audio_procunit(struct mixer_build *state, int unitid,
 				char *name)
 {
 	struct uac_processing_unit_descriptor *desc = raw_desc;
-	int num_ins = desc->bNrInPins;
+	int num_ins;
 	struct usb_mixer_elem_info *cval;
 	struct snd_kcontrol *kctl;
 	int i, err, nameid, type, len;
@@ -2157,7 +2178,13 @@ static int build_audio_procunit(struct mixer_build *state, int unitid,
 		0, NULL, default_value_info
 	};
 
-	if (desc->bLength < 13 || desc->bLength < 13 + num_ins ||
+	if (desc->bLength < 13) {
+		usb_audio_err(state->chip, "invalid %s descriptor (id %d)\n", name, unitid);
+		return -EINVAL;
+	}
+
+	num_ins = desc->bNrInPins;
+	if (desc->bLength < 13 + num_ins ||
 	    desc->bLength < num_ins + uac_processing_unit_bControlSize(desc, state->mixer->protocol)) {
 		usb_audio_err(state->chip, "invalid %s descriptor (id %d)\n", name, unitid);
 		return -EINVAL;
@@ -2432,6 +2459,8 @@ static int parse_audio_selector_unit(struct mixer_build *state, int unitid,
 	kctl = snd_ctl_new1(&mixer_selectunit_ctl, cval);
 	if (! kctl) {
 		usb_audio_err(state->chip, "cannot malloc kcontrol\n");
+		for (i = 0; i < desc->bNrInPins; i++)
+			kfree(namelist[i]);
 		kfree(namelist);
 		kfree(cval);
 		return -ENOMEM;
