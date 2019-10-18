@@ -45,6 +45,29 @@ config ZRAM_DEFAULT_COMP_ALGORITHM
 	string "Default ZRAM compression algorithm"
 	default "lzo"
 
+choice
+	prompt "Default zRAM backend"
+	default DEFAULT_ZRAM_ZSMALLOC
+	help
+	  Select the memory allocator that will be used by default to store
+	  compressed pages for all zRAM devices.
+
+	config DEFAULT_ZRAM_ZBUD
+		bool "zbud" if ZBUD=y
+
+	config DEFAULT_ZRAM_Z3FOLD
+		bool "z3fold" if Z3FOLD=y
+
+	config DEFAULT_ZRAM_ZSMALLOC
+		bool "zsmalloc" if ZSMALLOC=y
+endchoice
+
+config ZRAM_DEFAULT_BACKEND
+	string
+	default "zbud" if DEFAULT_ZRAM_ZBUD
+	default "z3fold" if DEFAULT_ZRAM_Z3FOLD
+	default "zsmalloc"
+
 config ZRAM_SIZE_OVERRIDE
 	int "zram size to set from kernel"
 	range 1 8
