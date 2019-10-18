@@ -26,6 +26,7 @@
 #include <linux/atomic.h>
 #include <linux/sched.h>
 #include <linux/cpumask.h>
+#include <linux/dcache.h>
 #include <linux/list.h>
 #include <linux/mm.h>
 #include <linux/module.h>
@@ -35,14 +36,12 @@
 #include <linux/compaction.h>
 #include <linux/percpu.h>
 #include <linux/mount.h>
-#include <linux/pseudo_fs.h>
 #include <linux/fs.h>
 #include <linux/preempt.h>
 #include <linux/workqueue.h>
 #include <linux/slab.h>
 #include <linux/spinlock.h>
 #include <linux/zpool.h>
-#include <linux/magic.h>
 
 /*
  * NCHUNKS_ORDER determines the internal allocation granularity, effectively
@@ -246,14 +245,15 @@ static inline void free_handle(unsigned long handle)
 	}
 }
 
-static int z3fold_init_fs_context(struct fs_context *fc)
+static struct dentry *z3fold_do_mount(struct file_system_type *fs_type,
+				int flags, const char *dev_name, void *data)
 {
-	return init_pseudo(fc, Z3FOLD_MAGIC) ? 0 : -ENOMEM;
+	return mount_pseudo(fs_type, "z3fold:", NULL, NULL, 0x33);
 }
 
 static struct file_system_type z3fold_fs = {
 	.name		= "z3fold",
-	.init_fs_context = z3fold_init_fs_context,
+	.mount		= z3fold_do_mount,
 	.kill_sb	= kill_anon_super,
 };
 
@@ -503,76 +503,6 @@ static void free_pages_work(struct work_struct *w)
 		spin_unlock(&pool->stale_lock);
 		cancel_work_sync(&zhdr->work);
 		free_z3fold_page(page, false);
-		cond_resched();
-		spin_lock(&pool->stale_lock);
-	}
-	spin_unlock(&pool->stale_lock);
-}
-
-static void __release_z3fold_page(struct z3fold_header *zhdr, bool locked)
-{
-	struct page *page = virt_to_page(zhdr);
-	struct z3fold_pool *pool = zhdr->pool;
-
-	WARN_ON(!list_empty(&zhdr->buddy));
-	set_bit(PAGE_STALE, &page->private);
-	clear_bit(NEEDS_COMPACTING, &page->private);
-	spin_lock(&pool->lock);
-	if (!list_empty(&page->lru))
-		list_del(&page->lru);
-	spin_unlock(&pool->lock);
-	if (locked)
-		z3fold_page_unlock(zhdr);
-	spin_lock(&pool->stale_lock);
-	list_add(&zhdr->buddy, &pool->stale);
-	queue_work(pool->release_wq, &pool->work);
-	spin_unlock(&pool->stale_lock);
-}
-
-static void __attribute__((__unused__))
-			release_z3fold_page(struct kref *ref)
-{
-	struct z3fold_header *zhdr = container_of(ref, struct z3fold_header,
-						refcount);
-	__release_z3fold_page(zhdr, false);
-}
-
-static void release_z3fold_page_locked(struct kref *ref)
-{
-	struct z3fold_header *zhdr = container_of(ref, struct z3fold_header,
-						refcount);
-	WARN_ON(z3fold_page_trylock(zhdr));
-	__release_z3fold_page(zhdr, true);
-}
-
-static void release_z3fold_page_locked_list(struct kref *ref)
-{
-	struct z3fold_header *zhdr = container_of(ref, struct z3fold_header,
-					       refcount);
-	spin_lock(&zhdr->pool->lock);
-	list_del_init(&zhdr->buddy);
-	spin_unlock(&zhdr->pool->lock);
-
-	WARN_ON(z3fold_page_trylock(zhdr));
-	__release_z3fold_page(zhdr, true);
-}
-
-static void free_pages_work(struct work_struct *w)
-{
-	struct z3fold_pool *pool = container_of(w, struct z3fold_pool, work);
-
-	spin_lock(&pool->stale_lock);
-	while (!list_empty(&pool->stale)) {
-		struct z3fold_header *zhdr = list_first_entry(&pool->stale,
-						struct z3fold_header, buddy);
-		struct page *page = virt_to_page(zhdr);
-
-		list_del(&zhdr->buddy);
-		if (WARN_ON(!test_bit(PAGE_STALE, &page->private)))
-			continue;
-		spin_unlock(&pool->stale_lock);
-		cancel_work_sync(&zhdr->work);
-		free_z3fold_page(page);
 		cond_resched();
 		spin_lock(&pool->stale_lock);
 	}
