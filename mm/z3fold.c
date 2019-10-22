@@ -1542,6 +1542,11 @@ static u64 z3fold_zpool_total_size(void *pool)
 	return z3fold_get_pool_size(pool) * PAGE_SIZE;
 }
 
+static size_t z3fold_zpool_huge_class_size(void *pool)
+{
+	return PAGE_SIZE - ZHDR_SIZE_ALIGNED;
+}
+
 static struct zpool_driver z3fold_zpool_driver = {
 	.type =		"z3fold",
 	.owner =	THIS_MODULE,
@@ -1553,6 +1558,7 @@ static struct zpool_driver z3fold_zpool_driver = {
 	.map =		z3fold_zpool_map,
 	.unmap =	z3fold_zpool_unmap,
 	.total_size =	z3fold_zpool_total_size,
+	.huge_class_size =	z3fold_zpool_huge_class_size,
 };
 
 MODULE_ALIAS("zpool-z3fold");
