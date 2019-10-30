@@ -7515,6 +7515,7 @@ static inline int find_best_target(struct task_struct *p, int *backup_cpu,
 	bool next_group_higher_cap = false;
 	int isolated_candidate = -1;
 	int mid_cap_orig_cpu = cpu_rq(smp_processor_id())->rd->mid_cap_orig_cpu;
+	int max_cap_orig_cpu = cpu_rq(6)->rd->max_cap_orig_cpu;
 	struct task_struct *curr_tsk;
 
 	*backup_cpu = -1;
