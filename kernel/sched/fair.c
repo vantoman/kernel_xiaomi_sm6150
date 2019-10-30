@@ -7456,8 +7456,8 @@ static int start_cpu(struct task_struct *p, bool boosted,
 		return rd->max_cap_orig_cpu;
 	}
 
-	if (sync_boost && rd->mid_cap_orig_cpu != -1)
-		return rd->mid_cap_orig_cpu;
+	if (sync_boost && rd->max_cap_orig_cpu != -1)
+		return rd->max_cap_orig_cpu;
 
 	/* A task always fits on its rtg_target */
 	if (rtg_target) {
@@ -8507,7 +8507,7 @@ pick_cpu:
 			 * capacity cpu should be used.
 			*/
 			bool sync_boost = sync &&
-				      cpu >= cpu_rq(cpu)->rd->mid_cap_orig_cpu;
+				      cpu >= cpu_rq(cpu)->rd->max_cap_orig_cpu;
 
 			new_cpu = find_energy_efficient_cpu(energy_sd, p, cpu,
 						    prev_cpu, sync, sync_boost);
