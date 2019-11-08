@@ -37,6 +37,18 @@ obj-$(CONFIG_CRYPTO_SHA512_SSSE3) += sha512-ssse3.o
 obj-$(CONFIG_CRYPTO_CRCT10DIF_PCLMUL) += crct10dif-pclmul.o
 obj-$(CONFIG_CRYPTO_POLY1305_X86_64) += poly1305-x86_64.o
 
+obj-$(CONFIG_CRYPTO_AEGIS128_AESNI_SSE2) += aegis128-aesni.o
+obj-$(CONFIG_CRYPTO_AEGIS128L_AESNI_SSE2) += aegis128l-aesni.o
+obj-$(CONFIG_CRYPTO_AEGIS256_AESNI_SSE2) += aegis256-aesni.o
+
+obj-$(CONFIG_CRYPTO_MORUS640_GLUE) += morus640_glue.o
+obj-$(CONFIG_CRYPTO_MORUS1280_GLUE) += morus1280_glue.o
+
+obj-$(CONFIG_CRYPTO_MORUS640_SSE2) += morus640-sse2.o
+obj-$(CONFIG_CRYPTO_MORUS1280_SSE2) += morus1280-sse2.o
+
+obj-$(CONFIG_CRYPTO_CURVE25519_X86) += curve25519-x86_64.o
+
 # These modules require assembler to support AVX.
 ifeq ($(avx_supported),yes)
 	obj-$(CONFIG_CRYPTO_CAMELLIA_AESNI_AVX_X86_64) += \
