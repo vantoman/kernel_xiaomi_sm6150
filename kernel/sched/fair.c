@@ -7088,6 +7088,9 @@ find_idlest_group_cpu(struct sched_group *group, struct task_struct *p, int this
 
 	/* Traverse only the allowed CPUs */
 	for_each_cpu_and(i, sched_group_span(group), &p->cpus_allowed) {
+		if (sched_idle_cpu(i))
+			return i;
+
 		if (idle_cpu(i)) {
 			struct rq *rq = cpu_rq(i);
 			struct cpuidle_state *idle = idle_get_state(rq);
@@ -7345,7 +7348,7 @@ static int select_idle_cpu(struct task_struct *p, struct sched_domain *sd, int t
 			continue;
 		if (cpu_isolated(cpu))
 			continue;
-		if (idle_cpu(cpu))
+		if (idle_cpu(cpu) || sched_idle_cpu(cpu))
 			break;
 	}
 
