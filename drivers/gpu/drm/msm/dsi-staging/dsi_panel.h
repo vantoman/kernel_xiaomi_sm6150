@@ -231,6 +231,9 @@ struct dsi_panel {
 
 	struct dsi_parser_utils utils;
 
+	bool is_tddi_flag;
+	bool panel_dead_flag;
+
 	bool lp11_init;
 	bool ulps_feature_enabled;
 	bool ulps_suspend_enabled;
