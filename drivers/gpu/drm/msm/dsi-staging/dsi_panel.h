@@ -189,6 +189,14 @@ struct brightness_alpha_pair {
 	u32 alpha;
 };
 
+struct dsi_read_config {
+	bool enabled;
+	struct dsi_panel_cmd_set read_cmd;
+	u32 cmds_rlen;
+	u32 valid_bits;
+	u8 rbuf[64];
+};
+
 struct dsi_panel {
 	const char *name;
 	const char *type;
