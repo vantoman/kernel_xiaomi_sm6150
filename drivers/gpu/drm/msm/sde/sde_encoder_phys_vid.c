@@ -418,7 +418,7 @@ static void _sde_encoder_phys_vid_setup_avr(
 		}
 
 		if (qsync_min_fps > default_fps) {
-			SDE_ERROR_VIDENC(vid_enc,
+			SDE_DEBUG_VIDENC(vid_enc,
 				"qsync fps %d must be less than default %d\n",
 				qsync_min_fps, default_fps);
 			return;
