@@ -43,7 +43,7 @@
 #include <linux/pm_wakeup.h>
 #include <linux/fb.h>
 #include <drm/drm_bridge.h>
-#include <drm/drm_notifier.h>
+#include <linux/msm_drm_notify.h>
 
 #define FPC_GPIO_NO_DEFAULT -1
 #define FPC_TTW_HOLD_TIME 2000
@@ -848,10 +848,10 @@ static int fpc_fb_notif_callback(struct notifier_block *nb,
 	if (evdata && evdata->data && val == DRM_EVENT_BLANK) {
 		blank = *(int *)(evdata->data);
 		switch (blank) {
-		case DRM_BLANK_POWERDOWN:
+		case MSM_DRM_BLANK_POWERDOWN:
 			fpc1020->fb_black = true;
 			break;
-		case DRM_BLANK_UNBLANK:
+		case MSM_DRM_BLANK_UNBLANK:
 			fpc1020->fb_black = false;
 			break;
 		default:
@@ -960,7 +960,7 @@ static int fpc1020_probe(struct platform_device *pdev)
 	INIT_WORK(&fpc1020->work, notification_work);
 #endif
 	fpc1020->fb_notifier = fpc_notif_block;
-	drm_register_client(&fpc1020->fb_notifier);
+	msm_drm_register_client(&fpc1020->fb_notifier);
 
 	//rc = hw_reset(fpc1020);
 
@@ -975,7 +975,7 @@ static int fpc1020_remove(struct platform_device *pdev)
 {
 	struct fpc1020_data *fpc1020 = platform_get_drvdata(pdev);
 
-	drm_unregister_client(&fpc1020->fb_notifier);
+	msm_drm_unregister_client(&fpc1020->fb_notifier);
 	sysfs_remove_group(&pdev->dev.kobj, &attribute_group);
 	mutex_destroy(&fpc1020->lock);
 	wakeup_source_trash(&fpc1020->ttw_wl);
