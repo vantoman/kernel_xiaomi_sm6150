@@ -844,7 +844,7 @@ static int fpc_fb_notif_callback(struct notifier_block *nb,
 {
 	struct fpc1020_data *fpc1020 = container_of(nb, struct fpc1020_data,
 			fb_notifier);
-	struct fb_event *evdata = data;
+	struct msm_drm_notifier *evdata = data;
 	unsigned int blank;
 
 	if (!fpc1020)
