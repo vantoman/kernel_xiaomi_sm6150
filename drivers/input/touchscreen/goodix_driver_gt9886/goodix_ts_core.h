@@ -81,7 +81,7 @@
 #define CENTER_Y					2030
 
 #define KEY_GOTO					0x162
-//#define BTN_INFO					0x152
+#define BTN_INFO					0x152
 
 #define GTP_RESULT_INVALID 0
 #define GTP_RESULT_PASS 2
