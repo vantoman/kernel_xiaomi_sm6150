@@ -984,6 +984,11 @@ static int dsi_panel_parse_timing(struct dsi_mode_info *mode,
 		goto error;
 	}
 
+	if (mode->refresh_rate != 60) {
+		pr_info("setting panel refresh rate to values above 60 is not allowed");
+		BUG();
+	}
+
 	rc = utils->read_u32(utils->data, "qcom,mdss-dsi-panel-width",
 				  &mode->h_active);
 	if (rc) {
