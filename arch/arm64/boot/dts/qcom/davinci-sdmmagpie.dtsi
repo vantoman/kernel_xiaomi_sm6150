@@ -821,3 +821,7 @@
 			reg = <0x0 0x85d00000 0x0 0x100000>;
 		};
 };
+
+&mdss_dsi_phy0 {
+	qcom,panel-allow-phy-poweroff;
+};
