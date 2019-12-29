@@ -181,6 +181,14 @@ struct brightness_alpha_pair {
 	u32 alpha;
 };
 
+struct dsi_read_config {
+	bool enabled;
+	struct dsi_panel_cmd_set read_cmd;
+	u32 cmds_rlen;
+	u32 valid_bits;
+	u8 rbuf[64];
+};
+
 struct dsi_panel {
 	const char *name;
 	const char *type;
@@ -237,6 +245,12 @@ struct dsi_panel {
 
 	struct brightness_alpha_pair *fod_dim_lut;
 	u32 fod_dim_lut_count;
+
+	bool elvss_dimming_check_enable;
+	struct dsi_read_config elvss_dimming_cmds;
+	struct dsi_panel_cmd_set elvss_dimming_offset;
+	struct dsi_panel_cmd_set hbm_fod_on;
+	struct dsi_panel_cmd_set hbm_fod_off;
 };
 
 static inline bool dsi_panel_ulps_feature_enabled(struct dsi_panel *panel)

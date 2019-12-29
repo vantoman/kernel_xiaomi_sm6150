@@ -772,19 +772,75 @@ int dsi_panel_set_doze_mode(struct dsi_panel *panel, enum dsi_doze_mode_type mod
 	return dsi_panel_update_doze(panel);
 }
 
+static int dsi_display_write_panel(struct dsi_panel *panel,
+				struct dsi_panel_cmd_set *cmd_sets)
+{
+	int rc = 0, i = 0;
+	ssize_t len;
+	struct dsi_cmd_desc *cmds;
+	u32 count;
+	enum dsi_cmd_set_state state;
+	struct dsi_display_mode *mode;
+	const struct mipi_dsi_host_ops *ops = panel->host->ops;
+
+	if (!panel || !panel->cur_mode)
+		return -EINVAL;
+
+	mode = panel->cur_mode;
+
+	cmds = cmd_sets->cmds;
+	count = cmd_sets->count;
+	state = cmd_sets->state;
+
+	if (count == 0) {
+		pr_debug("[%s] No commands to be sent for state\n",
+			 panel->name);
+		goto error;
+	}
+
+	for (i = 0; i < count; i++) {
+		if (state == DSI_CMD_SET_STATE_LP)
+			cmds->msg.flags |= MIPI_DSI_MSG_USE_LPM;
+
+		if (cmds->last_command)
+			cmds->msg.flags |= MIPI_DSI_MSG_LASTCOMMAND;
+
+		len = ops->transfer(panel->host, &cmds->msg);//dsi_host_transfer,
+		if (len < 0) {
+			rc = len;
+			pr_err("failed to set cmds, rc=%d\n", rc);
+			goto error;
+		}
+		if (cmds->post_wait_ms)
+			usleep_range(cmds->post_wait_ms*1000,
+					((cmds->post_wait_ms*1000)+10));
+		cmds++;
+	}
+error:
+	return rc;
+}
+
 int dsi_panel_set_fod_hbm(struct dsi_panel *panel, bool status)
 {
 	int rc = 0;
 
 	if (status) {
-		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_HBM_FOD_ON);
+		if (panel->elvss_dimming_check_enable) {
+			rc = dsi_display_write_panel(panel, &panel->hbm_fod_on);
+		} else {
+			rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_HBM_FOD_ON);
+		}
 		if (rc)
 			pr_err("[%s] failed to send DSI_CMD_SET_DISP_HBM_FOD_ON cmd, rc=%d\n",
 					panel->name, rc);
 	} else if (panel->doze_enabled) {
 		dsi_panel_update_doze(panel);
 	} else {
-		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_HBM_FOD_OFF);
+			if (panel->elvss_dimming_check_enable) {
+				rc = dsi_display_write_panel(panel, &panel->hbm_fod_off);
+			} else {
+				rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_HBM_FOD_OFF);
+			}
 		if (rc)
 			pr_err("[%s] failed to send DSI_CMD_SET_DISP_HBM_FOD_OFF cmd, rc=%d\n",
 					panel->name, rc);
@@ -1862,6 +1918,8 @@ const char *cmd_set_prop_map[DSI_CMD_SET_MAX] = {
 	"qcom,mdss-dsi-doze-lbm-command",
 	"qcom,mdss-dsi-dispparam-hbm-fod-on-command",
 	"qcom,mdss-dsi-dispparam-hbm-fod-off-command",
+	"qcom,mdss-dsi-dispparam-elvss-dimming-offset-command",
+	"qcom,mdss-dsi-dispparam-elvss-dimming-read-command",
 };
 
 const char *cmd_set_state_map[DSI_CMD_SET_MAX] = {
@@ -1892,6 +1950,8 @@ const char *cmd_set_state_map[DSI_CMD_SET_MAX] = {
 	"qcom,mdss-dsi-doze-lbm-command-state",
 	"qcom,mdss-dsi-dispparam-hbm-fod-on-command-state",
 	"qcom,mdss-dsi-dispparam-hbm-fod-off-command-state",
+	"qcom,mdss-dsi-dispparam-elvss-dimming-offset-command-state",
+	"qcom,mdss-dsi-dispparam-elvss-dimming-read-command-state",
 };
 
 static int dsi_panel_get_cmd_pkt_count(const char *data, u32 length, u32 *cnt)
@@ -3465,6 +3525,89 @@ end:
 	utils->node = panel->panel_of_node;
 }
 
+int dsi_panel_parse_elvss_dimming_read_configs(struct dsi_panel *panel)
+{
+	int rc = 0;
+	struct dsi_read_config *elvss_dimming_cmds;
+	struct dsi_parser_utils *utils = &panel->utils;
+
+	if (!panel) {
+		pr_err("Invalid Params\n");
+		return -EINVAL;
+	}
+
+	elvss_dimming_cmds = &panel->elvss_dimming_cmds;
+	if (!elvss_dimming_cmds)
+		return -EINVAL;
+
+	dsi_panel_parse_cmd_sets_sub(&panel->elvss_dimming_offset,
+				DSI_CMD_SET_ELVSS_DIMMING_OFFSET, utils);
+	if (!panel->elvss_dimming_offset.count) {
+		pr_err("elvss dimming offset command parsing failed\n");
+		return -EINVAL;
+	}
+
+	dsi_panel_parse_cmd_sets_sub(&elvss_dimming_cmds->read_cmd,
+				DSI_CMD_SET_ELVSS_DIMMING_READ, utils);
+	if (!elvss_dimming_cmds->read_cmd.count) {
+		pr_err("elvss dimming command parsing failed\n");
+		return -EINVAL;
+	}
+
+	rc = utils->read_u32(utils->data, "qcom,mdss-dsi-panel-elvss-dimming-read-length",
+					&(elvss_dimming_cmds->cmds_rlen));
+	if (rc) {
+		pr_err("failed to parse elvss dimming read length, rc=%d\n", rc);
+		return -EINVAL;
+	}
+
+	elvss_dimming_cmds->enabled = true;
+
+	dsi_panel_parse_cmd_sets_sub(&panel->hbm_fod_on,
+				DSI_CMD_SET_DISP_HBM_FOD_ON, utils);
+	if (!panel->hbm_fod_on.count) {
+		pr_err("hbm fod on command parsing failed\n");
+		return -EINVAL;
+	}
+
+	dsi_panel_parse_cmd_sets_sub(&panel->hbm_fod_off,
+				DSI_CMD_SET_DISP_HBM_FOD_OFF, utils);
+	if (!panel->hbm_fod_off.count) {
+		pr_err("hbm fod off command parsing failed\n");
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
+static int dsi_panel_parse_elvss_dimming_config(struct dsi_panel *panel)
+{
+	int rc = 0;
+	struct dsi_parser_utils *utils = &panel->utils;
+
+	if (!panel) {
+		pr_err("Invalid Params\n");
+		return -EINVAL;
+	}
+
+	panel->elvss_dimming_check_enable = utils->read_bool(utils->data,
+		"qcom,elvss_dimming_check_enable");
+
+	if (!panel->elvss_dimming_check_enable)
+		return 0;
+
+	rc = dsi_panel_parse_elvss_dimming_read_configs(panel);
+	if (rc) {
+		pr_err("failed to parse esd reg read mode params, rc=%d\n", rc);
+		panel->elvss_dimming_check_enable = false;
+		return -EINVAL;;
+	}
+
+	pr_info("elvss dimming check enable\n");
+
+	return 0;
+}
+
 struct dsi_panel *dsi_panel_get(struct device *parent,
 				struct device_node *of_node,
 				struct device_node *parser_node,
@@ -3574,6 +3717,8 @@ struct dsi_panel *dsi_panel_get(struct device *parent,
 	rc = dsi_panel_parse_esd_config(panel);
 	if (rc)
 		pr_debug("failed to parse esd config, rc=%d\n", rc);
+
+	dsi_panel_parse_elvss_dimming_config(panel);
 
 	panel->doze_mode = DSI_DOZE_LPM;
 	panel->doze_enabled = false;
