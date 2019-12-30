@@ -612,6 +612,13 @@
 			reg = <0x0 0x9f800000 0x0 0x1e00000>;
 		};
 
+		ramoops: ramoops@a1600000 {
+			compatible = "ramoops";
+			reg = <0 0xa1600000 0 0x800000>;
+			console-size = <0x400000>;
+			pmsg-size = <0x400000>;
+		};
+
 		adsp_mem: adsp_region {
 			compatible = "shared-dma-pool";
 			alloc-ranges = <0 0x00000000 0 0xffffffff>;
