@@ -122,9 +122,9 @@ int gf_hw_reset(struct gf_dev *gf_dev, unsigned int delay_ms)
 	}
 
 	gpio_direction_output(gf_dev->reset_gpio, 0);
-	usleep_range(3000, 4000);
+	usleep_range(6000, 12000);
 	gpio_set_value(gf_dev->reset_gpio, 1);
-	usleep_range(delay_ms * 1000, delay_ms * 1200);
+	usleep_range(delay_ms * 2000, delay_ms * 2200);
 	pr_info("%s\n", __func__);
 	return 0;
 }
