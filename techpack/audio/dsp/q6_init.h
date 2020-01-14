@@ -1,5 +1,6 @@
 /*
 Copyright (c) 2017, 2019 The Linux Foundation. All rights reserved.
+Copyright (C) 2020 XiaoMi, Inc.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License version 2 and
@@ -30,6 +31,7 @@ int avtimer_init(void);
 int msm_mdf_init(void);
 void msm_mdf_exit(void);
 #else
+int elliptic_driver_init(void);
 static inline int msm_mdf_init(void)
 {
 	return 0;
@@ -65,6 +67,7 @@ void q6asm_exit(void);
 void afe_exit(void);
 void adm_exit(void);
 void adsp_err_exit(void);
+int elliptic_driver_exit(void);
 
 #ifdef CONFIG_VOICE_MHI
 int voice_mhi_init(void);

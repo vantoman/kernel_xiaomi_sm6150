@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
+ * Copyright (C) 2020 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -449,6 +450,11 @@ static bool wcd_clsh_is_state_valid(u8 state)
 	case WCD_CLSH_STATE_HPHR_AUX:
 	case WCD_CLSH_STATE_HPH_ST_AUX:
 	case WCD_CLSH_STATE_EAR_AUX:
+#ifdef CONFIG_SND_SOC_FOR_ULTRASOUND_PATH
+	case WCD_CLSH_STATE_HPHL_EAR:
+	case WCD_CLSH_STATE_HPHR_EAR:
+	case WCD_CLSH_STATE_HPH_ST_EAR:
+#endif
 		return true;
 	default:
 		return false;

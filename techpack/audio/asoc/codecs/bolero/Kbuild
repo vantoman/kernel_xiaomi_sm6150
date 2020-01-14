@@ -128,6 +128,10 @@ ifeq ($(CONFIG_SND_SOC_GCOV), y)
 GCOV_PROFILE := y
 endif
 
+ifneq (,$(filter $(TARGET_PRODUCT), phoenix phoenixin))
+	CDEFINES += -DCONFIG_SND_SOC_FOR_ULTRASOUND_PATH
+endif
+
 # Module information used by KBuild framework
 obj-$(CONFIG_SND_SOC_BOLERO) += bolero_cdc_dlkm.o
 bolero_cdc_dlkm-y := $(BOLERO_OBJS)

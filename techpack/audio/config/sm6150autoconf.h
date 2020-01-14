@@ -1,4 +1,5 @@
 /* Copyright (c) 2018, The Linux Foundation. All rights reserved.
+ * Copyright (C) 2020 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -59,3 +60,4 @@
 #define CONFIG_SND_SOC_WCD937X 1
 #define CONFIG_SND_SOC_WCD937X_SLAVE 1
 #define CONFIG_SND_EVENT 1
+#define CONFIG_SND_SOC_TFA9874 1
