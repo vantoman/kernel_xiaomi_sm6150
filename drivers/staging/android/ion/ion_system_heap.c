@@ -2,7 +2,7 @@
  * drivers/staging/android/ion/ion_system_heap.c
  *
  * Copyright (C) 2011 Google, Inc.
- * Copyright (c) 2011-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2020, The Linux Foundation. All rights reserved.
  *
  * This software is licensed under the terms of the GNU General Public
  * License version 2, as published by the Free Software Foundation, and
@@ -88,7 +88,7 @@ static struct page *alloc_buffer_page(struct ion_system_heap *heap,
 
 	page = ion_page_pool_alloc(pool, from_pool);
 
-	if (pool_auto_refill_en &&
+	if (pool_auto_refill_en && pool->order &&
 	    pool_count_below_lowmark(pool) && vmid <= 0) {
 		wake_up_process(heap->kworker[cached]);
 	}
