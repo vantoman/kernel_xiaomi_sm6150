@@ -38,6 +38,20 @@
 #define MAX_PATHS	2
 #define DBL_BUF		2
 
+#include <linux/pm_qos.h>
+struct qos_request_v {
+	int max_state;
+	int max_devfreq;
+	int min_devfreq;
+};
+
+static bool cpubw_flag;
+static struct qos_request_v qos_request_value = {
+	.max_state = 0,
+	.max_devfreq = INT_MAX,
+	.min_devfreq = 0,
+};
+
 struct dev_data {
 	struct msm_bus_vectors vectors[MAX_PATHS * DBL_BUF];
 	struct msm_bus_paths bw_levels[DBL_BUF];
@@ -238,9 +252,18 @@ int devfreq_add_devbw(struct device *dev)
 		return PTR_ERR(d->df);
 	}
 
-	if (!strcmp(dev_name(dev), "soc:qcom,cpu-llcc-ddr-bw"))
+	if (!strcmp(dev_name(dev), "soc:qcom,cpu-cpu-llcc-bw"))
 		devfreq_register_boost_device(DEVFREQ_MSM_CPUBW, d->df);
 
+	if (!strcmp(dev_name(dev), "soc:qcom,cpu-llcc-ddr-bw"))
+		devfreq_register_boost_device(DEVFREQ_MSM_LLCCBW, d->df);
+
+	if (cpubw_flag) {
+		cpubw_flag = false;
+		qos_request_value.max_state = p->max_state;
+		qos_request_value.min_devfreq = 0;
+		qos_request_value.max_devfreq = p->max_state;
+	}
 	return 0;
 }
 
