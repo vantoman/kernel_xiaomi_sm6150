@@ -2,6 +2,10 @@ menu "Kernel hacking"
 
 source "lib/Kconfig.debug"
 
+config FRAME_POINTER
+	bool
+	default y
+
 config ARM64_PTDUMP_CORE
 	def_bool n
 
