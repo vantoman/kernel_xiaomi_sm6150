@@ -149,8 +149,8 @@ unsigned int __read_mostly sysctl_sched_migration_cost	= 500000UL;
 DEFINE_PER_CPU_READ_MOSTLY(int, sched_load_boost);
 
 #ifdef CONFIG_SCHED_WALT
-unsigned int sysctl_sched_use_walt_cpu_util = 1;
-unsigned int sysctl_sched_use_walt_task_util = 1;
+unsigned int sysctl_sched_use_walt_cpu_util = 0;
+unsigned int sysctl_sched_use_walt_task_util = 0;
 __read_mostly unsigned int sysctl_sched_walt_cpu_high_irqload =
     (10 * NSEC_PER_MSEC);
 #endif
