@@ -844,6 +844,17 @@ int smblib_set_fastcharge_mode(struct smb_charger *chg, bool enable)
 	if (!chg->bms_psy)
 		return 0;
 
+#ifdef CONFIG_BATT_VERIFY_BY_DS28E16
+	rc = power_supply_get_property(chg->bms_psy,
+				POWER_SUPPLY_PROP_AUTHENTIC, &pval);
+	if (rc < 0) {
+		smblib_err(chg, "Couldn't get battery authentic:%d\n", rc);
+		return rc;
+	}
+	if (!pval.intval)
+		enable = false;
+#endif
+
 	/*if soc > 90 do not set fastcharge flag*/
 	rc = power_supply_get_property(chg->bms_psy,
 			POWER_SUPPLY_PROP_CAPACITY, &pval);
@@ -9307,6 +9318,9 @@ int smblib_init(struct smb_charger *chg)
 
 		chg->bms_psy = power_supply_get_by_name("bms");
 
+#ifdef CONFIG_BATT_VERIFY_BY_DS28E16
+		chg->batt_verify_psy = power_supply_get_by_name("batt_verify");
+#endif
 		if (chg->sec_pl_present) {
 			chg->pl.psy = power_supply_get_by_name("parallel");
 			if (chg->pl.psy) {

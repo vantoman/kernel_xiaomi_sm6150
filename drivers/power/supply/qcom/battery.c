@@ -73,6 +73,7 @@ struct pl_data {
 	struct delayed_work	status_change_work;
 	struct work_struct	pl_disable_forever_work;
 	struct work_struct	pl_taper_work;
+    struct delayed_work pl_awake_work;
 	struct delayed_work	fcc_stepper_work;
 	bool			taper_work_running;
 	struct power_supply	*main_psy;
@@ -282,7 +283,6 @@ static void cp_configure_ilim(struct pl_data *chip, const char *voter, int ilim)
 		pl_dbg(chip, PR_PARALLEL,
 			"ILIM: vote: %d voter:%s min_ilim=%d fcc = %d\n",
 			ilim, voter, pval.intval, fcc);
-	}
 }
 
 /*******
@@ -1221,7 +1221,7 @@ static int pl_fv_vote_callback(struct votable *votable, void *data,
 			pr_err("Couldn't get battery status rc=%d\n", rc);
 		} else {
 			if (pval.intval == POWER_SUPPLY_STATUS_FULL) {
-				pr_debug("re-triggering charging\n");
+				pr_info("re-triggering charging\n");
 				pval.intval = 1;
 				rc = power_supply_set_property(chip->batt_psy,
 					POWER_SUPPLY_PROP_FORCE_RECHARGE,
@@ -1389,6 +1389,10 @@ static int pl_disable_vote_callback(struct votable *votable,
 	total_fcc_ua = get_effective_result_locked(chip->fcc_votable);
 
 	if (chip->pl_mode != POWER_SUPPLY_PL_NONE && !pl_disable) {
+		/* keep system awake to talk to slave charger through i2c */
+		cancel_delayed_work_sync(&chip->pl_awake_work);
+		vote(chip->pl_awake_votable, PL_VOTER, true, 0);
+
 		rc = validate_parallel_icl(chip, &disable);
 		if (rc < 0)
 			return rc;
@@ -1561,6 +1565,10 @@ static int pl_disable_vote_callback(struct votable *votable,
 		}
 
 		rerun_election(chip->fv_votable);
+
+		cancel_delayed_work_sync(&chip->pl_awake_work);
+		schedule_delayed_work(&chip->pl_awake_work,
+						msecs_to_jiffies(5000));
 	}
 
 	/* notify parallel state change */
@@ -2034,6 +2042,7 @@ int qcom_batt_init(struct charger_param *chg_param)
 	INIT_DELAYED_WORK(&chip->status_change_work, status_change_work);
 	INIT_WORK(&chip->pl_taper_work, pl_taper_work);
 	INIT_WORK(&chip->pl_disable_forever_work, pl_disable_forever_work);
+	INIT_DELAYED_WORK(&chip->pl_awake_work, pl_awake_work);
 	INIT_DELAYED_WORK(&chip->fcc_stepper_work, fcc_stepper_work);
 
 	rc = pl_register_notifier(chip);
@@ -2091,6 +2100,7 @@ void qcom_batt_deinit(void)
 	cancel_delayed_work_sync(&chip->status_change_work);
 	cancel_work_sync(&chip->pl_taper_work);
 	cancel_work_sync(&chip->pl_disable_forever_work);
+	cancel_delayed_work_sync(&chip->pl_awake_work);
 	cancel_delayed_work_sync(&chip->fcc_stepper_work);
 
 	power_supply_unreg_notifier(&chip->nb);

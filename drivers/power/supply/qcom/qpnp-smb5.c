@@ -449,6 +449,9 @@ static int smb5_charge_step_charge_init(struct smb_charger *chg,
 #define MICRO_1P8A_FOR_DCP		1800000
 #define OTG_DEFAULT_DEGLITCH_TIME_MS	50
 #define DEFAULT_WD_BARK_TIME		64
+#define DEFAULT_WD_SNARL_TIME_8S		0x07
+#define DEFAULT_FCC_STEP_SIZE_UA		100000
+#define DEFAULT_FCC_STEP_UPDATE_DELAY_MS	1000
 static int smb5_parse_dt(struct smb5 *chip)
 {
 	struct smb_charger *chg = &chip->chg;
@@ -1605,7 +1608,7 @@ static int smb5_usb_main_set_prop(struct power_supply *psy,
 	struct smb_charger *chg = &chip->chg;
 	union power_supply_propval pval = {0, };
 	enum power_supply_type real_chg_type = chg->real_charger_type;
-	int rc = 0, offset_ua = 0;
+	int rc = 0;
 	int parallel_output_mode = 0, offset = 0;
 
 	switch (psp) {

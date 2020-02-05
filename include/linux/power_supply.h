@@ -386,6 +386,23 @@ enum power_supply_property {
 	POWER_SUPPLY_PROP_IRQ_STATUS,
 	POWER_SUPPLY_PROP_PARALLEL_OUTPUT_MODE,
 	POWER_SUPPLY_PROP_FFC_CHG_TERMINATION_CURRENT,
+#ifdef CONFIG_BATT_VERIFY_BY_DS28E16
+	/* battery verify properties */
+	POWER_SUPPLY_PROP_ROMID,
+	POWER_SUPPLY_PROP_DS_STATUS,
+	POWER_SUPPLY_PROP_PAGENUMBER,
+	POWER_SUPPLY_PROP_PAGEDATA,
+	POWER_SUPPLY_PROP_AUTHEN_RESULT,
+	POWER_SUPPLY_PROP_SESSION_SEED,
+	POWER_SUPPLY_PROP_S_SECRET,
+	POWER_SUPPLY_PROP_CHALLENGE,
+	POWER_SUPPLY_PROP_AUTH_ANON,
+	POWER_SUPPLY_PROP_AUTH_BDCONST,
+	POWER_SUPPLY_PROP_PAGE0_DATA,
+	POWER_SUPPLY_PROP_PAGE1_DATA,
+	POWER_SUPPLY_PROP_VERIFY_MODEL_NAME,
+	POWER_SUPPLY_PROP_CHIP_OK,
+#endif
 	/* Local extensions of type int64_t */
 	POWER_SUPPLY_PROP_CHARGE_COUNTER_EXT,
 	/* Properties of type `const char *' */
@@ -421,6 +438,9 @@ enum power_supply_type {
 	POWER_SUPPLY_TYPE_UFP,			/* Type-C UFP */
 	POWER_SUPPLY_TYPE_DFP,			/* Type-C DFP */
 	POWER_SUPPLY_TYPE_CHARGE_PUMP,		/* Charge Pump */
+#ifdef CONFIG_BATT_VERIFY_BY_DS28E16
+	POWER_SUPPLY_TYPE_BATT_VERIFY,          /* battery verify */
+#endif
 };
 
 /* Indicates USB Type-C CC connection status */
@@ -462,10 +482,13 @@ union power_supply_propval {
 	int intval;
 	const char *strval;
 	int64_t int64val;
+#ifdef CONFIG_BATT_VERIFY_BY_DS28E16
+	unsigned char arrayval[50];
+#endif
 };
 
 struct device_node;
-struct power_supply;`
+struct power_supply;
 
 /* Run-time specific power supply configuration */
 struct power_supply_config {

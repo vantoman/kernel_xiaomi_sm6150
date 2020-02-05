@@ -435,7 +435,7 @@ static bool maint_soc_timeout(struct qpnp_qg *chip)
 
 static void update_msoc(struct qpnp_qg *chip)
 {
-	int rc = 0, sdam_soc, batt_temp = 0, batt_cur = 0, batt_soc_32bit = 0;
+	int rc = 0, sdam_soc, batt_temp = 0, batt_cur = 0;
 	bool input_present = is_input_present(chip);
 
 	rc = qg_get_battery_current(chip, &batt_cur);
