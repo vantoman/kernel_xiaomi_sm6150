@@ -323,6 +323,7 @@ fail:
 static int
 hdd_enable_disable_apf(struct hdd_adapter *adapter, bool apf_enable)
 {
+    /*
 	QDF_STATUS status;
 
 	hdd_enter();
@@ -338,6 +339,7 @@ hdd_enable_disable_apf(struct hdd_adapter *adapter, bool apf_enable)
 	adapter->apf_context.apf_enabled = apf_enable;
 
 	hdd_exit();
+    */
 	return 0;
 }
 
