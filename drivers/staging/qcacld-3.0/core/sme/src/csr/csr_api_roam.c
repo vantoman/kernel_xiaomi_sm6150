@@ -11473,6 +11473,7 @@ void csr_roaming_state_msg_processor(tpAniSirGlobal pMac, void *pMsgBuf)
 	case eWNI_SME_DISCONNECT_DONE_IND:
 		csr_roam_send_disconnect_done_indication(pMac, pSmeRsp);
 		break;
+
 	case eWNI_SME_UPPER_LAYER_ASSOC_CNF:
 		csr_roam_joined_state_msg_processor(pMac, pSmeRsp);
 		break;

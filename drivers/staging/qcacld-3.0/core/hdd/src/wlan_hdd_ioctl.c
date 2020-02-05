@@ -23,6 +23,7 @@
 #include <wlan_hdd_stats.h>
 #include "wlan_hdd_trace.h"
 #include "wlan_hdd_ioctl.h"
+#include "wlan_hdd_main.h"
 #include "wlan_hdd_power.h"
 #include "wlan_hdd_regulatory.h"
 #include "wlan_osif_request_manager.h"
