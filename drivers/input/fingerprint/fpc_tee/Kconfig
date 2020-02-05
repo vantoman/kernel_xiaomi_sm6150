@@ -1,0 +1,20 @@
+#
+# FPC sensors
+#
+
+config FINGERPRINT_FPC_TEE
+	tristate "Finger print card fpc"
+	depends on INPUT_FINGERPRINT
+	help
+	  Say Y here to enable support for retrieving self-test reports.
+
+	  If unsure, say N.
+
+	  To compile this driver as a module, choose M here.
+
+config FINGERPRINT_FPC_FOD
+	tristate "FPC1020 fingerprint sensor IRQ support"
+	depends on INPUT_FINGERPRINT
+	help
+		If you say yes here you get IRQ support for the FPC1020 family
+		of fingerprint sensors from Fingerprint Cards (FPC).
