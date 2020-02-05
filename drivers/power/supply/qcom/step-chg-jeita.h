@@ -13,7 +13,24 @@
 #ifndef __STEP_CHG_H__
 #define __STEP_CHG_H__
 
+#ifdef CONFIG_MACH_XIAOMI_SDMMAGPIE
+#define MAX_STEP_CHG_ENTRIES	5
+#else
 #define MAX_STEP_CHG_ENTRIES	8
+#endif
+#define BATT_CP_COOL_THRESHOLD		100
+#define BATT_CP_WARM_THRESHOLD		450
+
+#define BATT_COOL_THRESHOLD		150
+#define BATT_WARM_THRESHOLD		450
+#define FFC_CHG_TERM_TEMP_THRESHOLD	350
+#define FFC_LOW_TEMP_CHG_TERM_CURRENT	-980
+#define FFC_HIGH_TEMP_CHG_TERM_CURRENT	-1110
+#define SOC_CHG_VOTER		"SOC_CHG_VOTER"
+#define SOC_FCC_LIMIT		5300000
+
+
+#define HVDCP3_CLASS_B_27W		2
 
 struct step_chg_jeita_param {
 	u32			psy_prop;
@@ -34,4 +51,6 @@ void qcom_step_chg_deinit(void);
 int read_range_data_from_node(struct device_node *node,
 		const char *prop_str, struct range_data *ranges,
 		int max_threshold, u32 max_value);
+int get_val(struct range_data *range, int hysteresis, int current_index,
+		int threshold, int *new_index, int *val);
 #endif /* __STEP_CHG_H__ */

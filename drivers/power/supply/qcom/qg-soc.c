@@ -32,7 +32,11 @@
 #define VBAT_LOW_HYST_UV			50000
 #define FULL_SOC				100
 
+#ifdef CONFIG_MACH_XIAOMI_SDMMAGPIE
+static int qg_delta_soc_interval_ms = 40000;
+#else
 static int qg_delta_soc_interval_ms = 20000;
+#endif
 module_param_named(
 	soc_interval_ms, qg_delta_soc_interval_ms, int, 0600
 );
@@ -42,7 +46,11 @@ module_param_named(
 	fvss_soc_interval_ms, qg_fvss_delta_soc_interval_ms, int, 0600
 );
 
+#ifdef CONFIG_MACH_XIAOMI_SDMMAGPIE
+static int qg_delta_soc_cold_interval_ms = 25000;
+#else
 static int qg_delta_soc_cold_interval_ms = 4000;
+#endif
 module_param_named(
 	soc_cold_interval_ms, qg_delta_soc_cold_interval_ms, int, 0600
 );
@@ -134,8 +142,7 @@ exit_soc_scale:
 #define TCSS_ENTRY_COUNT		2
 static int qg_process_tcss_soc(struct qpnp_qg *chip, int sys_soc)
 {
-	int rc, ibatt_diff = 0, ibat_inc_hyst = 0;
-	int qg_iterm_ua = (-1 * chip->dt.iterm_ma * 1000);
+	int rc, ibatt_diff = 0, ibat_inc_hyst = 0, qg_iterm_ua = 0, bat_health = 0;
 	int soc_ibat, wt_ibat, wt_sys;
 	union power_supply_propval prop = {0, };
 
@@ -148,11 +155,25 @@ static int qg_process_tcss_soc(struct qpnp_qg *chip, int sys_soc)
 	if (chip->sys_soc >= QG_MAX_SOC && chip->soc_tcss >= QG_MAX_SOC)
 		goto exit_soc_scale;
 
-	rc = power_supply_get_property(chip->batt_psy,
-			POWER_SUPPLY_PROP_HEALTH, &prop);
-	if (!rc && (prop.intval == POWER_SUPPLY_HEALTH_COOL ||
-			prop.intval == POWER_SUPPLY_HEALTH_WARM))
+	rc = power_supply_get_property(chip->qg_psy, POWER_SUPPLY_PROP_BATT_FULL_CURRENT, &prop);
+	if (rc < 0) {
+		pr_err("failed to get full_current, rc = %d\n", rc);
 		goto exit_soc_scale;
+	} else {
+		qg_iterm_ua = -1 * prop.intval;
+	}
+
+	rc = power_supply_get_property(chip->batt_psy, POWER_SUPPLY_PROP_HEALTH, &prop);
+	if (rc < 0){
+		pr_err("failed to get bat_health, rc = %d\n", rc);
+		goto exit_soc_scale;
+	} else {
+		bat_health = prop.intval;
+	}
+	if (bat_health == POWER_SUPPLY_HEALTH_WARM || bat_health == POWER_SUPPLY_HEALTH_OVERHEAT) {
+		pr_err("bat_health not good, %d\n", bat_health);
+		goto exit_soc_scale;
+	}
 
 	if (chip->last_fifo_i_ua >= 0)
 		goto exit_soc_scale;
@@ -201,6 +222,7 @@ static int qg_process_tcss_soc(struct qpnp_qg *chip, int sys_soc)
 
 	wt_ibat = qg_linear_interpolate(1, chip->soc_tcss_entry,
 					10000, 10000, soc_ibat);
+
 	wt_ibat = CAP(QG_MIN_SOC, QG_MAX_SOC, wt_ibat);
 	wt_sys = 10000 - wt_ibat;
 
@@ -209,11 +231,11 @@ static int qg_process_tcss_soc(struct qpnp_qg *chip, int sys_soc)
 	chip->soc_tcss = CAP(QG_MIN_SOC, QG_MAX_SOC, chip->soc_tcss);
 
 	qg_dbg(chip, QG_DEBUG_SOC,
-		"TCSS: fifo_i=%d prev_fifo_i=%d ibatt_tcss_entry=%d qg_term=%d soc_tcss_entry=%d sys_soc=%d soc_ibat=%d wt_ibat=%d wt_sys=%d soc_tcss=%d\n",
+		"TCSS: fifo_i=%d prev_fifo_i=%d ibatt_tcss_entry=%d qg_term=%d soc_tcss_entry=%d sys_soc=%d soc_ibat=%d wt_ibat=%d wt_sys=%d soc_tcss=%d bat_health=%d\n",
 			chip->last_fifo_i_ua, chip->prev_fifo_i_ua,
 			chip->ibat_tcss_entry, qg_iterm_ua,
 			chip->soc_tcss_entry, sys_soc, soc_ibat,
-			wt_ibat, wt_sys, chip->soc_tcss);
+			wt_ibat, wt_sys, chip->soc_tcss, bat_health);
 
 	return chip->soc_tcss;
 
@@ -221,9 +243,10 @@ exit_soc_scale:
 	chip->tcss_entry_count = 0;
 skip_entry_count:
 	chip->tcss_active = false;
-	qg_dbg(chip, QG_DEBUG_SOC, "TCSS: Quit - enabled=%d sys_soc=%d tcss_entry_count=%d fifo_i_ua=%d\n",
+	qg_dbg(chip, QG_DEBUG_SOC, "TCSS: Quit - enabled=%d sys_soc=%d tcss_entry_count=%d fifo_i_ua=%d bat_health=%d\n",
 			chip->dt.tcss_enable, sys_soc, chip->tcss_entry_count,
-			chip->last_fifo_i_ua);
+			chip->last_fifo_i_ua, bat_health);
+
 	return sys_soc;
 }
 
@@ -285,12 +308,14 @@ int qg_adjust_sys_soc(struct qpnp_qg *chip)
 
 	if (chip->sys_soc == QG_MAX_SOC) {
 		soc = FULL_SOC;
+#ifndef CONFIG_MACH_XIAOMI_SDMMAGPIE
 	} else if (chip->sys_soc >= (QG_MAX_SOC - 100)) {
 		/* Hold SOC to 100% if we are dropping from 100 to 99 */
 		if (chip->last_adj_ssoc == FULL_SOC)
 			soc = FULL_SOC;
 		else /* Hold SOC at 99% until we hit 100% */
 			soc = FULL_SOC - 1;
+#endif
 	} else {
 		soc = DIV_ROUND_CLOSEST(chip->sys_soc, 100);
 	}
@@ -418,16 +443,22 @@ static bool maint_soc_timeout(struct qpnp_qg *chip)
 
 static void update_msoc(struct qpnp_qg *chip)
 {
-	int rc = 0, sdam_soc, batt_temp = 0;
+	int rc = 0, sdam_soc, batt_temp = 0, batt_cur = 0;
 	bool input_present = is_input_present(chip);
 
+	rc = qg_get_battery_current(chip, &batt_cur);
+	if (rc < 0) {
+		pr_err("Failed to read BATT_CUR rc=%d\n", rc);
+	}
 	if (chip->catch_up_soc > chip->msoc) {
 		/* SOC increased */
 		if (input_present) /* Increment if input is present */
 			chip->msoc += chip->dt.delta_soc;
 	} else if (chip->catch_up_soc < chip->msoc) {
 		/* SOC dropped */
-		chip->msoc -= chip->dt.delta_soc;
+		if (batt_cur > 0) {
+			chip->msoc -= chip->dt.delta_soc;
+		}
 	}
 	chip->msoc = CAP(0, 100, chip->msoc);
 
