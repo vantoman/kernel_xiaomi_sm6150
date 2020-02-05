@@ -1,4 +1,4 @@
-/* Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -167,6 +167,13 @@ static int cam_lrme_mgr_util_prepare_io_buffer(int32_t iommu_hdl,
 			io_cfg[i].resource_type,
 			io_cfg[i].fence, io_cfg[i].format);
 
+		if ((num_in_buf > io_buf_size) ||
+			(num_out_buf > io_buf_size)) {
+			CAM_ERR(CAM_LRME, "Invalid number of buffers %d %d %d",
+				num_in_buf, num_out_buf, io_buf_size);
+			return -EINVAL;
+		}
+
 		memset(io_addr, 0, sizeof(io_addr));
 		for (plane = 0; plane < CAM_PACKET_MAX_PLANES; plane++) {
 			if (!io_cfg[i].mem_handle[plane])
@@ -194,12 +201,6 @@ static int cam_lrme_mgr_util_prepare_io_buffer(int32_t iommu_hdl,
 
 		switch (io_cfg[i].direction) {
 		case CAM_BUF_INPUT: {
-			if (num_in_buf >= io_buf_size) {
-				CAM_ERR(CAM_LRME,
-					"Invalid number of buffers %d %d %d",
-					num_in_buf, num_out_buf, io_buf_size);
-				return -EINVAL;
-			}
 			prepare->in_map_entries[num_in_buf].resource_handle =
 				io_cfg[i].resource_type;
 			prepare->in_map_entries[num_in_buf].sync_id =
@@ -215,12 +216,6 @@ static int cam_lrme_mgr_util_prepare_io_buffer(int32_t iommu_hdl,
 			break;
 		}
 		case CAM_BUF_OUTPUT: {
-			if (num_out_buf >= io_buf_size) {
-				CAM_ERR(CAM_LRME,
-					"Invalid number of buffers %d %d %d",
-					num_in_buf, num_out_buf, io_buf_size);
-				return -EINVAL;
-			}
 			prepare->out_map_entries[num_out_buf].resource_handle =
 				io_cfg[i].resource_type;
 			prepare->out_map_entries[num_out_buf].sync_id =
@@ -656,54 +651,6 @@ static int cam_lrme_mgr_hw_release(void *hw_mgr_priv, void *hw_release_args)
 	return rc;
 }
 
-static int cam_lrme_mgr_hw_dump(void *hw_mgr_priv, void *hw_dump_args)
-{
-	struct cam_hw_dump_args *dump_args = hw_dump_args;
-	struct cam_lrme_hw_mgr *hw_mgr = hw_mgr_priv;
-	struct cam_lrme_device *hw_device;
-	int rc = 0;
-	uint32_t device_index;
-	struct cam_lrme_hw_dump_args lrme_dump_args;
-
-	device_index = CAM_LRME_DECODE_DEVICE_INDEX(dump_args->ctxt_to_hw_map);
-	if (device_index >= hw_mgr->device_count) {
-		CAM_ERR(CAM_LRME, "Invalid device index %d", device_index);
-		return -EPERM;
-	}
-
-	CAM_DBG(CAM_LRME, "Start device index %d", device_index);
-
-	rc = cam_lrme_mgr_util_get_device(hw_mgr, device_index, &hw_device);
-	if (rc) {
-		CAM_ERR(CAM_LRME, "Failed to get hw device");
-		return rc;
-	}
-	rc  = cam_mem_get_cpu_buf(dump_args->buf_handle,
-		&lrme_dump_args.cpu_addr,
-		&lrme_dump_args.buf_len);
-	if (!lrme_dump_args.cpu_addr || !lrme_dump_args.buf_len || rc) {
-		CAM_ERR(CAM_LRME,
-			"lnvalid addr %u len %zu rc %d",
-			dump_args->buf_handle, lrme_dump_args.buf_len, rc);
-		return rc;
-	}
-	lrme_dump_args.offset =  dump_args->offset;
-	lrme_dump_args.request_id = dump_args->request_id;
-
-	rc = hw_device->hw_intf.hw_ops.process_cmd(
-		hw_device->hw_intf.hw_priv,
-		CAM_LRME_HW_CMD_DUMP,
-		&lrme_dump_args,
-		sizeof(struct cam_lrme_hw_dump_args));
-	dump_args->offset = lrme_dump_args.offset;
-
-	rc  = cam_mem_put_cpu_buf(dump_args->buf_handle);
-	if (rc)
-		CAM_ERR(CAM_LRME, "Cpu put failed handle %u",
-			dump_args->buf_handle);
-	return rc;
-}
-
 static int cam_lrme_mgr_hw_flush(void *hw_mgr_priv, void *hw_flush_args)
 {	int rc = 0, i;
 	struct cam_lrme_hw_mgr *hw_mgr = hw_mgr_priv;
@@ -919,8 +866,7 @@ static int cam_lrme_mgr_hw_prepare_update(void *hw_mgr_priv,
 		kmd_buf.size, kmd_buf.used_bytes);
 
 	rc = cam_packet_util_process_patches(args->packet,
-		hw_mgr->device_iommu.non_secure,
-		hw_mgr->device_iommu.secure, 0);
+		hw_mgr->device_iommu.non_secure, hw_mgr->device_iommu.secure);
 	if (rc) {
 		CAM_ERR(CAM_LRME, "Patch packet failed, rc=%d", rc);
 		return rc;
@@ -1201,7 +1147,6 @@ int cam_lrme_hw_mgr_init(struct cam_hw_mgr_intf *hw_mgr_intf,
 	hw_mgr_intf->hw_write = NULL;
 	hw_mgr_intf->hw_close = NULL;
 	hw_mgr_intf->hw_flush = cam_lrme_mgr_hw_flush;
-	hw_mgr_intf->hw_dump = cam_lrme_mgr_hw_dump;
 
 	g_lrme_hw_mgr.event_cb = cam_lrme_dev_buf_done_cb;
 
