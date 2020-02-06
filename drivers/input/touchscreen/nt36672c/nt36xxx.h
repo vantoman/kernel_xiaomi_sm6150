@@ -1,6 +1,5 @@
 /*
  * Copyright (C) 2010 - 2018 Novatek, Inc.
- * Copyright (C) 2021 XiaoMi, Inc.
  *
  * $Revision: 32206 $
  * $Date: 2018-08-10 19:23:04 +0800 (週五, 10 八月 2018) $
@@ -102,11 +101,10 @@ extern const uint16_t touch_key_array[TOUCH_KEY_NUM];
 extern const uint16_t gesture_key_array[];
 #endif
 #define BOOT_UPDATE_FIRMWARE 1
-#define DEFAULT_BOOT_UPDATE_FIRMWARE_NAME "novatek_ts_fw.bin"
-#define DEFAULT_MP_UPDATE_FIRMWARE_NAME   "novatek_ts_mp.bin"
-#define DEFAULT_DEBUG_FW_NAME "novatek_debug_fw.bin"
-#define DEFAULT_DEBUG_MP_NAME "novatek_debug_mp.bin"
-
+//#define DEFAULT_BOOT_UPDATE_FIRMWARE_NAME "novatek_ts_fw.bin"
+//#define DEFAULT_MP_UPDATE_FIRMWARE_NAME   "novatek_ts_mp.bin"
+#define DEFAULT_BOOT_UPDATE_FIRMWARE_NAME "novatek_nt36672c_g7b_fw01.bin"
+#define DEFAULT_MP_UPDATE_FIRMWARE_NAME   "novatek_nt36672c_g7b_mp01.bin"
 
 //---ESD Protect.---
 #define NVT_TOUCH_ESD_PROTECT 1
@@ -121,7 +119,6 @@ struct nvt_config_info {
 	u8 panel_cg;
 	const char *nvt_fw_name;
 	const char *nvt_mp_name;
-	const char *nvt_limit_name;
 };
 
 enum nvt_ic_state {
@@ -140,15 +137,7 @@ struct nvt_ts_data {
 	struct delayed_work nvt_lockdown_work;
 	uint16_t addr;
 	int8_t phys[32];
-#if defined(CONFIG_FB)
-#ifdef _DRM_NOTIFIER_H_
 	struct notifier_block drm_notif;
-#else
-	struct notifier_block fb_notif;
-#endif
-#elif defined(CONFIG_HAS_EARLYSUSPEND)
-	struct early_suspend early_suspend;
-#endif
 	uint8_t fw_ver;
 	uint8_t x_num;
 	uint8_t y_num;
@@ -194,7 +183,6 @@ struct nvt_ts_data {
 	struct attribute_group *attrs;
 	/*bit map indicate which slot(0~9) has been used*/
 	unsigned long slot_map[BITS_TO_LONGS(10)];
-	bool fw_debug;
 #ifdef CONFIG_TOUCHSCREEN_NVT_DEBUG_FS
 	struct dentry *debugfs;
 #endif
@@ -272,8 +260,6 @@ int32_t nvt_clear_fw_status(void);
 int32_t nvt_check_fw_status(void);
 int32_t nvt_set_page(uint32_t addr);
 int32_t nvt_write_addr(uint32_t addr, uint8_t data);
-void nvt_set_dbgfw_status(bool enable);
-bool nvt_get_dbgfw_status(void);
 void nvt_match_fw(void);
 int32_t nvt_set_pocket_palm_switch(uint8_t pocket_palm_switch);
 #if NVT_TOUCH_ESD_PROTECT
