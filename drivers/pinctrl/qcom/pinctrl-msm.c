@@ -40,6 +40,7 @@
 #include "../pinconf.h"
 #include "pinctrl-msm.h"
 #include "../pinctrl-utils.h"
+#include <soc/qcom/socinfo.h>
 #include <linux/suspend.h>
 #ifdef CONFIG_HIBERNATION
 #include <linux/notifier.h>
@@ -619,8 +620,25 @@ static void msm_gpio_dbg_show(struct seq_file *s, struct gpio_chip *chip)
 {
 	unsigned gpio = chip->base;
 	unsigned i;
+	uint32_t hw_type;
+
+	hw_type = get_hw_version_platform();
 
 	for (i = 0; i < chip->ngpio; i++, gpio++) {
+		if (HARDWARE_PLATFORM_DAVINCI == hw_type) {
+			/* gpio 0~3 is FP spi, gpio 59~62 is NFC spi */
+			if (i < 4 || (i > 58 && i < 63))
+				continue;
+		} else if (HARDWARE_PLATFORM_PHOENIX == hw_type) {
+			/* gpio 0~3 is NFC spi, gpio 59~62 is FP spi */
+			if (i < 4 || (i > 58 && i < 63))
+				continue;
+
+		} else {
+			/* gpio 0~3 is FP spi, gpio 6~9 is NFC spi */
+			if (i < 4 || (i > 5 && i < 10))
+				continue;
+		}
 		msm_gpio_dbg_show_one(s, NULL, chip, i, gpio);
 		seq_puts(s, "\n");
 	}
