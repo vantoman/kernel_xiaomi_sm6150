@@ -1,6 +1,5 @@
 /*
  * Copyright (C) 2010 - 2018 Novatek, Inc.
- * Copyright (C) 2021 XiaoMi, Inc.
  *
  * $Revision: 32206 $
  * $Date: 2018-08-10 19:23:04 +0800 (週五, 10 八月 2018) $
@@ -17,7 +16,6 @@
  *
  */
 
-
 #include <linux/proc_fs.h>
 #include <linux/seq_file.h>
 #include <linux/delay.h>
@@ -32,7 +30,6 @@
 #define NVT_XIAOMI_CONFIG_INFO "nvt_xiaomi_config_info"
 #define NVT_XIAOMI_LOCKDOWN_INFO "tp_lockdown_info"
 #define NVT_POCKET_PALM_SWITCH "nvt_pocket_palm_switch"
-
 
 #define SPI_TANSFER_LENGTH  256
 
@@ -53,8 +50,6 @@ static struct proc_dir_entry *NVT_proc_diff_entry;
 static struct proc_dir_entry *NVT_proc_xiaomi_config_info_entry;
 static struct proc_dir_entry *NVT_proc_xiaomi_lockdown_info_entry;
 static struct proc_dir_entry *NVT_proc_pocket_palm_switch_entry;
-
-
 
 // Xiaomi Config Info.
 static uint8_t nvt_xiaomi_conf_info_fw_ver = 0;
@@ -583,13 +578,10 @@ static int nvt_xiaomi_lockdown_info_show(struct seq_file *m, void *v)
 	return 0;
 }
 
-
-
 static int32_t nvt_xiaomi_lockdown_info_open(struct inode *inode, struct file *file)
 {
 	return single_open(file, nvt_xiaomi_lockdown_info_show, NULL);
 }
-
 
 static const struct file_operations nvt_xiaomi_lockdown_info_fops = {
 	.owner = THIS_MODULE,
