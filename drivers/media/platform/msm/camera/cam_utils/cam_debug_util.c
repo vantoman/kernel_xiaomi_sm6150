@@ -119,7 +119,8 @@ void cam_debug_log(unsigned int module_id, const char *func, const int line,
 
 	if (debug_mdl & module_id) {
 		vsnprintf(str_buffer, STR_BUFFER_MAX_LENGTH, fmt, args);
-		pr_info("CAM_DBG: %s: %s: %d: %s\n",
+		pr_info("CAM_DBG: (%u  %u) %s: %s: %d: %s\n",
+			current->tgid, current->pid,
 			cam_get_module_name(module_id),
 			func, line, str_buffer);
 		va_end(args);
