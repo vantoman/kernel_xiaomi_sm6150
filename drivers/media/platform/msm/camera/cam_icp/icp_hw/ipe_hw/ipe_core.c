@@ -163,8 +163,7 @@ static int cam_ipe_handle_pc(struct cam_hw_info *ipe_dev)
 			hw_info->pwr_ctrl, true, 0x1);
 
 		if (pwr_status >> IPE_PWR_ON_MASK)
-			CAM_WARN(CAM_ICP, "BPS: pwr_status(%x):pwr_ctrl(%x)",
-				pwr_status, pwr_ctrl);
+			return -EINVAL;
 
 	}
 	cam_ipe_get_gdsc_control(soc_info);
