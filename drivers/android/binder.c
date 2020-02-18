@@ -51,7 +51,6 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <asm/cacheflush.h>
 #include <linux/fdtable.h>
 #include <linux/file.h>
 #include <linux/freezer.h>
@@ -64,6 +63,7 @@
 #include <linux/poll.h>
 #include <linux/debugfs.h>
 #include <linux/rbtree.h>
+#include <linux/sched.h>
 #include <linux/sched/signal.h>
 #include <linux/sched/mm.h>
 #include <linux/seq_file.h>
@@ -71,9 +71,14 @@
 #include <linux/pid_namespace.h>
 #include <linux/security.h>
 #include <linux/spinlock.h>
+#include <linux/ratelimit.h>
 
 #include <uapi/linux/android/binder.h>
+#include <uapi/linux/eventpoll.h>
 #include <uapi/linux/sched/types.h>
+
+#include <asm/cacheflush.h>
+
 #include "binder_alloc.h"
 #include "binder_trace.h"
 
@@ -162,13 +167,13 @@ module_param_call(stop_on_user_error, binder_set_stop_on_user_error,
 #define binder_debug(mask, x...) \
 	do { \
 		if (binder_debug_mask & mask) \
-			pr_info(x); \
+			pr_info_ratelimited(x); \
 	} while (0)
 
 #define binder_user_error(x...) \
 	do { \
 		if (binder_debug_mask & BINDER_DEBUG_USER_ERROR) \
-			pr_info(x); \
+			pr_info_ratelimited(x); \
 		if (binder_stop_on_user_error) \
 			binder_stop_on_user_error = 2; \
 	} while (0)
@@ -868,6 +873,7 @@ static void
 binder_enqueue_deferred_thread_work_ilocked(struct binder_thread *thread,
 					    struct binder_work *work)
 {
+	WARN_ON(!list_empty(&thread->waiting_thread_node));
 	binder_enqueue_work_ilocked(work, &thread->todo);
 }
 
@@ -885,6 +891,7 @@ static void
 binder_enqueue_thread_work_ilocked(struct binder_thread *thread,
 				   struct binder_work *work)
 {
+	WARN_ON(!list_empty(&thread->waiting_thread_node));
 	binder_enqueue_work_ilocked(work, &thread->todo);
 	thread->process_todo = true;
 }
@@ -1445,19 +1452,12 @@ static int binder_inc_node_nilocked(struct binder_node *node, int strong,
 		} else
 			node->local_strong_refs++;
 		if (!node->has_strong_ref && target_list) {
+			struct binder_thread *thread = container_of(target_list,
+						    struct binder_thread, todo);
 			binder_dequeue_work_ilocked(&node->work);
-			/*
-			 * Note: this function is the only place where we queue
-			 * directly to a thread->todo without using the
-			 * corresponding binder_enqueue_thread_work() helper
-			 * functions; in this case it's ok to not set the
-			 * process_todo flag, since we know this node work will
-			 * always be followed by other work that starts queue
-			 * processing: in case of synchronous transactions, a
-			 * BR_REPLY or BR_ERROR; in case of oneway
-			 * transactions, a BR_TRANSACTION_COMPLETE.
-			 */
-			binder_enqueue_work_ilocked(&node->work, target_list);
+			BUG_ON(&thread->todo != target_list);
+			binder_enqueue_deferred_thread_work_ilocked(thread,
+								   &node->work);
 		}
 	} else {
 		if (!internal)
@@ -2521,7 +2521,7 @@ static void binder_transaction_buffer_release(struct binder_proc *proc,
 						     NULL,
 						     num_valid);
 			if (!parent) {
-				pr_err("transaction release %d bad parent offset",
+				pr_err("transaction release %d bad parent offset\n",
 				       debug_id);
 				continue;
 			}
@@ -2994,6 +2994,7 @@ static void binder_transaction(struct binder_proc *proc,
 {
 	int ret;
 	struct binder_transaction *t;
+	struct binder_work *w;
 	struct binder_work *tcomplete;
 	binder_size_t buffer_offset = 0;
 	binder_size_t off_start_offset, off_end_offset;
@@ -3137,6 +3138,29 @@ static void binder_transaction(struct binder_proc *proc,
 			goto err_invalid_target_handle;
 		}
 		binder_inner_proc_lock(proc);
+
+		w = list_first_entry_or_null(&thread->todo,
+					     struct binder_work, entry);
+		if (!(tr->flags & TF_ONE_WAY) && w &&
+		    w->type == BINDER_WORK_TRANSACTION) {
+			/*
+			 * Do not allow new outgoing transaction from a
+			 * thread that has a transaction at the head of
+			 * its todo list. Only need to check the head
+			 * because binder_select_thread_ilocked picks a
+			 * thread from proc->waiting_threads to enqueue
+			 * the transaction, and nothing is queued to the
+			 * todo list while the thread is on waiting_threads.
+			 */
+			binder_user_error("%d:%d new transaction not allowed when there is a transaction on thread todo\n",
+					  proc->pid, thread->pid);
+			binder_inner_proc_unlock(proc);
+			return_error = BR_FAILED_REPLY;
+			return_error_param = -EPROTO;
+			return_error_line = __LINE__;
+			goto err_bad_todo_list;
+		}
+
 		if (!(tr->flags & TF_ONE_WAY) && thread->transaction_stack) {
 			struct binder_transaction *tmp;
 
@@ -3616,6 +3640,7 @@ err_alloc_tcomplete_failed:
 	kfree(t);
 	binder_stats_deleted(BINDER_STAT_TRANSACTION);
 err_alloc_t_failed:
+err_bad_todo_list:
 err_bad_call_stack:
 err_empty_call_stack:
 err_dead_binder:
@@ -4306,7 +4331,7 @@ retry:
 			e->cmd = BR_OK;
 			ptr += sizeof(uint32_t);
 
-			binder_stat_br(proc, thread, e->cmd);
+			binder_stat_br(proc, thread, cmd);
 		} break;
 		case BINDER_WORK_TRANSACTION_COMPLETE: {
 			binder_inner_proc_unlock(proc);
@@ -4770,7 +4795,7 @@ static int binder_thread_release(struct binder_proc *proc,
 	 */
 	if ((thread->looper & BINDER_LOOPER_STATE_POLL) &&
 	    waitqueue_active(&thread->wait)) {
-		wake_up_poll(&thread->wait, POLLHUP | POLLFREE);
+		wake_up_poll(&thread->wait, EPOLLHUP | POLLFREE);
 	}
 
 	binder_inner_proc_unlock(thread->proc);
@@ -4811,7 +4836,7 @@ static unsigned int binder_poll(struct file *filp,
 	poll_wait(filp, &thread->wait, wait);
 
 	if (binder_has_work(thread, wait_for_proc_work))
-		return POLLIN;
+		return EPOLLIN;
 
 	return 0;
 }
