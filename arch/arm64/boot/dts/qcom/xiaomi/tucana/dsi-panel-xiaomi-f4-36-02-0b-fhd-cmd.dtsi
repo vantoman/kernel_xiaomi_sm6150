@@ -173,23 +173,6 @@
 				qcom,mdss-dsi-on-command-state = "dsi_lp_mode";
 				qcom,mdss-dsi-off-command-state = "dsi_lp_mode";
 
-				qcom,mdss-dsi-dispparam-hbm-fod-on-command = [
-					/* Exit AOD Mode */
-					39 00 00 00 00 00 02 65 00
-					39 00 00 00 00 00 02 38 00
-					15 01 00 00 00 00 02 2C 00
-					/* 20h----dimming off */
-					39 00 00 00 00 00 02 53 20
-					/* Enter FOD HBM Mode */
-					39 01 00 00 00 00 03 51 0F FF];
-				qcom,mdss-dsi-dispparam-hbm-fod-on-command-state = "dsi_hs_mode";
-				qcom,mdss-dsi-dispparam-hbm-fod-off-command = [
-					/* 20h----dimming off */
-					39 00 00 00 00 00 02 53 20
-					/* Exit FOD HBM Mode */
-					39 01 00 00 00 00 03 51 07 FF];
-				qcom,mdss-dsi-dispparam-hbm-fod-off-command-state = "dsi_hs_mode";
-
 				qcom,mdss-dsi-dispparam-hbm-on-command = [
 					/* 28h----dimming on */
 					39 01 00 00 00 00 02 53 28
@@ -296,6 +279,22 @@
 				qcom,mdss-dsc-bit-per-component = <8>;
 				qcom,mdss-dsc-bit-per-pixel = <8>;
 				qcom,mdss-dsc-block-prediction-enable;
+				qcom,mdss-dsi-dispparam-hbm-fod-on-command = [
+					/* Exit AOD Mode */
+					39 00 00 00 00 00 02 65 00
+					39 00 00 00 00 00 02 38 00
+					15 01 00 00 00 00 02 2C 00
+					/* 20h----dimming off */
+					39 00 00 00 00 00 02 53 20
+					/* Enter FOD HBM Mode */
+					39 01 00 00 00 00 03 51 0F FF];
+				qcom,mdss-dsi-dispparam-hbm-fod-on-command-state = "dsi_hs_mode";
+				qcom,mdss-dsi-dispparam-hbm-fod-off-command = [
+					/* 20h----dimming off */
+					39 00 00 00 00 00 02 53 20
+					/* Exit FOD HBM Mode */
+					39 01 00 00 00 00 03 51 07 FF];
+				qcom,mdss-dsi-dispparam-hbm-fod-off-command-state = "dsi_hs_mode";
 			};
 		};
 	};
