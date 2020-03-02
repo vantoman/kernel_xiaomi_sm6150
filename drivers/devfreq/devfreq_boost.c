@@ -112,6 +112,10 @@ void devfreq_register_boost_device(enum df_device device, struct devfreq *df)
 
 	df->is_boost_device = true;
 	b = d->devices + device;
+
+	//Set curr boost device to differ in set_phal_values
+	df->curr_device = device;
+
 	WRITE_ONCE(b->df, df);
 }
 
@@ -147,6 +151,10 @@ static void devfreq_update_boosts(struct boost_dev *b, unsigned long state)
 			       df->profile->freq_table[0];
 		df->max_boost = test_bit(MAX_BOOST, &state);
 	}
+
+	//Set values from P4 PHAL
+	set_phal_values(df);
+	
 	update_devfreq(df);
 	mutex_unlock(&df->lock);
 }

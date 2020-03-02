@@ -306,6 +306,37 @@ unsigned long to_mbps_zone(struct hwmon_node *node, unsigned long mbps)
 	return node->hw->df->max_freq;
 }
 
+#ifdef CONFIG_DEVFREQ_BOOST
+void set_phal_values(struct devfreq *df) {
+	unsigned long flags;
+	struct hwmon_node *node;
+
+	//We only want DEVFREQ_MSM_CPUBW to be boosted
+	if (df->curr_device != 0) {
+		return;
+	}
+
+	node = df->data;
+
+	if (!node)
+		return;
+
+	spin_lock_irqsave(&irq_lock, flags);
+
+	if(df->max_boost) {
+		node->hyst_trigger_count = 0;
+		node->hist_memory = 0;
+		node->hyst_length = 0;
+	}else{
+		node->hyst_trigger_count = 3;
+		node->hist_memory = 20;
+		node->hyst_length = 10;
+	}
+
+	spin_unlock_irqrestore(&irq_lock, flags);
+}
+#endif
+
 #define MIN_MBPS	500UL
 #define HIST_PEAK_TOL	60
 static unsigned long get_bw_and_set_irq(struct hwmon_node *node,
