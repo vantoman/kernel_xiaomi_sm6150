@@ -259,6 +259,7 @@ struct dsi_panel {
 	enum dsi_doze_mode_type doze_mode;
 
 	int hbm_mode;
+	bool resend_ea;
 
 	struct brightness_alpha_pair *fod_dim_lut;
 	u32 fod_dim_lut_count;
