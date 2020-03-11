@@ -1033,6 +1033,12 @@ static int do_cpu_down(unsigned int cpu, enum cpuhp_state target)
 {
 	int err;
 
+	if (cpu == cpumask_first(cpu_perf_mask) ||
+		cpu == cpumask_first(cpu_lp_mask)) {
+		pr_err("trying to take down core%i\n", cpu);
+		return -EINVAL;
+	}
+
 	/*
 	 * When cpusets are enabled, the rebuilding of the scheduling
 	 * domains is deferred to a workqueue context. Make sure
