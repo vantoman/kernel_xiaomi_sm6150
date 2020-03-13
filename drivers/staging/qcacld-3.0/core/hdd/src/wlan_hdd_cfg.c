@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -3000,6 +3000,13 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_ENABLE_PACKET_LOG_DEFAULT,
 		     CFG_ENABLE_PACKET_LOG_MIN,
 		     CFG_ENABLE_PACKET_LOG_MAX),
+
+	REG_VARIABLE(CFG_PACKET_LOG_BUFFER_SIZE_NAME, WLAN_PARAM_Integer,
+		     struct hdd_config, pktlog_buf_size,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_PACKET_LOG_BUFFER_SIZE_DEFAULT,
+		     CFG_PACKET_LOG_BUFFER_SIZE_MIN,
+		     CFG_PACKET_LOG_BUFFER_SIZE_MAX),
 #endif
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
@@ -3250,6 +3257,27 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_ENABLE_NAN_SUPPORT_DEFAULT,
 		     CFG_ENABLE_NAN_SUPPORT_MIN,
 		     CFG_ENABLE_NAN_SUPPORT_MAX),
+
+	REG_VARIABLE(CFG_NAN_SEPARATE_IFACE_SUPP, WLAN_PARAM_Integer,
+		     struct hdd_config, nan_separate_iface_support,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_NAN_SEPARATE_IFACE_SUPP_DEFAULT,
+		     CFG_NAN_SEPARATE_IFACE_SUPP_MIN,
+		     CFG_NAN_SEPARATE_IFACE_SUPP_MAX),
+
+	REG_VARIABLE(CFG_NDP_KEEP_ALIVE_PERIOD, WLAN_PARAM_Integer,
+		     struct hdd_config, ndp_keep_alive_period,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_NDP_KEEP_ALIVE_PERIOD_DEFAULT,
+		     CFG_NDP_KEEP_ALIVE_PERIOD_MIN,
+		     CFG_NDP_KEEP_ALIVE_PERIOD_MAX),
+
+	REG_VARIABLE(CFG_SUPPORT_MP0_DISCOVERY, WLAN_PARAM_Integer,
+		     struct hdd_config, support_mp0_discovery,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_SUPPORT_MP0_DISCOVERY_DEFAULT,
+		     CFG_SUPPORT_MP0_DISCOVERY_MIN,
+		     CFG_SUPPORT_MP0_DISCOVERY_MAX),
 #endif
 
 	REG_VARIABLE(CFG_ENABLE_SELF_RECOVERY, WLAN_PARAM_Integer,
@@ -4259,6 +4287,13 @@ struct reg_table_entry g_registry_table[] = {
 			struct hdd_config, dp_trace_config,
 			VAR_FLAGS_OPTIONAL,
 			(void *) CFG_ENABLE_DP_TRACE_CONFIG_DEFAULT),
+
+	REG_VARIABLE(CFG_DP_PROTO_EVENT_BITMAP, WLAN_PARAM_HexInteger,
+		     struct hdd_config, dp_proto_event_bitmap,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_DP_PROTO_EVENT_BITMAP_DEFAULT,
+		     CFG_DP_PROTO_EVENT_BITMAP_MIN,
+		     CFG_DP_PROTO_EVENT_BITMAP_MAX),
 #endif
 
 	REG_VARIABLE(CFG_ADAPTIVE_SCAN_DWELL_MODE_NAME, WLAN_PARAM_Integer,
@@ -5294,6 +5329,13 @@ struct reg_table_entry g_registry_table[] = {
 		CFG_OCE_WAN_WEIGHTAGE_MIN,
 		CFG_OCE_WAN_WEIGHTAGE_MAX),
 
+	REG_VARIABLE(CFG_VENDOR_ROAM_SCORE_ALGORITHM_NAME, WLAN_PARAM_Integer,
+		struct hdd_config, vendor_roam_score_algorithm,
+		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		CFG_VENDOR_ROAM_SCORE_ALGORITHM_DEFAULT,
+		CFG_VENDOR_ROAM_SCORE_ALGORITHM_MIN,
+		CFG_VENDOR_ROAM_SCORE_ALGORITHM_MAX),
+
 	REG_VARIABLE(CFG_BEST_RSSI_THRESHOLD_NAME, WLAN_PARAM_Integer,
 		struct hdd_config, best_rssi_threshold,
 		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -5629,6 +5671,14 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_BTM_STICKY_TIME_DEFAULT,
 		     CFG_BTM_STICKY_TIME_MIN,
 		     CFG_BTM_STICKY_TIME_MAX),
+
+	REG_VARIABLE(CFG_BTM_QUERY_BITMASK_NAME,
+		     WLAN_PARAM_HexInteger, struct hdd_config,
+		     btm_query_bitmask,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_BTM_QUERY_BITMASK_DEFAULT,
+		     CFG_BTM_QUERY_BITMASK_MIN,
+		     CFG_BTM_QUERY_BITMASK_MAX),
 
 	REG_VARIABLE(CFG_ENABLE_GCMP_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, gcmp_enabled,
@@ -5984,6 +6034,13 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_ROAM_SCORE_DELTA_MIN,
 		     CFG_ROAM_SCORE_DELTA_MAX),
 
+	REG_VARIABLE(CFG_CAND_MIN_ROAM_SCORE_DELTA, WLAN_PARAM_Integer,
+		     struct hdd_config, min_roam_score_delta,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_CAND_MIN_ROAM_SCORE_DELTA_DEFAULT,
+		     CFG_CAND_MIN_ROAM_SCORE_DELTA_MIN,
+		     CFG_CAND_MIN_ROAM_SCORE_DELTA_MAX),
+
 	REG_VARIABLE(CFG_ROAM_TRIGGER_DELTA_BITMAP, WLAN_PARAM_Integer,
 		     struct hdd_config, roam_score_delta_bitmap,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -6153,6 +6210,122 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_ENABLE_PENDING_CHAN_LIST_REQ_DEFAULT,
 		     CFG_ENABLE_PENDING_CHAN_LIST_REQ_MIN,
 		     CFG_ENABLE_PENDING_CHAN_LIST_REQ_MAX),
+	REG_VARIABLE(CFG_NUM_VDEV_ENABLE_NAME, WLAN_PARAM_Integer,
+		     struct hdd_config, num_vdevs,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_NUM_VDEV_ENABLE_DEFAULT,
+		     CFG_NUM_VDEV_ENABLE_MIN,
+		     CFG_NUM_VDEV_ENABLE_MAX),
+
+#ifdef SAR_SAFETY_FEATURE
+	REG_VARIABLE(CFG_SAR_SAFETY_TIMEOUT, WLAN_PARAM_Integer,
+		     struct hdd_config, sar_safety_timeout,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_SAR_SAFETY_TIMEOUT_DEFAULT,
+		     CFG_SAR_SAFETY_TIMEOUT_MIN,
+		     CFG_SAR_SAFETY_TIMEOUT_MAX),
+
+	REG_VARIABLE(CFG_SAR_SAFETY_UNSOLICITED_TIMEOUT, WLAN_PARAM_Integer,
+		     struct hdd_config, sar_safety_unsolicited_timeout,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_SAR_SAFETY_UNSOLICITED_TIMEOUT_DEFAULT,
+		     CFG_SAR_SAFETY_UNSOLICITED_TIMEOUT_MIN,
+		     CFG_SAR_SAFETY_UNSOLICITED_TIMEOUT_MAX),
+
+	REG_VARIABLE(CFG_SAR_SAFETY_REQ_RESP_TIMEOUT, WLAN_PARAM_Integer,
+		     struct hdd_config, sar_safety_req_resp_timeout,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_SAR_SAFETY_REQ_RESP_TIMEOUT_DEFAULT,
+		     CFG_SAR_SAFETY_REQ_RESP_TIMEOUT_MIN,
+		     CFG_SAR_SAFETY_REQ_RESP_TIMEOUT_MAX),
+
+	REG_VARIABLE(CFG_SAR_SAFETY_REQ_RESP_RETRIES, WLAN_PARAM_Integer,
+		     struct hdd_config, sar_safety_req_resp_retry,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_SAR_SAFETY_REQ_RESP_RETRIES_DEFAULT,
+		     CFG_SAR_SAFETY_REQ_RESP_RETRIES_MIN,
+		     CFG_SAR_SAFETY_REQ_RESP_RETRIES_MAX),
+
+	REG_VARIABLE(CFG_SAR_SAFETY_INDEX, WLAN_PARAM_Integer,
+		     struct hdd_config, sar_safety_index,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_SAR_SAFETY_INDEX_DEFAULT,
+		     CFG_SAR_SAFETY_INDEX_MIN,
+		     CFG_SAR_SAFETY_INDEX_MAX),
+
+	REG_VARIABLE(CFG_SAR_SAFETY_SLEEP_INDEX, WLAN_PARAM_Integer,
+		     struct hdd_config, sar_safety_sleep_index,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_SAR_SAFETY_SLEEP_INDEX_DEFAULT,
+		     CFG_SAR_SAFETY_SLEEP_INDEX_MIN,
+		     CFG_SAR_SAFETY_SLEEP_INDEX_MAX),
+
+	REG_VARIABLE(CFG_ENABLE_SAR_SAFETY_FEATURE, WLAN_PARAM_Integer,
+		     struct hdd_config, enable_sar_safety,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_ENABLE_SAR_SAFETY_FEATURE_DEFAULT,
+		     CFG_ENABLE_SAR_SAFETY_FEATURE_MIN,
+		     CFG_ENABLE_SAR_SAFETY_FEATURE_MAX),
+
+	REG_VARIABLE(CFG_CONFIG_SAR_SAFETY_SLEEP_MODE_INDEX, WLAN_PARAM_Integer,
+		     struct hdd_config, config_sar_safety_sleep_index,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_CONFIG_SAR_SAFETY_SLEEP_MODE_INDEX_DEFAULT,
+		     CFG_CONFIG_SAR_SAFETY_SLEEP_MODE_INDEX_MIN,
+		     CFG_CONFIG_SAR_SAFETY_SLEEP_MODE_INDEX_MAX),
+#endif
+
+#ifdef WLAN_FEATURE_PKT_CAPTURE
+	REG_VARIABLE(CFG_PKT_CAPTURE_MODE, WLAN_PARAM_Integer,
+		     struct hdd_config, pkt_capture_mode,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_PKT_CAPTURE_MODE_DEFAULT,
+		     CFG_PKT_CAPTURE_MODE_MIN,
+		     CFG_PKT_CAPTURE_MODE_MAX),
+#endif
+
+	REG_VARIABLE(CFG_MWS_COEX_PCC_CHANNEL_AVOID_DELAY, WLAN_PARAM_Integer,
+		     struct hdd_config, mws_coex_pcc_channel_avoid_delay,
+		     VAR_FLAGS_OPTIONAL,
+		     CFG_MWS_COEX_PCC_CHANNEL_AVOID_DELAY_DEFAULT,
+		     CFG_MWS_COEX_PCC_CHANNEL_AVOID_DELAY_MIN,
+		     CFG_MWS_COEX_PCC_CHANNEL_AVOID_DELAY_MAX),
+
+	REG_VARIABLE(CFG_MWS_COEX_SCC_CHANNEL_AVOID_DELAY, WLAN_PARAM_Integer,
+		     struct hdd_config, mws_coex_scc_channel_avoid_delay,
+		     VAR_FLAGS_OPTIONAL,
+		     CFG_MWS_COEX_SCC_CHANNEL_AVOID_DELAY_DEFAULT,
+		     CFG_MWS_COEX_SCC_CHANNEL_AVOID_DELAY_MIN,
+		     CFG_MWS_COEX_SCC_CHANNEL_AVOID_DELAY_MAX),
+
+	REG_VARIABLE(CFG_DISABLE_4WAY_HS_OFFLOAD, WLAN_PARAM_Integer,
+		     struct hdd_config, disable_4way_hs_offload,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_DISABLE_4WAY_HS_OFFLOAD_DEFAULT,
+		     CFG_DISABLE_4WAY_HS_OFFLOAD_MIN,
+		     CFG_DISABLE_4WAY_HS_OFFLOAD_MAX),
+#ifdef FEATURE_WLAN_TIME_SYNC_FTM
+	REG_VARIABLE(CFG_ENABLE_TIME_SYNC_FTM, WLAN_PARAM_Integer,
+		     struct hdd_config, time_sync_ftm_enable,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_ENABLE_TIME_SYNC_FTM_DEFAULT,
+		     CFG_ENABLE_TIME_SYNC_FTM_MIN,
+		     CFG_ENABLE_TIME_SYNC_FTM_MAX),
+
+	REG_VARIABLE(CFG_TIME_SYNC_FTM_MODE, WLAN_PARAM_Integer,
+		     struct hdd_config, time_sync_ftm_mode,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_TIME_SYNC_FTM_MODE_DEFAULT,
+		     CFG_TIME_SYNC_FTM_MODE_MIN,
+		     CFG_TIME_SYNC_FTM_MODE_MAX),
+
+	REG_VARIABLE(CFG_TIME_SYNC_FTM_ROLE, WLAN_PARAM_Integer,
+		     struct hdd_config, time_sync_ftm_role,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_TIME_SYNC_FTM_ROLE_DEFAULT,
+		     CFG_TIME_SYNC_FTM_ROLE_MIN,
+		     CFG_TIME_SYNC_FTM_ROLE_MAX),
+#endif
 };
 
 /**
@@ -8154,6 +8327,8 @@ void hdd_cfg_print(struct hdd_context *hdd_ctx)
 		  hdd_ctx->config->btm_max_attempt_cnt);
 	hdd_debug("Name = [btm_sticky_time] value = [0x%x]",
 		  hdd_ctx->config->btm_sticky_time);
+	hdd_debug("Name = [btm_query_bitmask] value = [0x%x]",
+		  hdd_ctx->config->btm_query_bitmask);
 	hdd_debug("Name = [%s] value = [%d]",
 		  CFG_ENABLE_GCMP_NAME,
 		  hdd_ctx->config->gcmp_enabled);
@@ -8211,6 +8386,25 @@ void hdd_cfg_print(struct hdd_context *hdd_ctx)
 	hdd_debug("Name = [%s] Value = [%u]",
 		  CFG_ENABLE_RING_BUFFER,
 		  hdd_ctx->config->enable_ring_buffer);
+	hdd_debug("Name = [num_vdevs] value = [0x%x]",
+		  hdd_ctx->config->num_vdevs);
+	hdd_debug("Name = [%s] Value =[%x]",
+		  CFG_PKT_CAPTURE_MODE,
+		  hdd_ctx->config->pkt_capture_mode);
+	hdd_debug("Name = [%s] value = [%d]",
+		  CFG_DISABLE_4WAY_HS_OFFLOAD,
+		  hdd_ctx->config->disable_4way_hs_offload);
+#ifdef FEATURE_WLAN_TIME_SYNC_FTM
+	hdd_debug("Name = [%s] Value =[%d]",
+		  CFG_ENABLE_TIME_SYNC_FTM,
+		  hdd_ctx->config->time_sync_ftm_enable);
+	hdd_debug("Name = [%s] Value =[%d]",
+		  CFG_TIME_SYNC_FTM_MODE,
+		  hdd_ctx->config->time_sync_ftm_mode);
+	hdd_debug("Name = [%s] Value =[%d]",
+		  CFG_TIME_SYNC_FTM_ROLE,
+		  hdd_ctx->config->time_sync_ftm_role);
+#endif
 }
 
 /**
@@ -8572,7 +8766,7 @@ QDF_STATUS hdd_set_idle_ps_config(struct hdd_context *hdd_ctx, bool val)
 	hdd_debug("Enter Val %d", val);
 
 	if (hdd_ctx->imps_enabled == val) {
-		hdd_info("Already in the requested power state:%d", val);
+		hdd_nofl_debug("Already in the requested power state:%d", val);
 		return QDF_STATUS_SUCCESS;
 	}
 
@@ -8798,16 +8992,15 @@ static bool hdd_update_vht_cap_in_cfg(struct hdd_context *hdd_ctx)
 	if ((config->dot11Mode == eHDD_DOT11_MODE_AUTO) ||
 	    (config->dot11Mode == eHDD_DOT11_MODE_11ac_ONLY) ||
 	    (config->dot11Mode == eHDD_DOT11_MODE_11ac)) {
-		/* Currently shortGI40Mhz is used for shortGI80Mhz and 160MHz*/
 		if (sme_cfg_set_int(mac_handle, WNI_CFG_VHT_SHORT_GI_80MHZ,
-			config->ShortGI40MhzEnable) == QDF_STATUS_E_FAILURE) {
+			config->ShortGI80MhzEnable) == QDF_STATUS_E_FAILURE) {
 			status = false;
 			hdd_err("Couldn't pass WNI_VHT_SHORT_GI_80MHZ to CFG");
 		}
 
 		if (sme_cfg_set_int(mac_handle,
 			WNI_CFG_VHT_SHORT_GI_160_AND_80_PLUS_80MHZ,
-			config->ShortGI40MhzEnable) == QDF_STATUS_E_FAILURE) {
+			config->ShortGI160MhzEnable) == QDF_STATUS_E_FAILURE) {
 			status = false;
 			hdd_err("Couldn't pass SHORT_GI_160MHZ to CFG");
 		}
@@ -9363,6 +9556,8 @@ static void hdd_update_bss_score_params(struct hdd_config *config,
 	score_params->weight_cfg.channel_congestion_weightage =
 			config->channel_congestion_weightage;
 	score_params->weight_cfg.oce_wan_weightage = config->oce_wan_weightage;
+	score_params->weight_cfg.vendor_roam_score_algorithm =
+			config->vendor_roam_score_algorithm;
 
 	total_weight = score_params->weight_cfg.rssi_weightage +
 		       score_params->weight_cfg.ht_caps_weightage +
@@ -9407,6 +9602,8 @@ static void hdd_update_bss_score_params(struct hdd_config *config,
 		hdd_limit_max_per_index_score(config->band_weight_per_index);
 
 	score_params->roam_score_delta = config->roam_score_delta;
+	score_params->cand_min_roam_score_delta =
+				config->min_roam_score_delta;
 	score_params->roam_score_delta_bitmap = config->roam_score_delta_bitmap;
 
 	score_params->rssi_score.best_rssi_threshold =
@@ -10050,6 +10247,11 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 			hdd_ctx->config->btm_max_attempt_cnt;
 	smeConfig->csrConfig.btm_sticky_time =
 			hdd_ctx->config->btm_sticky_time;
+	smeConfig->csrConfig.btm_query_bitmask =
+			hdd_ctx->config->btm_query_bitmask;
+	smeConfig->csrConfig.disable_4way_hs_offload =
+			hdd_ctx->config->disable_4way_hs_offload;
+
 	hdd_update_bss_score_params(hdd_ctx->config,
 			&smeConfig->csrConfig.bss_score_params);
 

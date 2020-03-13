@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -49,7 +49,6 @@ QDF_STATUS pmo_core_del_wow_pattern(struct wlan_objmgr_vdev *vdev)
 	uint8_t pattern_count;
 	struct pmo_vdev_priv_obj *vdev_ctx;
 
-	pmo_enter();
 	status = pmo_vdev_get_ref(vdev);
 	if (QDF_IS_STATUS_ERROR(status))
 		goto out;
@@ -67,7 +66,6 @@ QDF_STATUS pmo_core_del_wow_pattern(struct wlan_objmgr_vdev *vdev)
 
 	pmo_vdev_put_ref(vdev);
 out:
-	pmo_exit();
 	return status;
 }
 
@@ -425,6 +423,9 @@ void pmo_set_sta_wow_bitmask(uint32_t *bitmask, uint32_t wow_bitmap_size)
 	 * Firmware will send WMI_ROAM_PREAUTH_STATUS_CMDID
 	 */
 	pmo_set_wow_event_bitmap(WOW_ROAM_PREAUTH_START_EVENT,
+				 wow_bitmap_size,
+				 bitmask);
+	pmo_set_wow_event_bitmap(WOW_ROAM_PMKID_REQUEST_EVENT,
 				 wow_bitmap_size,
 				 bitmask);
 }
