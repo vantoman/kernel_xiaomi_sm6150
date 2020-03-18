@@ -11,6 +11,7 @@
  * GNU General Public License for more details.
  */
 
+#define DEBUG
 #include <linux/module.h>
 #include <linux/slab.h>
 #include <linux/platform_device.h>
@@ -41,6 +42,7 @@
 
 #define WCD937X_VERSION_1_0 1
 #define WCD937X_VERSION_ENTRY_SIZE 32
+#define EAR_RX_PATH_AUX 1
 
 enum {
 	CODEC_TX = 0,
@@ -538,10 +540,33 @@ static int wcd937x_codec_ear_dac_event(struct snd_soc_dapm_widget *w,
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
 		wcd937x_rx_clk_enable(codec);
+#ifdef CONFIG_SND_SOC_FOR_ULTRASOUND_PATH
+		wcd937x->ear_rx_path =
+			snd_soc_read(codec, WCD937X_DIGITAL_CDC_EAR_PATH_CTL);
+		if (wcd937x->ear_rx_path & EAR_RX_PATH_AUX) {
+			snd_soc_update_bits(codec,
+					WCD937X_DIGITAL_CDC_AUX_GAIN_CTL,
+					0x01, 0x01);
+			snd_soc_update_bits(codec,
+					WCD937X_DIGITAL_CDC_DIG_CLK_CTL,
+					0x04, 0x04);
+			snd_soc_update_bits(codec,
+					WCD937X_ANA_EAR_COMPANDER_CTL,
+					0x80, 0x80);
+		} else {
+			snd_soc_update_bits(codec,
+					WCD937X_DIGITAL_CDC_HPH_GAIN_CTL,
+					0x04, 0x04);
+			snd_soc_update_bits(codec,
+					WCD937X_DIGITAL_CDC_DIG_CLK_CTL,
+					0x01, 0x01);
+		}
+#else
 		snd_soc_update_bits(codec, WCD937X_DIGITAL_CDC_HPH_GAIN_CTL,
 				    0x04, 0x04);
 		snd_soc_update_bits(codec, WCD937X_DIGITAL_CDC_DIG_CLK_CTL,
 				    0x01, 0x01);
+#endif
 		if (hph_mode == CLS_AB_HIFI || hph_mode == CLS_H_HIFI)
 			snd_soc_update_bits(codec,
 				WCD937X_HPH_NEW_INT_RDAC_HD2_CTL_L,
@@ -550,8 +575,10 @@ static int wcd937x_codec_ear_dac_event(struct snd_soc_dapm_widget *w,
 			snd_soc_update_bits(codec,
 				WCD937X_HPH_NEW_INT_RDAC_HD2_CTL_L,
 				0x0F, 0x06);
+#ifndef CONFIG_SND_SOC_FOR_ULTRASOUND_PATH
 		snd_soc_update_bits(codec, WCD937X_DIGITAL_CDC_COMP_CTL_0,
 				    0x02, 0x02);
+#endif
 		usleep_range(5000, 5010);
 		snd_soc_update_bits(codec, WCD937X_FLYBACK_EN,
 				    0x04, 0x00);
@@ -562,6 +589,14 @@ static int wcd937x_codec_ear_dac_event(struct snd_soc_dapm_widget *w,
 
 		break;
 	case SND_SOC_DAPM_POST_PMD:
+#ifdef CONFIG_SND_SOC_FOR_ULTRASOUND_PATH
+		if (wcd937x->ear_rx_path & EAR_RX_PATH_AUX)
+			snd_soc_update_bits(codec,
+					WCD937X_DIGITAL_CDC_AUX_GAIN_CTL,
+					0x01, 0x00);
+		snd_soc_update_bits(codec,
+				WCD937X_ANA_EAR_COMPANDER_CTL, 0x80, 0x00);
+#endif
 		if (hph_mode == CLS_AB_HIFI || hph_mode == CLS_H_LOHIFI ||
 		    hph_mode == CLS_H_HIFI)
 			snd_soc_update_bits(codec,
@@ -861,16 +896,37 @@ static int wcd937x_codec_enable_ear_pa(struct snd_soc_dapm_widget *w,
 		if (hph_mode == CLS_AB || hph_mode == CLS_AB_HIFI)
 			snd_soc_update_bits(codec, WCD937X_ANA_RX_SUPPLIES,
 					    0x02, 0x02);
+#ifdef CONFIG_SND_SOC_FOR_ULTRASOUND_PATH
+		if (wcd937x->ear_rx_path & EAR_RX_PATH_AUX) {
+			if (wcd937x->update_wcd_event)
+				wcd937x->update_wcd_event(wcd937x->handle,
+						WCD_BOLERO_EVT_RX_MUTE,
+						(WCD_RX3 << 0x10));
+		} else {
+			if (wcd937x->update_wcd_event)
+				wcd937x->update_wcd_event(wcd937x->handle,
+						WCD_BOLERO_EVT_RX_MUTE,
+						(WCD_RX1 << 0x10));
+		}
+#else
 		if (wcd937x->update_wcd_event)
 			wcd937x->update_wcd_event(wcd937x->handle,
 						WCD_BOLERO_EVT_RX_MUTE,
 						(WCD_RX1 << 0x10));
+#endif
 		break;
 	case SND_SOC_DAPM_PRE_PMD:
+#ifdef CONFIG_SND_SOC_FOR_ULTRASOUND_PATH
+		if (wcd937x->update_wcd_event)
+			wcd937x->update_wcd_event(wcd937x->handle,
+						WCD_BOLERO_EVT_RX_MUTE,
+						(WCD_RX3 << 0x10 | 0x1));
+#else
 		if (wcd937x->update_wcd_event)
 			wcd937x->update_wcd_event(wcd937x->handle,
 						WCD_BOLERO_EVT_RX_MUTE,
 						(WCD_RX1 << 0x10 | 0x1));
+#endif
 		break;
 	case SND_SOC_DAPM_POST_PMD:
 		if (!wcd937x->comp1_enable)
@@ -1197,6 +1253,9 @@ static int wcd937x_codec_enable_adc(struct snd_soc_dapm_widget *w,
 	case SND_SOC_DAPM_PRE_PMU:
 		mutex_lock(&wcd937x->ana_tx_clk_lock);
 		wcd937x->ana_clk_count++;
+#ifdef CONFIG_SND_SOC_FOR_ULTRASOUND_PATH
+		wcd937x->ana_adc_count++;
+#endif
 		mutex_unlock(&wcd937x->ana_tx_clk_lock);
 		snd_soc_update_bits(codec, WCD937X_DIGITAL_CDC_DIG_CLK_CTL,
 				    0x80, 0x80);
@@ -1213,6 +1272,21 @@ static int wcd937x_codec_enable_adc(struct snd_soc_dapm_widget *w,
 		wcd937x_tx_connect_port(codec, ADC1 + (w->shift), true);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
+#ifdef CONFIG_SND_SOC_FOR_ULTRASOUND_PATH
+		mutex_lock(&wcd937x->ana_tx_clk_lock);
+		wcd937x->ana_adc_count--;
+		mutex_unlock(&wcd937x->ana_tx_clk_lock);
+
+		dev_dbg(codec->dev, "%s SND_SOC_DAPM_POST_PMD, ana_adc_count=%d\n", __func__, wcd937x->ana_adc_count);
+
+		wcd937x_tx_connect_port(codec, ADC1 + (w->shift), false);
+		if (wcd937x->ana_adc_count <= 0) {
+			wcd937x->ana_adc_count = 0;
+			dev_dbg(codec->dev, "%s SND_SOC_DAPM_POST_PMD, ana_adc_count=%d, POWER DOWN\n", __func__, wcd937x->ana_adc_count);
+			snd_soc_update_bits(codec, WCD937X_DIGITAL_CDC_ANA_CLK_CTL,
+					0x08, 0x00);
+		}
+#else
 		wcd937x_tx_connect_port(codec, ADC1 + (w->shift), false);
 		if (w->shift == 1 &&
 			test_bit(AMIC2_BCS_ENABLE, &wcd937x->status_mask)) {
@@ -1221,6 +1295,7 @@ static int wcd937x_codec_enable_adc(struct snd_soc_dapm_widget *w,
 		}
 		snd_soc_update_bits(codec, WCD937X_DIGITAL_CDC_ANA_CLK_CTL,
 				    0x08, 0x00);
+#endif
 		break;
 	};
 
@@ -1238,11 +1313,17 @@ static int wcd937x_enable_req(struct snd_soc_dapm_widget *w,
 
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
+#ifdef CONFIG_SND_SOC_FOR_ULTRASOUND_PATH
+		mutex_lock(&wcd937x->ana_tx_clk_lock);
+		wcd937x->ana_tx_req_count++;
+		mutex_unlock(&wcd937x->ana_tx_clk_lock);
+#endif
 		snd_soc_update_bits(codec, WCD937X_DIGITAL_CDC_REQ_CTL,
 				    0x02, 0x02);
 		snd_soc_update_bits(codec, WCD937X_DIGITAL_CDC_REQ_CTL, 0x01,
 				    0x00);
 		snd_soc_update_bits(codec, WCD937X_ANA_TX_CH2, 0x40, 0x40);
+		snd_soc_update_bits(codec, WCD937X_ANA_TX_CH3, 0x40, 0x40);
 		snd_soc_update_bits(codec, WCD937X_ANA_TX_CH3_HPF, 0x40, 0x40);
 		snd_soc_update_bits(codec, WCD937X_DIGITAL_CDC_DIG_CLK_CTL,
 				    0x70, 0x70);
@@ -1250,13 +1331,34 @@ static int wcd937x_enable_req(struct snd_soc_dapm_widget *w,
 		snd_soc_update_bits(codec, WCD937X_ANA_TX_CH2, 0x40, 0x00);
 		snd_soc_update_bits(codec, WCD937X_ANA_TX_CH2, 0x80, 0x80);
 		snd_soc_update_bits(codec, WCD937X_ANA_TX_CH3, 0x80, 0x80);
+		snd_soc_update_bits(codec, WCD937X_ANA_TX_CH3_HPF, 0x80, 0x80);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
+#ifdef CONFIG_SND_SOC_FOR_ULTRASOUND_PATH
+		mutex_lock(&wcd937x->ana_tx_clk_lock);
+		wcd937x->ana_tx_req_count--;
+		mutex_unlock(&wcd937x->ana_tx_clk_lock);
+
+		dev_dbg(codec->dev, "%s SND_SOC_DAPM_POST_PMD, ana_tx_req_count=%d\n", __func__, wcd937x->ana_tx_req_count);
+
+		if (wcd937x->ana_tx_req_count <= 0) {
+			dev_dbg(codec->dev, "%s SND_SOC_DAPM_POST_PMD, ana_tx_req_count=%d, POWER DOWN\n", __func__, wcd937x->ana_tx_req_count);
+			wcd937x->ana_tx_req_count = 0;
+			snd_soc_update_bits(codec, WCD937X_ANA_TX_CH1, 0x80, 0x00);
+			snd_soc_update_bits(codec, WCD937X_ANA_TX_CH2, 0x80, 0x00);
+			snd_soc_update_bits(codec, WCD937X_ANA_TX_CH3, 0x80, 0x00);
+			snd_soc_update_bits(codec, WCD937X_ANA_TX_CH3_HPF, 0x80, 0x00);
+			snd_soc_update_bits(codec, WCD937X_DIGITAL_CDC_DIG_CLK_CTL,
+					0x10, 0x00);
+		}
+#else
 		snd_soc_update_bits(codec, WCD937X_ANA_TX_CH1, 0x80, 0x00);
 		snd_soc_update_bits(codec, WCD937X_ANA_TX_CH2, 0x80, 0x00);
 		snd_soc_update_bits(codec, WCD937X_ANA_TX_CH3, 0x80, 0x00);
+		snd_soc_update_bits(codec, WCD937X_ANA_TX_CH3_HPF, 0x80, 0x00);
 		snd_soc_update_bits(codec, WCD937X_DIGITAL_CDC_DIG_CLK_CTL,
 				    0x10, 0x00);
+#endif
 		mutex_lock(&wcd937x->ana_tx_clk_lock);
 		wcd937x->ana_clk_count--;
 		if (wcd937x->ana_clk_count <= 0) {
@@ -1711,8 +1813,8 @@ static const struct snd_kcontrol_new wcd937x_snd_controls[] = {
 	SOC_SINGLE_EXT("HPHR_COMP Switch", SND_SOC_NOPM, 1, 1, 0,
 		wcd937x_get_compander, wcd937x_set_compander),
 
-	SOC_SINGLE_TLV("HPHL Volume", WCD937X_HPH_L_EN, 0, 20, 1, line_gain),
-	SOC_SINGLE_TLV("HPHR Volume", WCD937X_HPH_R_EN, 0, 20, 1, line_gain),
+	SOC_SINGLE_TLV("HPHL Volume", WCD937X_HPH_L_EN, 0, 24, 1, line_gain),
+	SOC_SINGLE_TLV("HPHR Volume", WCD937X_HPH_R_EN, 0, 24, 1, line_gain),
 	SOC_SINGLE_TLV("ADC1 Volume", WCD937X_ANA_TX_CH1, 0, 20, 0, analog_gain),
 	SOC_SINGLE_TLV("ADC2 Volume", WCD937X_ANA_TX_CH2, 0, 20, 0, analog_gain),
 	SOC_SINGLE_TLV("ADC3 Volume", WCD937X_ANA_TX_CH3, 0, 20, 0, analog_gain),
