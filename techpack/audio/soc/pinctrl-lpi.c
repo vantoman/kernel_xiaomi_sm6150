@@ -483,6 +483,8 @@ static void lpi_gpio_dbg_show(struct seq_file *s, struct gpio_chip *chip)
 	unsigned int i;
 
 	for (i = 0; i < chip->ngpio; i++, gpio++) {
+		/* skip lpi gpio 0~7 and 12 ~ 17 */
+		if(i < 8 || (i > 11 && i < 18))continue;
 		lpi_gpio_dbg_show_one(s, NULL, chip, i, gpio);
 		seq_puts(s, "\n");
 	}

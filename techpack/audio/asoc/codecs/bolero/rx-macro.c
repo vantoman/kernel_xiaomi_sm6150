@@ -285,7 +285,9 @@ static int rx_macro_hw_params(struct snd_pcm_substream *substream,
 static int rx_macro_get_channel_map(struct snd_soc_dai *dai,
 				unsigned int *tx_num, unsigned int *tx_slot,
 				unsigned int *rx_num, unsigned int *rx_slot);
+#ifdef CONFIG_SND_SOC_FOR_ULTRASOUND_PATH
 static int rx_macro_digital_mute(struct snd_soc_dai *dai, int mute);
+#endif
 static int rx_macro_int_dem_inp_mux_put(struct snd_kcontrol *kcontrol,
 				     struct snd_ctl_elem_value *ucontrol);
 static int rx_macro_mux_get(struct snd_kcontrol *kcontrol,
@@ -580,7 +582,9 @@ static const struct snd_kcontrol_new rx_mix_tx0_mux =
 static struct snd_soc_dai_ops rx_macro_dai_ops = {
 	.hw_params = rx_macro_hw_params,
 	.get_channel_map = rx_macro_get_channel_map,
+#ifdef CONFIG_SND_SOC_FOR_ULTRASOUND_PATH
 	.digital_mute = rx_macro_digital_mute,
+#endif
 };
 
 static struct snd_soc_dai_driver rx_macro_dai[] = {
@@ -828,12 +832,26 @@ static int rx_macro_set_prim_interpolator_rate(struct snd_soc_dai *dai,
 
 			int_mux_cfg0_val = snd_soc_read(codec, int_mux_cfg0);
 			int_mux_cfg1_val = snd_soc_read(codec, int_mux_cfg1);
+#ifdef CONFIG_SND_SOC_FOR_ULTRASOUND_PATH
 			inp0_sel = int_mux_cfg0_val & 0x0F;
 			inp1_sel = (int_mux_cfg0_val >> 4) & 0x0F;
 			inp2_sel = (int_mux_cfg1_val >> 4) & 0x0F;
+#else
+			inp0_sel = int_mux_cfg0_val & 0x07;
+			inp1_sel = (int_mux_cfg0_val >> 4) & 0x038;
+			inp2_sel = (int_mux_cfg1_val >> 4) & 0x038;
+#endif
+
+#ifdef CONFIG_SND_SOC_FOR_ULTRASOUND_PATH
 			if ((inp0_sel == int_1_mix1_inp + INTn_1_INP_SEL_RX0) ||
 			    (inp1_sel == int_1_mix1_inp + INTn_1_INP_SEL_RX0) ||
 			    (inp2_sel == int_1_mix1_inp + INTn_1_INP_SEL_RX0)) {
+#else
+			if ((inp0_sel == int_1_mix1_inp) ||
+			    (inp1_sel == int_1_mix1_inp) ||
+			    (inp2_sel == int_1_mix1_inp)) {
+#endif
+
 				int_fs_reg = BOLERO_CDC_RX_RX0_RX_PATH_CTL +
 					     0x80 * j;
 				pr_debug("%s: AIF_PB DAI(%d) connected to INT%u_1\n",
@@ -878,9 +896,20 @@ static int rx_macro_set_mix_interpolator_rate(struct snd_soc_dai *dai,
 
 		int_mux_cfg1 = BOLERO_CDC_RX_INP_MUX_RX_INT0_CFG1;
 		for (j = 0; j < INTERP_MAX; j++) {
+#ifdef CONFIG_SND_SOC_FOR_ULTRASOUND_PATH
 			int_mux_cfg1_val = snd_soc_read(codec, int_mux_cfg1) &
 						0x0F;
+#else
+			int_mux_cfg1_val = snd_soc_read(codec, int_mux_cfg1) &
+						0x07;
+#endif
+
+#ifdef CONFIG_SND_SOC_FOR_ULTRASOUND_PATH
 			if (int_mux_cfg1_val == int_2_inp + INTn_2_INP_SEL_RX0) {
+#else
+			if (int_mux_cfg1_val == int_2_inp) {
+#endif
+
 				int_fs_reg = BOLERO_CDC_RX_RX0_RX_PATH_MIX_CTL +
 						0x80 * j;
 				pr_debug("%s: AIF_PB DAI(%d) connected to INT%u_2\n",
@@ -1007,6 +1036,7 @@ static int rx_macro_get_channel_map(struct snd_soc_dai *dai,
 			if (++i == RX_MACRO_MAX_DMA_CH_PER_PORT)
 				break;
 		}
+#ifdef CONFIG_SND_SOC_FOR_ULTRASOUND_PATH
 		/*
 		 * CDC_DMA_RX_0 port drives RX0/RX1 -- ch_mask 0x1/0x2/0x3
 		 * CDC_DMA_RX_1 port drives RX2/RX3 -- ch_mask 0x1/0x2/0x3
@@ -1024,6 +1054,10 @@ static int rx_macro_get_channel_map(struct snd_soc_dai *dai,
 			ch_mask = 0x1;
 		*rx_slot = ch_mask;
 		*rx_num = i;
+#else
+		*rx_slot = ch_mask;
+		*rx_num = rx_priv->active_ch_cnt[dai->id];
+#endif
 		break;
 	case RX_MACRO_AIF_ECHO:
 		val = snd_soc_read(codec,
@@ -1052,6 +1086,7 @@ static int rx_macro_get_channel_map(struct snd_soc_dai *dai,
 	return 0;
 }
 
+#ifdef CONFIG_SND_SOC_FOR_ULTRASOUND_PATH
 static int rx_macro_digital_mute(struct snd_soc_dai *dai, int mute)
 {
 	struct snd_soc_codec *codec = dai->codec;
@@ -1100,6 +1135,7 @@ static int rx_macro_digital_mute(struct snd_soc_dai *dai, int mute)
 	}
 	return 0;
 }
+#endif
 
 static int rx_macro_mclk_enable(struct rx_macro_priv *rx_priv,
 				 bool mclk_enable, bool dapm)
@@ -1473,6 +1509,10 @@ static int rx_macro_enable_mix_path(struct snd_soc_dapm_widget *w,
 		rx_macro_set_idle_detect_thr(codec, rx_priv, w->shift,
 					INTERP_MIX_PATH);
 		rx_macro_enable_interp_clk(codec, event, w->shift);
+#ifndef CONFIG_SND_SOC_FOR_ULTRASOUND_PATH
+		/* Clk enable */
+		snd_soc_update_bits(codec, mix_reg, 0x20, 0x20);
+#endif
 		break;
 	case SND_SOC_DAPM_POST_PMU:
 		snd_soc_write(codec, gain_reg,
@@ -1491,6 +1531,7 @@ static int rx_macro_enable_mix_path(struct snd_soc_dapm_widget *w,
 	return 0;
 }
 
+#ifdef CONFIG_SND_SOC_FOR_ULTRASOUND_PATH
 static bool rx_macro_adie_lb(struct snd_soc_codec *codec, int interp_idx)
 {
 	u16 int_mux_cfg0 = 0, int_mux_cfg1 = 0;
@@ -1525,6 +1566,7 @@ static bool rx_macro_adie_lb(struct snd_soc_codec *codec, int interp_idx)
 
 	return false;
 }
+#endif
 
 static int rx_macro_enable_main_path(struct snd_soc_dapm_widget *w,
 					struct snd_kcontrol *kcontrol,
@@ -1557,8 +1599,10 @@ static int rx_macro_enable_main_path(struct snd_soc_dapm_widget *w,
 		rx_macro_set_idle_detect_thr(codec, rx_priv, w->shift,
 						INTERP_MAIN_PATH);
 		rx_macro_enable_interp_clk(codec, event, w->shift);
+#ifdef CONFIG_SND_SOC_FOR_ULTRASOUND_PATH
 		if (rx_macro_adie_lb(codec, w->shift))
 			snd_soc_update_bits(codec, reg, 0x20, 0x20);
+#endif
 		break;
 	case SND_SOC_DAPM_POST_PMU:
 		snd_soc_write(codec, gain_reg,
@@ -2282,6 +2326,10 @@ static int rx_macro_enable_interp_clk(struct snd_soc_codec *codec,
 			/* Main path PGA mute enable */
 			snd_soc_update_bits(codec, main_reg, 0x10, 0x10);
 			snd_soc_update_bits(codec, dsm_reg, 0x01, 0x01);
+#ifndef CONFIG_SND_SOC_FOR_ULTRASOUND_PATH
+			/* Clk enable */
+			snd_soc_update_bits(codec, main_reg, 0x20, 0x20);
+#endif
 			snd_soc_update_bits(codec, rx_cfg2_reg, 0x03, 0x03);
 			rx_macro_idle_detect_control(codec, rx_priv,
 					interp_idx, event);
@@ -2339,18 +2387,24 @@ static int rx_macro_enable_rx_path_clk(struct snd_soc_dapm_widget *w,
 				  struct snd_kcontrol *kcontrol, int event)
 {
 	struct snd_soc_codec *codec = snd_soc_dapm_to_codec(w->dapm);
-	u16 sidetone_reg = 0, fs_reg = 0;
+	u16 sidetone_reg = 0;
+#ifdef CONFIG_SND_SOC_FOR_ULTRASOUND_PATH
+	u16 fs_reg = 0;
+#endif
 
 	dev_dbg(codec->dev, "%s %d %d\n", __func__, event, w->shift);
 	sidetone_reg = BOLERO_CDC_RX_RX0_RX_PATH_CFG1 +
 			RX_MACRO_RX_PATH_OFFSET * (w->shift);
+#ifdef CONFIG_SND_SOC_FOR_ULTRASOUND_PATH
 	fs_reg = BOLERO_CDC_RX_RX0_RX_PATH_CTL +
 			RX_MACRO_RX_PATH_OFFSET * (w->shift);
-
+#endif
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
 		rx_macro_enable_interp_clk(codec, event, w->shift);
+#ifdef CONFIG_SND_SOC_FOR_ULTRASOUND_PATH
 		snd_soc_update_bits(codec, fs_reg, 0x20, 0x20);
+#endif
 		snd_soc_update_bits(codec, sidetone_reg, 0x10, 0x10);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
@@ -3444,6 +3498,11 @@ static int rx_macro_init(struct snd_soc_codec *codec)
 	snd_soc_dapm_ignore_suspend(dapm, "RX_TX DEC3_INP");
 	snd_soc_dapm_sync(dapm);
 
+#ifndef CONFIG_SND_SOC_FOR_ULTRASOUND_PATH
+	snd_soc_update_bits(codec, BOLERO_CDC_RX_RX0_RX_PATH_DSM_CTL, 0x01, 0x01);
+	snd_soc_update_bits(codec, BOLERO_CDC_RX_RX1_RX_PATH_DSM_CTL, 0x01, 0x01);
+	snd_soc_update_bits(codec, BOLERO_CDC_RX_RX2_RX_PATH_DSM_CTL, 0x01, 0x01);
+#endif
 	snd_soc_update_bits(codec, BOLERO_CDC_RX_RX0_RX_PATH_SEC7, 0x07, 0x02);
 	snd_soc_update_bits(codec, BOLERO_CDC_RX_RX1_RX_PATH_SEC7, 0x07, 0x02);
 	snd_soc_update_bits(codec, BOLERO_CDC_RX_RX2_RX_PATH_SEC7, 0x07, 0x02);

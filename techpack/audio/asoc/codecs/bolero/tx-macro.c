@@ -752,7 +752,7 @@ static int tx_macro_enable_dec(struct snd_soc_dapm_widget *w,
 							CF_MIN_3DB_150HZ) {
 			schedule_delayed_work(
 					&tx_priv->tx_hpf_work[decimator].dwork,
-					msecs_to_jiffies(300));
+					msecs_to_jiffies(50));
 			snd_soc_update_bits(codec, hpf_gate_reg, 0x02, 0x02);
 			/*
 			 * Minimum 1 clk cycle delay is required as per HW spec

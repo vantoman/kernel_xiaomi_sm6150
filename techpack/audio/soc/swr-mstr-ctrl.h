@@ -172,6 +172,7 @@ struct swr_mstr_ctrl {
 	wait_queue_head_t pm_wq;
 	int wlock_holders;
 	u32 intr_mask;
+	bool swr_tx_wakeup_capable;
 	u32 swr_irq_wakeup_capable;
 };
 
