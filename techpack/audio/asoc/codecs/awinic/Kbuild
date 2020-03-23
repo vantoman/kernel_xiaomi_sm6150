@@ -11,8 +11,7 @@ endif
 ifeq ($(KERNEL_BUILD), 1)
 	# These are configurable via Kconfig for kernel-based builds
 	# Need to explicitly configure for Android-based builds
-	AUDIO_BLD_DIR := $(ANDROID_BUILD_TOP)/kernel/msm-4.14
-	AUDIO_ROOT := $(AUDIO_BLD_DIR)/techpack/audio
+	AUDIO_ROOT := techpack/audio
 endif
 
 ifeq ($(KERNEL_BUILD), 0)
@@ -70,13 +69,15 @@ ifdef CONFIG_SND_SMARTPA_AW882XX
 	AW882XX_OBJS += src/aw_bin_parse.o
 endif
 
-LINUX_INC += -Iinclude/linux
+LINUX_INC += -Iinclude/linux -Iinc
 
 INCS +=	$(COMMON_INC) \
 	$(UAPI_INC) \
-	$(TFA_INC)
+	$(TFA_INC) \
+	$(LINUX_INC)
 
 EXTRA_CFLAGS += $(INCS)
+ccflags-y += $(INCS)
 
 CDEFINES +=	-DANI_LITTLE_BYTE_ENDIAN \
 		-DANI_LITTLE_BIT_ENDIAN \
