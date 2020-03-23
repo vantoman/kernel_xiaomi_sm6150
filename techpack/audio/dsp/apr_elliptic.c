@@ -167,7 +167,7 @@ int32_t ultrasound_apr_set_parameter(int32_t port_id, uint32_t param_id,
 	u8 *user_params, int32_t length) {
 
 	int32_t  ret = 0;
-	uint32_t module_id;
+	uint32_t module_id = 0;
 
 	pr_err("%s: port_id %x, param_id %x, module_id %x\n",
 			__func__, port_id, param_id, module_id);

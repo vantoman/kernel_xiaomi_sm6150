@@ -664,7 +664,7 @@ int elliptic_calibration_param_put(
 
 	switch (mc->shift) {
 	case ELLIPTIC_CALIBRATION_STATE:
-	pr_err("[ELUS] %s: calibration_state=%d", __func__, ucontrol->value.integer.value[0]);
+	pr_err("[ELUS] %s: calibration_state=%ld", __func__, ucontrol->value.integer.value[0]);
 		elliptic_system_configuration_cache.calibration_state =
 			ucontrol->value.integer.value[0];
 
@@ -674,7 +674,7 @@ int elliptic_calibration_param_put(
 		break;
 
 	case ELLIPTIC_CALIBRATION_PROFILE:
-	pr_err("[ELUS] %s: calibration_profile=%d", __func__, ucontrol->value.integer.value[0]);
+	pr_err("[ELUS] %s: calibration_profile=%ld", __func__, ucontrol->value.integer.value[0]);
 		elliptic_system_configuration_cache.calibration_profile =
 			ucontrol->value.integer.value[0];
 
@@ -684,7 +684,7 @@ int elliptic_calibration_param_put(
 		break;
 
 	case ELLIPTIC_ULTRASOUND_GAIN:
-	pr_err("[ELUS] %s: calibration_gain=%d", __func__, ucontrol->value.integer.value[0]);
+	pr_err("[ELUS] %s: calibration_gain=%ld", __func__, ucontrol->value.integer.value[0]);
 		elliptic_system_configuration_cache.ultrasound_gain =
 			ucontrol->value.integer.value[0];
 		param.type = ESCPT_ULTRASOUND_GAIN;
