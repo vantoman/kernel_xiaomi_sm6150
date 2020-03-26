@@ -1286,8 +1286,8 @@ static int _init_global_pt(struct kgsl_mmu *mmu, struct kgsl_pagetable *pt)
 		goto done;
 	}
 	context_bank_number = cb_num;
-	if (!MMU_FEATURE(mmu, KGSL_MMU_GLOBAL_PAGETABLE) &&
-		scm_is_call_available(SCM_SVC_MP, CP_SMMU_APERTURE_ID)) {
+	if (kgsl_mmu_is_perprocess(mmu) && MMU_FEATURE(mmu,
+				KGSL_MMU_SMMU_APERTURE)) {
 		ret = kgsl_program_smmu_aperture();
 		if (ret) {
 			pr_err("SMMU aperture programming call failed with error %d\n",
