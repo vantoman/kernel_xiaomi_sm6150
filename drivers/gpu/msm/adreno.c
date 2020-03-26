@@ -1266,6 +1266,9 @@ static int adreno_probe(struct platform_device *pdev)
 		device->pwrctrl.cx_ipeak_gpu_freq =
 				adreno_dev->gpucore->cx_ipeak_gpu_freq;
 
+	if (adreno_is_a6xx(adreno_dev))
+		device->mmu.features |= KGSL_MMU_SMMU_APERTURE;
+
 	status = kgsl_device_platform_probe(device);
 	if (status) {
 		device->pdev = NULL;
