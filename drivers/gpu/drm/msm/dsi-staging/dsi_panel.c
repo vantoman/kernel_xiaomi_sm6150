@@ -25,9 +25,7 @@
 #include "dsi_ctrl_hw.h"
 #include "dsi_parser.h"
 
-#ifdef CONFIG_EXPOSURE_ADJUSTMENT
 #include "exposure_adjustment.h"
-#endif
 
 /**
  * topology is currently defined by a set of following 3 values:
@@ -848,12 +846,10 @@ int dsi_panel_set_fod_hbm(struct dsi_panel *panel, bool status)
 	int rc = 0;
 
 	if (status) {
-#ifdef CONFIG_EXPOSURE_ADJUSTMENT
 		if (ea_panel_is_enabled()) {
 			ea_panel_mode_ctrl(panel, 0);
 			panel->resend_ea = true;
 		}
-#endif
 		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_HBM_FOD_ON);
 		if (rc)
 			pr_err("[%s] failed to send DSI_CMD_SET_DISP_HBM_FOD_ON cmd, rc=%d\n",
@@ -865,12 +861,10 @@ int dsi_panel_set_fod_hbm(struct dsi_panel *panel, bool status)
 		if (rc)
 			pr_err("[%s] failed to send DSI_CMD_SET_DISP_HBM_FOD_OFF cmd, rc=%d\n",
 					panel->name, rc);
-#ifdef CONFIG_EXPOSURE_ADJUSTMENT
 		if (panel->resend_ea) {
 			ea_panel_mode_ctrl(panel, 1);
 			panel->resend_ea = false;
 		}
-#endif
 	}
 
 	return rc;
@@ -898,10 +892,8 @@ int dsi_panel_set_backlight(struct dsi_panel *panel, u32 bl_lvl)
 
 	pr_info("backlight type:%d lvl:%d\n", bl->type, bl_lvl);
 
-#ifdef CONFIG_EXPOSURE_ADJUSTMENT
-        if (bl_lvl > 0)
-                bl_lvl = ea_panel_calc_backlight(bl_lvl < bl_dc_min ? bl_dc_min : bl_lvl);
-#endif
+	if (bl_lvl > 0)
+		bl_lvl = ea_panel_calc_backlight(bl_lvl < bl_dc_min ? bl_dc_min : bl_lvl);
 
 	switch (bl->type) {
 	case DSI_BACKLIGHT_WLED:
