@@ -18,6 +18,7 @@
 #include <linux/utsname.h>
 #include <linux/mempolicy.h>
 #include <linux/debugfs.h>
+#include <linux/nmi.h>
 
 #include "sched.h"
 
