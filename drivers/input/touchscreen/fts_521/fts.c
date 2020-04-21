@@ -7675,12 +7675,10 @@ static int fts_probe(struct spi_device *client)
 
 	MI_TOUCH_LOGI(1, "%s %s:Probe Finished! \n", tag, __func__);
 	return OK;
-#ifdef CONFIG_FTS_TOUCH_COUNT_DUMP
 ProbeErrorExit_8:
 	device_destroy(info->fts_tp_class, 0x49);
 	class_destroy(info->fts_tp_class);
 	info->fts_tp_class = NULL;
-#endif
 ProbeErrorExit_7:
 #ifdef CONFIG_SECURE_TOUCH
 	fts_secure_remove(info);
@@ -7764,10 +7762,11 @@ static int fts_remove(struct spi_device *client)
 	}
 	sysfs_remove_file(&info->fts_touch_dev->kobj,
 			  &dev_attr_touch_suspend_notify.attr);
+#endif
+
 	device_destroy(info->fts_tp_class, DCHIP_ID_0);
 	class_destroy(info->fts_tp_class);
 	info->fts_tp_class = NULL;
-#endif
 
 	fts_enable_reg(info, false);
 	fts_get_reg(info, false);
