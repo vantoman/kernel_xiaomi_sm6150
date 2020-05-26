@@ -313,13 +313,13 @@
 					/* 20h----dimming off */
 					39 00 00 00 00 00 02 53 20
 					/* Enter FOD HBM Mode */
-					39 01 00 00 00 00 03 51 0F FF];
+					15 01 00 00 10 00 03 51 0F FF];
 				qcom,mdss-dsi-dispparam-hbm-fod-on-command-state = "dsi_hs_mode";
 				qcom,mdss-dsi-dispparam-hbm-fod-off-command = [
 					/* 20h----dimming off */
 					39 00 00 00 00 00 02 53 20
 					/* Exit FOD HBM Mode */
-					39 01 00 00 00 00 03 51 07 FF];
+					15 01 00 00 10 00 03 51 07 FF];
 				qcom,mdss-dsi-dispparam-hbm-fod-off-command-state = "dsi_hs_mode";
 			};
 		};
