@@ -17,8 +17,6 @@ enum FP_MODE {
 	GF_DEBUG_MODE = 0x56
 };
 
-#define SUPPORT_NAV_EVENT
-
 #if defined(SUPPORT_NAV_EVENT)
 #define GF_NAV_INPUT_UP				KEY_UP
 #define GF_NAV_INPUT_DOWN			KEY_DOWN
