@@ -585,7 +585,7 @@ static int _sde_connector_update_dirty_properties(
 	return 0;
 }
 
-void sde_connector_update_hbm(struct drm_connector *connector)
+void sde_connector_update_fod_hbm(struct drm_connector *connector)
 {
 	static atomic_t effective_status = ATOMIC_INIT(false);
 	struct sde_crtc_state *cstate;
@@ -651,7 +651,7 @@ int sde_connector_pre_kickoff(struct drm_connector *connector)
 
 	SDE_EVT32_VERBOSE(connector->base.id);
 
-	sde_connector_update_hbm(connector);
+	sde_connector_update_fod_hbm(connector);
 
 	rc = c_conn->ops.pre_kickoff(connector, c_conn->display, &params);
 
