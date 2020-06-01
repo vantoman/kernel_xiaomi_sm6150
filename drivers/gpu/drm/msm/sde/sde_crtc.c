@@ -3058,23 +3058,11 @@ static void sde_crtc_frame_event_work(struct kthread_work *work)
 void sde_crtc_complete_commit(struct drm_crtc *crtc,
 		struct drm_crtc_state *old_state)
 {
-	struct sde_crtc_state *cstate;
-	struct dsi_display *display;
 	struct sde_crtc *sde_crtc;
-	bool status;
 
 	if (!crtc || !crtc->state) {
 		SDE_ERROR("invalid crtc\n");
 		return;
-	}
-
-	display = get_main_display();
-	if (display) {
-		cstate = to_sde_crtc_state(crtc->state);
-		status = cstate->fod_dim_layer != NULL;
-		dsi_display_set_fod_ui(display, status);
-	} else {
-		SDE_ERROR("Invalid primary display\n");
 	}
 
 	sde_crtc = to_sde_crtc(crtc);

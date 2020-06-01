@@ -5200,10 +5200,7 @@ static int dsi_display_sysfs_deinit(struct dsi_display *display)
 void dsi_display_set_fod_ui(struct dsi_display *display, bool status)
 {
 	struct device *dev = &display->pdev->dev;
-
-	if (atomic_xchg(&display->fod_ui, status) == status)
-		return;
-
+	atomic_set(&display->fod_ui, status);
 	sysfs_notify(&dev->kobj, NULL, "fod_ui");
 }
 
