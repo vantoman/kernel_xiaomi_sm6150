@@ -3017,7 +3017,7 @@ static bool allow_direct_reclaim(pg_data_t *pgdat)
 
 	/* kswapd must be awake if processes are being throttled */
 	if (!wmark_ok && waitqueue_active(&pgdat->kswapd_wait)) {
-		pgdat->kswapd_classzone_idx = min(pgdat->kswapd_classzone_idx,
+		pgdat->kswapd_highest_zoneidx = min(pgdat->kswapd_highest_zoneidx,
 						(enum zone_type)ZONE_NORMAL);
 		wake_up_interruptible(&pgdat->kswapd_wait);
 	}
@@ -3266,27 +3266,27 @@ static void age_active_anon(struct pglist_data *pgdat,
 
 /*
  * Returns true if there is an eligible zone balanced for the request order
- * and classzone_idx
+ * and highest_zoneidx
  */
-static bool pgdat_balanced(pg_data_t *pgdat, int order, int classzone_idx)
+static bool pgdat_balanced(pg_data_t *pgdat, int order, int highest_zoneidx)
 {
 	int i;
 	unsigned long mark = -1;
 	struct zone *zone;
 
-	for (i = 0; i <= classzone_idx; i++) {
+	for (i = 0; i <= highest_zoneidx; i++) {
 		zone = pgdat->node_zones + i;
 
 		if (!managed_zone(zone))
 			continue;
 
 		mark = high_wmark_pages(zone);
-		if (zone_watermark_ok_safe(zone, order, mark, classzone_idx))
+		if (zone_watermark_ok_safe(zone, order, mark, highest_zoneidx))
 			return true;
 	}
 
 	/*
-	 * If a node has no populated zone within classzone_idx, it does not
+	 * If a node has no populated zone within highest_zoneidx, it does not
 	 * need balancing by definition. This can happen if a zone-restricted
 	 * allocation tries to wake a remote kswapd.
 	 */
@@ -3310,7 +3310,8 @@ static void clear_pgdat_congested(pg_data_t *pgdat)
  *
  * Returns true if kswapd is ready to sleep
  */
-static bool prepare_kswapd_sleep(pg_data_t *pgdat, int order, int classzone_idx)
+static bool prepare_kswapd_sleep(pg_data_t *pgdat, int order,
+				int highest_zoneidx)
 {
 	/*
 	 * The throttled processes are normally woken up in balance_pgdat() as
@@ -3332,7 +3333,7 @@ static bool prepare_kswapd_sleep(pg_data_t *pgdat, int order, int classzone_idx)
 	if (pgdat->kswapd_failures >= MAX_RECLAIM_RETRIES)
 		return true;
 
-	if (pgdat_balanced(pgdat, order, classzone_idx)) {
+	if (pgdat_balanced(pgdat, order, highest_zoneidx)) {
 		clear_pgdat_congested(pgdat);
 		return true;
 	}
@@ -3415,7 +3416,7 @@ reclaim:
  * or lower is eligible for reclaim until at least one usable zone is
  * balanced.
  */
-static int balance_pgdat(pg_data_t *pgdat, int order, int classzone_idx)
+static int balance_pgdat(pg_data_t *pgdat, int order, int highest_zoneidx)
 {
 	int i;
 	unsigned long nr_soft_reclaimed;
@@ -3437,7 +3438,7 @@ static int balance_pgdat(pg_data_t *pgdat, int order, int classzone_idx)
 		unsigned long nr_reclaimed = sc.nr_reclaimed;
 		bool raise_priority = true;
 
-		sc.reclaim_idx = classzone_idx;
+		sc.reclaim_idx = highest_zoneidx;
 
 		/*
 		 * If the number of buffer_heads exceeds the maximum allowed
@@ -3465,7 +3466,7 @@ static int balance_pgdat(pg_data_t *pgdat, int order, int classzone_idx)
 		 * sc.reclaim_idx is not used as buffer_heads_over_limit may
 		 * have adjusted it.
 		 */
-		if (pgdat_balanced(pgdat, sc.order, classzone_idx))
+		if (pgdat_balanced(pgdat, sc.order, highest_zoneidx))
 			goto out;
 
 		/*
@@ -3536,22 +3537,22 @@ out:
 }
 
 /*
- * The pgdat->kswapd_classzone_idx is used to pass the highest zone index to be
- * reclaimed by kswapd from the waker. If the value is MAX_NR_ZONES which is not
- * a valid index then either kswapd runs for first time or kswapd couldn't sleep
- * after previous reclaim attempt (node is still unbalanced). In that case
- * return the zone index of the previous kswapd reclaim cycle.
+ * The pgdat->kswapd_highest_zoneidx is used to pass the highest zone index to
+ * be reclaimed by kswapd from the waker. If the value is MAX_NR_ZONES which is
+ * not a valid index then either kswapd runs for first time or kswapd couldn't
+ * sleep after previous reclaim attempt (node is still unbalanced). In that
+ * case return the zone index of the previous kswapd reclaim cycle.
  */
-static enum zone_type kswapd_classzone_idx(pg_data_t *pgdat,
-					   enum zone_type prev_classzone_idx)
+static enum zone_type kswapd_highest_zoneidx(pg_data_t *pgdat,
+					   enum zone_type prev_highest_zoneidx)
 {
-	if (pgdat->kswapd_classzone_idx == MAX_NR_ZONES)
-		return prev_classzone_idx;
-	return pgdat->kswapd_classzone_idx;
+	if (pgdat->kswapd_highest_zoneidx == MAX_NR_ZONES)
+		return prev_highest_zoneidx;
+	return pgdat->kswapd_highest_zoneidx;
 }
 
 static void kswapd_try_to_sleep(pg_data_t *pgdat, int alloc_order, int reclaim_order,
-				unsigned int classzone_idx)
+				unsigned int highest_zoneidx)
 {
 	long remaining = 0;
 	DEFINE_WAIT(wait);
@@ -3568,7 +3569,7 @@ static void kswapd_try_to_sleep(pg_data_t *pgdat, int alloc_order, int reclaim_o
 	 * eligible zone balanced that it's also unlikely that compaction will
 	 * succeed.
 	 */
-	if (prepare_kswapd_sleep(pgdat, reclaim_order, classzone_idx)) {
+	if (prepare_kswapd_sleep(pgdat, reclaim_order, highest_zoneidx)) {
 		/*
 		 * Compaction records what page blocks it recently failed to
 		 * isolate pages from and skips them in the future scanning.
@@ -3581,17 +3582,17 @@ static void kswapd_try_to_sleep(pg_data_t *pgdat, int alloc_order, int reclaim_o
 		 * We have freed the memory, now we should compact it to make
 		 * allocation of the requested order possible.
 		 */
-		wakeup_kcompactd(pgdat, alloc_order, classzone_idx);
+		wakeup_kcompactd(pgdat, alloc_order, highest_zoneidx);
 
 		remaining = schedule_timeout(HZ/10);
 
 		/*
-		 * If woken prematurely then reset kswapd_classzone_idx and
+		 * If woken prematurely then reset kswapd_highest_zoneidx and
 		 * order. The values will either be from a wakeup request or
 		 * the previous request that slept prematurely.
 		 */
 		if (remaining) {
-			pgdat->kswapd_classzone_idx = kswapd_classzone_idx(pgdat, classzone_idx);
+			pgdat->kswapd_highest_zoneidx = kswapd_highest_zoneidx(pgdat, highest_zoneidx);
 			pgdat->kswapd_order = max(pgdat->kswapd_order, reclaim_order);
 		}
 
@@ -3604,7 +3605,7 @@ static void kswapd_try_to_sleep(pg_data_t *pgdat, int alloc_order, int reclaim_o
 	 * go fully to sleep until explicitly woken up.
 	 */
 	if (!remaining &&
-	    prepare_kswapd_sleep(pgdat, reclaim_order, classzone_idx)) {
+	    prepare_kswapd_sleep(pgdat, reclaim_order, highest_zoneidx)) {
 		trace_mm_vmscan_kswapd_sleep(pgdat->node_id);
 
 		/*
@@ -3646,7 +3647,7 @@ static void kswapd_try_to_sleep(pg_data_t *pgdat, int alloc_order, int reclaim_o
 static int kswapd(void *p)
 {
 	unsigned int alloc_order, reclaim_order;
-	unsigned int classzone_idx = MAX_NR_ZONES - 1;
+	unsigned int highest_zoneidx = MAX_NR_ZONES - 1;
 	pg_data_t *pgdat = (pg_data_t*)p;
 	struct task_struct *tsk = current;
 
@@ -3675,22 +3676,23 @@ static int kswapd(void *p)
 	set_freezable();
 
 	pgdat->kswapd_order = 0;
-	pgdat->kswapd_classzone_idx = MAX_NR_ZONES;
+	pgdat->kswapd_highest_zoneidx = MAX_NR_ZONES;
 	for ( ; ; ) {
 		bool ret;
 
 		alloc_order = reclaim_order = pgdat->kswapd_order;
-		classzone_idx = kswapd_classzone_idx(pgdat, classzone_idx);
+		highest_zoneidx = kswapd_highest_zoneidx(pgdat,
+							highest_zoneidx);
 
 kswapd_try_sleep:
 		kswapd_try_to_sleep(pgdat, alloc_order, reclaim_order,
-					classzone_idx);
+					highest_zoneidx);
 
-		/* Read the new order and classzone_idx */
+		/* Read the new order and highest_zoneidx */
 		alloc_order = reclaim_order = pgdat->kswapd_order;
-		classzone_idx = kswapd_classzone_idx(pgdat, classzone_idx);
+		highest_zoneidx = kswapd_highest_zoneidx(pgdat, highest_zoneidx);
 		pgdat->kswapd_order = 0;
-		pgdat->kswapd_classzone_idx = MAX_NR_ZONES;
+		pgdat->kswapd_highest_zoneidx = MAX_NR_ZONES;
 
 		ret = try_to_freeze();
 		if (kthread_should_stop())
@@ -3711,10 +3713,10 @@ kswapd_try_sleep:
 		 * but kcompactd is woken to compact for the original
 		 * request (alloc_order).
 		 */
-		trace_mm_vmscan_kswapd_wake(pgdat->node_id, classzone_idx,
+		trace_mm_vmscan_kswapd_wake(pgdat->node_id, highest_zoneidx,
 						alloc_order);
 		fs_reclaim_acquire(GFP_KERNEL);
-		reclaim_order = balance_pgdat(pgdat, alloc_order, classzone_idx);
+		reclaim_order = balance_pgdat(pgdat, alloc_order, highest_zoneidx);
 		fs_reclaim_release(GFP_KERNEL);
 		if (reclaim_order < alloc_order)
 			goto kswapd_try_sleep;
@@ -3734,7 +3736,7 @@ kswapd_try_sleep:
  * needed.
  */
 void wakeup_kswapd(struct zone *zone, gfp_t gfp_flags, int order,
-		   enum zone_type classzone_idx)
+		   enum zone_type highest_zoneidx)
 {
 	pg_data_t *pgdat;
 
@@ -3745,18 +3747,18 @@ void wakeup_kswapd(struct zone *zone, gfp_t gfp_flags, int order,
 		return;
 	pgdat = zone->zone_pgdat;
 
-	if (pgdat->kswapd_classzone_idx == MAX_NR_ZONES)
-		pgdat->kswapd_classzone_idx = classzone_idx;
+	if (pgdat->kswapd_highest_zoneidx == MAX_NR_ZONES)
+		pgdat->kswapd_highest_zoneidx = highest_zoneidx;
 	else
-		pgdat->kswapd_classzone_idx = max(pgdat->kswapd_classzone_idx,
-						  classzone_idx);
+		pgdat->kswapd_highest_zoneidx = max(pgdat->kswapd_highest_zoneidx,
+						  highest_zoneidx);
 	pgdat->kswapd_order = max(pgdat->kswapd_order, order);
 	if (!waitqueue_active(&pgdat->kswapd_wait))
 		return;
 
 	/* Hopeless node, leave it to direct reclaim if possible */
 	if (pgdat->kswapd_failures >= MAX_RECLAIM_RETRIES ||
-	    pgdat_balanced(pgdat, order, classzone_idx)) {
+	    pgdat_balanced(pgdat, order, highest_zoneidx)) {
 		/*
 		 * There may be plenty of free memory available, but it's too
 		 * fragmented for high-order allocations.  Wake up kcompactd
@@ -3765,11 +3767,11 @@ void wakeup_kswapd(struct zone *zone, gfp_t gfp_flags, int order,
 		 * ratelimit its work.
 		 */
 		if (!(gfp_flags & __GFP_DIRECT_RECLAIM))
-			wakeup_kcompactd(pgdat, order, classzone_idx);
+			wakeup_kcompactd(pgdat, order, highest_zoneidx);
 		return;
 	}
 
-	trace_mm_vmscan_wakeup_kswapd(pgdat->node_id, classzone_idx, order,
+	trace_mm_vmscan_wakeup_kswapd(pgdat->node_id, highest_zoneidx, order,
 				      gfp_flags);
 	wake_up_interruptible(&pgdat->kswapd_wait);
 }
