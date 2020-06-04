@@ -35,6 +35,7 @@ ifeq ($(CONFIG_ICNSS), y)
 	CONFIG_HELIUMPLUS := y
 	CONFIG_64BIT_PADDR := y
 	CONFIG_FEATURE_TSO := y
+	CONFIG_FEATURE_TSO_DEBUG := y
 	ifeq ($(CONFIG_INET_LRO), y)
 		CONFIG_WLAN_LRO := y
 	else
@@ -183,8 +184,9 @@ ifeq ($(CONFIG_ROME_IF),usb)
 	CONFIG_LINUX_QCMBR :=y
 endif
 
-CONFIG_MPC_UT_FRAMEWORK := n
-CONFIG_FEATURE_EPPING := n
+CONFIG_MPC_UT_FRAMEWORK := y
+
+CONFIG_FEATURE_EPPING := y
 
 #Flag to enable offload packets feature
 CONFIG_WLAN_OFFLOAD_PACKETS := y
@@ -297,10 +299,35 @@ CONFIG_DP_INTR_POLL_BASED := y
 CONFIG_TX_PER_PDEV_DESC_POOL := y
 CONFIG_DP_TRACE := y
 CONFIG_FEATURE_TSO := y
+CONFIG_TSO_DEBUG_LOG_ENABLE := y
 CONFIG_DP_LFR := y
 CONFIG_HTT_PADDR64 := y
 CONFIG_RX_OL := y
 CONFIG_TX_TID_OVERRIDE := y
+endif
+
+# As per target team, build is done as follows:
+# Defconfig : build with default flags
+# Slub      : defconfig  + CONFIG_SLUB_DEBUG=y +
+#	      CONFIG_SLUB_DEBUG_ON=y + CONFIG_PAGE_POISONING=y
+# Perf      : Using appropriate msmXXXX-perf_defconfig
+#
+# Shipment builds (user variants) should not have any debug feature
+# enabled. This is identified using 'TARGET_BUILD_VARIANT'. Slub builds
+# are identified using the CONFIG_SLUB_DEBUG_ON configuration. Since
+# there is no other way to identify defconfig builds, QCOMs internal
+# representation of perf builds (identified using the string 'perf'),
+# is used to identify if the build is a slub or defconfig one. This
+# way no critical debug feature will be enabled for perf and shipment
+# builds. Other OEMs are also protected using the TARGET_BUILD_VARIANT
+# config.
+ifneq ($(TARGET_BUILD_VARIANT),user)
+	ifeq ($(CONFIG_LITHIUM), y)
+		CONFIG_FEATURE_PKTLOG := n
+	else
+		CONFIG_FEATURE_PKTLOG := y
+	endif
+	CONFIG_WLAN_DEBUG_CRASH_INJECT := y
 endif
 
 #Enable WLAN/Power debugfs feature only if debug_fs is enabled
@@ -317,17 +344,10 @@ endif
 # Feature flags which are not (currently) configurable via Kconfig
 
 #Whether to build debug version
-BUILD_DEBUG_VERSION := n
+BUILD_DEBUG_VERSION := y
 
 #Enable this flag to build driver in diag version
-BUILD_DIAG_VERSION := n
-
-# Debug specific features
-CONFIG_FEATURE_TSO_DEBUG := n
-CONFIG_WLAN_NAPI_DEBUG := n
-CONFIG_WLAN_FEATURE_P2P_DEBUG := n
-CONFIG_FEATURE_FW_LOG_PARSING := n
-CONFIG_DP_TRACE := n
+BUILD_DIAG_VERSION := y
 
 ifeq ($(CONFIG_SLUB_DEBUG), y)
 	PANIC_ON_BUG := y
@@ -345,6 +365,7 @@ CONFIG_WLAN_LOG_FATAL := y
 CONFIG_WLAN_LOG_ERROR := y
 CONFIG_WLAN_LOG_WARN := y
 CONFIG_WLAN_LOG_INFO := y
+CONFIG_WLAN_LOG_DEBUG := y
 
 #Enable OL debug and wmi unified functions
 CONFIG_ATH_PERF_PWR_OFFLOAD := y
@@ -504,7 +525,7 @@ CONFIG_QCA_SIGNED_SPLIT_BINARY_SUPPORT := n
 CONFIG_QCA_SINGLE_BINARY_SUPPORT := n
 
 #Enable collecting target RAM dump after kernel panic
-CONFIG_TARGET_RAMDUMP_AFTER_KERNEL_PANIC := n
+CONFIG_TARGET_RAMDUMP_AFTER_KERNEL_PANIC := y
 
 #Flag to enable/disable secure firmware feature
 CONFIG_FEATURE_SECURE_FIRMWARE := n
@@ -516,13 +537,19 @@ CONFIG_FEATURE_STATS_EXT := y
 CONFIG_FEATURE_HTC_CREDIT_HISTORY := y
 
 #Flag to enable MTRACE feature
-CONFIG_TRACE_RECORD_FEATURE := n
+CONFIG_TRACE_RECORD_FEATURE := y
+
+#Flag to enable p2p debug feature
+CONFIG_WLAN_FEATURE_P2P_DEBUG := y
 
 #Flag to enable DFS Master feature
 CONFIG_WLAN_DFS_MASTER_ENABLE := y
 
+#Flag to enable/disable MTRACE feature
+CONFIG_ENABLE_MTRACE_LOG := y
+
 #Flag to enable nud tracking feature
-CONFIG_WLAN_NUD_TRACKING := n
+CONFIG_WLAN_NUD_TRACKING := y
 
 #Flag to enable wbuff feature
 CONFIG_WLAN_WBUFF := y
@@ -542,11 +569,14 @@ ifneq ($(CONFIG_WIFI_POS_CONVERGED), y)
 CONFIG_WIFI_POS_LEGACY := y
 endif
 
-CONFIG_CP_STATS := n
+CONFIG_CP_STATS := y
 
 CONFIG_FEATURE_WLAN_WAPI := y
 
 CONFIG_AGEIE_ON_SCAN_RESULTS := y
+
+#Flag to enable FW log parsing support feature
+CONFIG_FEATURE_FW_LOG_PARSING := y
 
 CONFIG_PTT_SOCK_SVC_ENABLE := y
 CONFIG_SOFTAP_CHANNEL_RANGE := y
@@ -556,7 +586,7 @@ CONFIG_WLAN_NS_OFFLOAD := y
 CONFIG_FEATURE_WLAN_RA_FILTERING:= y
 CONFIG_FEATURE_WLAN_LPHB := y
 CONFIG_QCA_SUPPORT_TX_THROTTLE := y
-CONFIG_WMI_INTERFACE_EVENT_LOGGING := n
+CONFIG_WMI_INTERFACE_EVENT_LOGGING := y
 CONFIG_WLAN_FEATURE_LINK_LAYER_STATS := y
 CONFIG_FEATURE_WLAN_EXTSCAN := y
 CONFIG_160MHZ_SUPPORT := y
@@ -572,9 +602,7 @@ CONFIG_CONVERGED_TDLS_ENABLE := y
 CONFIG_WLAN_CONV_SPECTRAL_ENABLE := y
 CONFIG_WLAN_SPECTRAL_ENABLE := y
 CONFIG_WMI_CMD_STRINGS := y
-CONFIG_FEATURE_MONITOR_MODE_SUPPORT := n
-CONFIG_DESC_DUP_DETECT_DEBUG := n
-CONFIG_DEBUG_RX_RING_BUFFER := n
+CONFIG_FEATURE_MONITOR_MODE_SUPPORT := y
 CONFIG_WLAN_FEATURE_TWT := y
 
 ifeq ($(CONFIG_HELIUMPLUS), y)
@@ -597,6 +625,9 @@ ifeq ($(CONFIG_LITHIUM), y)
 	CONFIG_FEATURE_UNIT_TEST_SUSPEND := y
 endif
 
+#Flag to enable hdd memory dump feature
+CONFIG_FEATURE_MEMDUMP_ENABLE := y
+
 #Flag to enable/disable WLAN D0-WOW
 ifeq ($(CONFIG_PCI_MSM), y)
 ifeq ($(CONFIG_HIF_PCI), y)
@@ -617,8 +648,18 @@ ifeq ($(CONFIG_ARCH_MSM8996), y)
 CONFIG_CHANNEL_HOPPING_ALL_BANDS := y
 endif
 
-CONFIG_WLAN_LOGGING_SOCK_SVC := n
-CONFIG_FEATURE_BECN_STATS := n
+ifneq ($(CONFIG_HIF_USB), y)
+CONFIG_WLAN_LOGGING_SOCK_SVC := y
+endif
+
+ifneq ($(TARGET_BUILD_VARIANT),user)
+CONFIG_DESC_DUP_DETECT_DEBUG := y
+CONFIG_DEBUG_RX_RING_BUFFER := y
+endif
+
+CONFIG_DP_TRACE := y
+#Enable Beacon Reception Stats
+CONFIG_FEATURE_BECN_STATS := y
 
 #enable MPTA helper for QCS405
 ifeq ($(CONFIG_ARCH_QCS405), y)
