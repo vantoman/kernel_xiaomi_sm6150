@@ -14153,9 +14153,6 @@ static int hdd_driver_load(void)
 
 pld_deinit:
 	pld_deinit();
-	/* Wait for any ref taken on /dev/wlan to be released */
-	while (qdf_atomic_read(&wlan_hdd_state_fops_ref))
-		;
 wakelock_destroy:
 	qdf_wake_lock_destroy(&wlan_wake_lock);
 comp_deinit:
