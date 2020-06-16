@@ -5414,10 +5414,11 @@ static int smblib_handle_usb_current(struct smb_charger *chg,
 				&& (usb_current == SUSPEND_CURRENT_UA))
 		is_float = true;
 
-	if (((usb_current < USBIN_500MA) && (usb_current > 0))
-			|| (usb_current == USBIN_900MA))
-	{
-		usb_current = USBIN_500MA;
+	if (chg->real_charger_type == POWER_SUPPLY_TYPE_USB) {
+		if (usb_current > 0 && usb_current < USBIN_500MA)
+			usb_current = USBIN_500MA;
+		else if (usb_current >= USBIN_500MA && usb_current < USBIN_900MA)
+			usb_current = USBIN_900MA;
 	}
 
 	if (chg->real_charger_type == POWER_SUPPLY_TYPE_USB_FLOAT) {
