@@ -146,7 +146,7 @@ enum print_reason {
 #define PD_MICRO_7P5V	7500000
 #define PD_MICRO_8P5V	8500000
 #define PD_MICRO_9V		9000000
-#define ICL_LIMIT_LEVEL_THR		4
+#define ICL_LIMIT_LEVEL_THR		15
 
 /* defined for qc2_unsupported */
 #define QC2_UNSUPPORTED_UA		1800000
