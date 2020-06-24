@@ -4732,12 +4732,8 @@ int dsi_panel_apply_hbm_mode(struct dsi_panel *panel)
 
 	if (panel->hbm_mode >= 0 && panel->hbm_mode < ARRAY_SIZE(type_map))
 		type = type_map[panel->hbm_mode];
-  else
-#ifdef CONFIG_MACH_XIAOMI_F10
-		type = DSI_CMD_SET_DISP_HBM_FOD_OFF;
-#else
-		type = DSI_CMD_SET_DISP_LCD_HBM_OFF;
-#endif
+	else
+		type = type_map[0];
 
 	mutex_lock(&panel->panel_lock);
 	rc = dsi_panel_tx_cmd_set(panel, type);
