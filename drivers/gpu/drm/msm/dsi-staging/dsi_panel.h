@@ -260,6 +260,7 @@ struct dsi_panel {
 
 	int hbm_mode;
 	bool resend_ea;
+	bool resend_ea_hbm;
 
 	struct brightness_alpha_pair *fod_dim_lut;
 	u32 fod_dim_lut_count;
