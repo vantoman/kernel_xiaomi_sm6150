@@ -1722,6 +1722,14 @@ static int qg_get_battery_capacity(struct qpnp_qg *chip, int *soc)
 	else
 		*soc = chip->msoc;
 
+	if(chip->charge_status == POWER_SUPPLY_STATUS_CHARGING){
+	        rc = qg_get_battery_current(chip, &ibat);
+                if ((rc >= 0) && (ibat < 0) && (*soc < pre_soc)) {
+			*soc = pre_soc;
+			pr_err ("lct rc=%d,ibat=%d,pre_soc=%d,*soc=%d\n", rc,ibat,pre_soc,*soc);
+		}
+	}
+
 	if (chip->dt.software_optimize_ffc_qg_iterm) {
 		if ((chip->fastcharge_mode_enabled) && (pre_soc == 99)
 			&& (*soc == 100) && (chip->charge_status == POWER_SUPPLY_STATUS_CHARGING)) {
