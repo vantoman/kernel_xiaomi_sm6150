@@ -2519,7 +2519,7 @@ int smblib_get_prop_batt_status(struct smb_charger *chg,
 		break;
 	case TERMINATE_CHARGE:
 	case INHIBIT_CHARGE:
-		if (POWER_SUPPLY_HEALTH_WARM == pval.intval || batt_capa.intval <= 98
+		if ((POWER_SUPPLY_HEALTH_WARM == pval.intval || (batt_capa.intval <= 99) && usb_online)
 			|| POWER_SUPPLY_HEALTH_OVERHEAT == pval.intval)
 			val->intval = POWER_SUPPLY_STATUS_CHARGING;
 		else
