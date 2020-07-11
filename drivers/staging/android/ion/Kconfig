@@ -82,3 +82,7 @@ config ION_POOL_FILL_MARK
 	help
 	  Set the fillmark of the pool in terms of mega bytes and the lowmark is
 	  ION_POOL_LOW_MARK_PERCENT of fillmark value.
+
+config ALLOC_BUFFERS_IN_4K_CHUNKS
+	bool "Allocate ion buffers in 4k chunks"
+	default n
