@@ -118,7 +118,7 @@
  *   ON: If the target CPU saves any energy, use that.
  *   OFF: Use whichever of target or backup saves most.
  */
-#define SCHED_FEAT_EAS_PREFER_IDLE 1
+#define SCHED_FEAT_EAS_PREFER_IDLE 0
 #define SCHED_FEAT_FIND_BEST_TARGET 1
 #define SCHED_FEAT_FBT_STRICT_ORDER 0
 
