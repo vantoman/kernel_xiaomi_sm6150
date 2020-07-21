@@ -88,8 +88,8 @@ enum flat_binder_object_flags {
 	 * scheduling policy from the caller (for synchronous transactions).
 	 */
 	FLAT_BINDER_FLAG_INHERIT_RT = 0x800,
-#ifdef __KERNEL__
 
+#ifdef __KERNEL__
 	/**
 	 * @FLAT_BINDER_FLAG_TXN_SECURITY_CTX: request security contexts
 	 *
@@ -339,8 +339,8 @@ struct binder_transaction_data_secctx {
 	struct binder_transaction_data transaction_data;
 	binder_uintptr_t secctx;
 };
-
 #endif /* __KERNEL__ */
+
 struct binder_transaction_data_sg {
 	struct binder_transaction_data transaction_data;
 	binder_size_t buffers_size;
