@@ -943,45 +943,11 @@ static ssize_t kgsl_pwrctrl_gpuclk_show(struct device *dev,
 	return snprintf(buf, PAGE_SIZE, "%lu\n", freq);
 }
 
-static ssize_t __timer_store(struct device *dev, struct device_attribute *attr,
-					const char *buf, size_t count,
-					enum kgsl_pwrctrl_timer_type timer)
-{
-	unsigned int val = 0;
-	struct kgsl_device *device = kgsl_device_from_dev(dev);
-	int ret;
-
-	if (device == NULL)
-		return 0;
-
-	ret = kgsl_sysfs_store(buf, &val);
-	if (ret)
-		return ret;
-
-	/*
-	 * We don't quite accept a maximum of 0xFFFFFFFF due to internal jiffy
-	 * math, so make sure the value falls within the largest offset we can
-	 * deal with
-	 */
-
-	if (val > jiffies_to_usecs(MAX_JIFFY_OFFSET))
-		return -EINVAL;
-
-	mutex_lock(&device->mutex);
-	/* Let the timeout be requested in ms, but convert to jiffies. */
-	if (timer == KGSL_PWR_IDLE_TIMER)
-		device->pwrctrl.interval_timeout = msecs_to_jiffies(val);
-
-	mutex_unlock(&device->mutex);
-
-	return count;
-}
-
 static ssize_t kgsl_pwrctrl_idle_timer_store(struct device *dev,
 					struct device_attribute *attr,
 					const char *buf, size_t count)
 {
-	return __timer_store(dev, attr, buf, count, KGSL_PWR_IDLE_TIMER);
+	return count;
 }
 
 static ssize_t kgsl_pwrctrl_idle_timer_show(struct device *dev,
