@@ -212,6 +212,8 @@ static void devfreq_boost_input_event(struct input_handle *handle,
 				      unsigned int type, unsigned int code,
 				      int value)
 {
+	return;
+
 	struct df_boost_drv *d = handle->handler->private;
 	int i;
 
