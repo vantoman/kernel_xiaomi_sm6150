@@ -519,9 +519,11 @@ int irq_domain_associate(struct irq_domain *domain, unsigned int virq,
 	struct irq_data *irq_data = irq_get_irq_data(virq);
 	int ret;
 
+#ifndef CONFIG_MACH_XIAOMI_F10
 	if (WARN(hwirq >= domain->hwirq_max,
 		 "error: hwirq 0x%x is too large for %s\n", (int)hwirq, domain->name))
 		return -EINVAL;
+#endif
 	if (WARN(!irq_data, "error: virq%i is not allocated", virq))
 		return -EINVAL;
 	if (WARN(irq_data->domain, "error: virq%i is already associated", virq))
