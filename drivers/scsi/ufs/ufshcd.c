@@ -558,33 +558,15 @@ static inline void ufshcd_disable_irq(struct ufs_hba *hba)
 
 void ufshcd_scsi_unblock_requests(struct ufs_hba *hba)
 {
-	unsigned long flags;
-	bool unblock = false;
-
-	spin_lock_irqsave(hba->host->host_lock, flags);
-	hba->scsi_block_reqs_cnt--;
-	unblock = !hba->scsi_block_reqs_cnt;
-	spin_unlock_irqrestore(hba->host->host_lock, flags);
-	if (unblock)
+	if (atomic_dec_and_test(&hba->scsi_block_reqs_cnt))
 		scsi_unblock_requests(hba->host);
-}
-EXPORT_SYMBOL(ufshcd_scsi_unblock_requests);
-
-static inline void __ufshcd_scsi_block_requests(struct ufs_hba *hba)
-{
-	if (!hba->scsi_block_reqs_cnt++)
-		scsi_block_requests(hba->host);
 }
 
 void ufshcd_scsi_block_requests(struct ufs_hba *hba)
 {
-	unsigned long flags;
-
-	spin_lock_irqsave(hba->host->host_lock, flags);
-	__ufshcd_scsi_block_requests(hba);
-	spin_unlock_irqrestore(hba->host->host_lock, flags);
+	if (atomic_inc_return(&hba->scsi_block_reqs_cnt) == 1)
+		scsi_block_requests(hba->host);
 }
-EXPORT_SYMBOL(ufshcd_scsi_block_requests);
 
 static int ufshcd_device_reset_ctrl(struct ufs_hba *hba, bool ctrl)
 {
@@ -2277,7 +2259,7 @@ start:
 					hba->clk_gating.state);
 		if (queue_work(hba->clk_gating.clk_gating_workq,
 			       &hba->clk_gating.ungate_work))
-			__ufshcd_scsi_block_requests(hba);
+			ufshcd_scsi_block_requests(hba);
 		/*
 		 * fall through to check if we should wait for this
 		 * work to be done or not.
@@ -2702,7 +2684,7 @@ start:
 		 * work and exit hibern8.
 		 */
 	case HIBERN8_ENTERED:
-		__ufshcd_scsi_block_requests(hba);
+		ufshcd_scsi_block_requests(hba);
 		hba->hibern8_on_idle.state = REQ_HIBERN8_EXIT;
 		trace_ufshcd_hibern8_on_idle(dev_name(hba->dev),
 			hba->hibern8_on_idle.state);
@@ -11439,6 +11421,7 @@ int ufshcd_init(struct ufs_hba *hba, void __iomem *mmio_base, unsigned int irq)
 
 	/* Hold auto suspend until async scan completes */
 	pm_runtime_get_sync(dev);
+	atomic_set(&hba->scsi_block_reqs_cnt, 0);
 
 	ufshcd_init_latency_hist(hba);
 
