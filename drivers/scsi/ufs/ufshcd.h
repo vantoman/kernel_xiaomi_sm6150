@@ -1057,7 +1057,7 @@ struct ufs_hba {
 	/* If set, don't gate device ref_clk during clock gating */
 	bool no_ref_clk_gating;
 
-	int scsi_block_reqs_cnt;
+	atomic_t scsi_block_reqs_cnt;
 
 	bool full_init_linereset;
 	struct pinctrl *pctrl;
