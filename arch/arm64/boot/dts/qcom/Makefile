@@ -5,18 +5,18 @@ dtbo-$(CONFIG_MACH_XIAOMI_DAVINCI) += \
 	davinci_m0a-sdmmagpie-overlay.dtbo \
 	davinci_m0b-sdmmagpie-overlay.dtbo
 
-davinci-sdmmagpie-overlay.dtbo-base := sdmmagpie.dtb
-davinci_m0a-sdmmagpie-overlay.dtbo-base := sdmmagpie.dtb
-davinci_m0b-sdmmagpie-overlay.dtbo-base := sdmmagpie.dtb
+davinci-sdmmagpie-overlay.dtbo-base := xiaomi-sdmmagpie.dtb
+davinci_m0a-sdmmagpie-overlay.dtbo-base := xiaomi-sdmmagpie.dtb
+davinci_m0b-sdmmagpie-overlay.dtbo-base := xiaomi-sdmmagpie.dtb
 
 dtbo-$(CONFIG_MACH_XIAOMI_PHOENIX) += phoenix-sdmmagpie-overlay.dtbo
-phoenix-sdmmagpie-overlay.dtbo-base := sdmmagpie.dtb
+phoenix-sdmmagpie-overlay.dtbo-base := xiaomi-sdmmagpie.dtb
 
 dtbo-$(CONFIG_MACH_XIAOMI_TOCO) += toco-sdmmagpie-overlay.dtbo
-toco-sdmmagpie-overlay.dtbo-base := sdmmagpie.dtb
+toco-sdmmagpie-overlay.dtbo-base := xiaomi-sdmmagpie.dtb
 
 dtbo-$(CONFIG_MACH_XIAOMI_TUCANA) += tucana-sdmmagpie-overlay.dtbo
-tucana-sdmmagpie-overlay.dtbo-base := sdmmagpie.dtb
+tucana-sdmmagpie-overlay.dtbo-base := xiaomi-sdmmagpie.dtb
 endif
 else
 # SPDX-License-Identifier: GPL-2.0

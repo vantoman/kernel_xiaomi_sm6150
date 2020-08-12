@@ -38,6 +38,7 @@
 	aliases {
 		spi0 = &qupv3_se0_spi;
 		spi1 = &qupv3_se4_spi;
+		spi2 = &qupv3_se8_spi;
 		i2c0 = &qupv3_se2_i2c;
 		i2c1 = &qupv3_se7_i2c;
 		i2c2 = &qupv3_se9_i2c;
