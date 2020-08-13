@@ -113,3 +113,4 @@ obj-$(CONFIG_TOUCHSCREEN_IQS5XX)	+= iqs5xx.o
 obj-$(CONFIG_TOUCHSCREEN_ST)	+= st/
 obj-$(CONFIG_TOUCHSCREEN_FTS_CAF)	+= focaltech_touch/
 obj-$(CONFIG_TOUCHSCREEN_GOODIX_GTX8) += goodix_driver_gt9886/
+obj-$(CONFIG_TOUCHSCREEN_NT36xxx_HOSTDL_SPI) += nt36672c/
