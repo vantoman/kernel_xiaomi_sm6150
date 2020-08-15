@@ -14,9 +14,9 @@
  * GNU General Public License for more details.
  */
 #define pr_fmt(fmt)     KBUILD_MODNAME ": " fmt
-/*
+
 #define GOODIX_DRM_INTERFACE_WA
-*/
+
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/ioctl.h>
