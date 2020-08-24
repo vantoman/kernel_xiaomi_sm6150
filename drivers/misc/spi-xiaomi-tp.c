@@ -1,7 +1,5 @@
 #include <linux/spi-xiaomi-tp.h>
 
-#define DEBUG
-
 static struct ts_spi_info owner;
 
 static ssize_t ts_xsfer_state_show(struct device *dev, struct device_attribute *attr, char *buf)
