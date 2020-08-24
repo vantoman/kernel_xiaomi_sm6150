@@ -622,6 +622,11 @@ config TI_DRV8846
 	  Motor Driver. The MISC peripheral holds the pwm and the
 	  driver provides an API to drive stepper motor.
 
+config SIMTRAY_STATUS
+	tristate "Xiaomi SIM tray status"
+	help
+	  Say 'y' here to support SIM tray GPIO detection
+
 source "drivers/misc/c2port/Kconfig"
 source "drivers/misc/eeprom/Kconfig"
 source "drivers/misc/cb710/Kconfig"
