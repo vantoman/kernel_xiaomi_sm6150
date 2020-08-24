@@ -4,6 +4,7 @@
 menuconfig TOUCHSCREEN_GOODIX_GTX8
 	bool "Goodix GTx8 touchscreen"
 	depends on I2C
+	select TOUCHSCREEN_TDDI_DBCLK
 	help
 	  Say Y here if you have a Goodix GTx5xx touchscreen connected
 	  to your system.
