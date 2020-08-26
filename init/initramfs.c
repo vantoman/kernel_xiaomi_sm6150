@@ -617,7 +617,12 @@ static int __init skip_initramfs_param(char *str)
 	do_skip_initramfs = 1;
 	return 1;
 }
+
+#ifdef PATCH_SKIP_INITRAMFS
+__setup("want_initramfs", skip_initramfs_param);
+#else
 __setup("skip_initramfs", skip_initramfs_param);
+#endif
 
 static int __init populate_rootfs(void)
 {
