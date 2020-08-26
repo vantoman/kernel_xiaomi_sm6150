@@ -816,6 +816,9 @@ static u32 interpolate(uint32_t x, uint32_t xa, uint32_t xb, uint32_t ya, uint32
 
 u32 dsi_panel_get_fod_dim_alpha(struct dsi_panel *panel)
 {
+	if (panel->hbm_mode)
+		return 0;
+
 	u32 brightness = dsi_panel_get_backlight(panel);
 	int i;
 
@@ -886,6 +889,9 @@ int dsi_panel_set_doze_mode(struct dsi_panel *panel, enum dsi_doze_mode_type mod
 int dsi_panel_set_fod_hbm(struct dsi_panel *panel, bool status)
 {
 	int rc = 0;
+
+	if (status && panel->hbm_mode)
+		return rc;
 
 	if (status) {
 
