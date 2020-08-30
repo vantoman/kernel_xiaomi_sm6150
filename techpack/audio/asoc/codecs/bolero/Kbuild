@@ -128,7 +128,7 @@ ifeq ($(CONFIG_SND_SOC_GCOV), y)
 GCOV_PROFILE := y
 endif
 
-ifneq (,$(filter $(TARGET_PRODUCT), phoenix phoenixin))
+ifdef CONFIG_MACH_XIAOMI_PHOENIX
 	CDEFINES += -DCONFIG_SND_SOC_FOR_ULTRASOUND_PATH
 endif
 
