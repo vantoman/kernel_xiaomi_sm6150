@@ -1,0 +1,17 @@
+&thermal_zones {
+	pm6150-ibat-lvl0 {
+		status = "disabled";
+	};
+	pm6150-ibat-lvl1 {
+		status = "disabled";
+	};
+	lmh-dcvs-00 {
+		status = "disabled";
+	};
+	lmh-dcvs-01 {
+		status = "disabled";
+	};
+	nvm-therm-adc {
+		status = "disabled";
+	};
+};
