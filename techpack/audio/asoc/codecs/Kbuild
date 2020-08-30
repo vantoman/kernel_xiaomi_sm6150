@@ -102,7 +102,7 @@ ifdef CONFIG_WCD9XXX_CODEC_CORE
 	CORE_OBJS += wcd9360/wcd9360-regmap.o
 endif
 
-ifneq (,$(filter $(TARGET_PRODUCT), phoenix phoenixin tucana toco tocoin))
+ifdef CONFIG_US_PROXIMITY
 	CDEFINES += -DCONFIG_SND_SOC_FOR_ULTRASOUND_PATH
 endif
 

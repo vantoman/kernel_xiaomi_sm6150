@@ -186,12 +186,11 @@ CDEFINES +=	-DANI_LITTLE_BYTE_ENDIAN \
 		-Werror\
 		-D__linux__
 
-ifneq (,$(filter $(TARGET_PRODUCT), davinci davinciin phoenix phoenixin tucana toco tocoin))
+ifdef CONFIG_MACH_XIAOMI_SDMMAGPIE
 	CDEFINES += -DCONFIG_SND_SOC_TFA9874_FOR_DAVI
 endif
 
-
-ifneq (,$(filter $(TARGET_PRODUCT), phoenix phoenixin tucana toco tocoin))
+ifdef CONFIG_US_PROXIMITY
 	CDEFINES += -DCONFIG_SND_SOC_FOR_ULTRASOUND_PATH
 endif
 
