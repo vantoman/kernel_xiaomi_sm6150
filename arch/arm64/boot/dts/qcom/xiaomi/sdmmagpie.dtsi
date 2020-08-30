@@ -25,6 +25,7 @@
 #include "sdmmagpie-pm6150.dtsi"
 #include "sdmmagpie-pm6150l.dtsi"
 #include "sdmmagpie-regulator.dtsi"
+#include "sdmmagpie-thermal.dtsi"
 #include "sdmmagpie-usb.dtsi"
 
 &firmware {
