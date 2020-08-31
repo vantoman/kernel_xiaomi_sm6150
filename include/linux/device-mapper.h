@@ -612,26 +612,22 @@ do {									\
 #define DM_MAPIO_DELAY_REQUEUE	3
 #define DM_MAPIO_KILL		4
 
-#define dm_sector_div64(x, y)( \
-{ \
+#define dm_sector_div64(x, y)({ \
 	u64 _res; \
 	(x) = div64_u64_rem(x, y, &_res); \
 	_res; \
-} \
-)
+})
 
 /*
  * Ceiling(n / sz)
  */
 #define dm_div_up(n, sz) (((n) + (sz) - 1) / (sz))
 
-#define dm_sector_div_up(n, sz) ( \
-{ \
+#define dm_sector_div_up(n, sz) ({ \
 	sector_t _r = ((n) + (sz) - 1); \
 	sector_div(_r, (sz)); \
 	_r; \
-} \
-)
+})
 
 /*
  * ceiling(n / size) * size
