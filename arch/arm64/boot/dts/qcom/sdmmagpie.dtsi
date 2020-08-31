@@ -971,6 +971,19 @@
 			   &cdsp_cdsp_l3_lat>;
 
 		#clock-cells = <1>;
+		qcom,cpufreq-table-0 =
+			<576000>,
+			<1017600>,
+			<1612800>,
+			<1708800>,
+			<1804800>;
+
+		qcom,cpufreq-table-6 =
+			<652800>,
+			<979200>,
+			<1209600>,
+			<1708800>,
+			<2208000>;
 	};
 
 	cpucc_debug: syscon@182a0018 {
