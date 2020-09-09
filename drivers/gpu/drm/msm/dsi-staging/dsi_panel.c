@@ -622,6 +622,17 @@ static int dsi_panel_update_backlight(struct dsi_panel *panel,
 		return -EINVAL;
 	}
 
+	if (panel->bl_config.bl_remap_flag && panel->bl_config.brightness_max_level &&
+			panel->bl_config.bl_max_level) {
+		/*
+		 * map UI brightness into driver backlight level
+		 *    y = kx+b;
+		 */
+		bl_lvl = (panel->bl_config.bl_max_level - panel->bl_config.bl_min_level) * bl_lvl /
+				panel->bl_config.brightness_max_level + panel->bl_config.bl_min_level;
+		pr_debug("bl_lvl: %d\n", bl_lvl);
+	}
+
 	dsi = &panel->mipi_device;
 
 	if (panel->bl_config.bl_inverted_dbv)
@@ -2468,6 +2479,9 @@ static int dsi_panel_parse_bl_config(struct dsi_panel *panel)
 
 	panel->bl_config.xiaomi_f4_41_flag = utils->read_bool(utils->data,
 			"qcom,mdss-dsi-bl-xiaomi-f4-41-flag");
+
+	panel->bl_config.bl_remap_flag = utils->read_bool(utils->data,
+			"qcom,mdss-brightness-remap");
 
 	data = utils->get_property(utils->data, "qcom,bl-update-flag", NULL);
 	if (!data) {
