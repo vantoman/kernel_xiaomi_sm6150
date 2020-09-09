@@ -236,6 +236,8 @@ struct drm_bridge_funcs {
 	 * The enable callback is optional.
 	 */
 	void (*enable)(struct drm_bridge *bridge);
+
+	int (*disp_get_panel_info)(struct drm_bridge *bridge, char *name);
 };
 
 /**
