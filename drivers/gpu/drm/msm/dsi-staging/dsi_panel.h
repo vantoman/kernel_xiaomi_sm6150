@@ -131,6 +131,7 @@ struct dsi_backlight_config {
 
 	bool dcs_type_ss_ea;
 	bool dcs_type_ss_eb;
+	bool bl_remap_flag;
 
 	/* PWM params */
 	struct pwm_device *pwm_bl;
