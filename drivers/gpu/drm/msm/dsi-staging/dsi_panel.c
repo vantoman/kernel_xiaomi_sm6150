@@ -741,7 +741,7 @@ int dsi_panel_update_doze(struct dsi_panel *panel) {
 			pr_err("[%s] failed to send DSI_CMD_SET_DOZE_HBM cmd, rc=%d\n",
 					panel->name, rc);
 	} else if (panel->doze_enabled && panel->doze_mode == DSI_DOZE_LPM) {
-		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DOZE_LBM);
+		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_LP1);
 		if (rc)
 			pr_err("[%s] failed to send DSI_CMD_SET_DOZE_LBM cmd, rc=%d\n",
 					panel->name, rc);
