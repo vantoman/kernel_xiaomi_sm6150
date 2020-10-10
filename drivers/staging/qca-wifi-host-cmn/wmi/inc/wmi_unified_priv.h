@@ -290,6 +290,25 @@ enum WMI_RECORD_TYPE {
 	WMI_CMD = 1,
 	WMI_EVT = 2,
 };
+#else
+
+#define wmi_alert(params...) ((void)0)
+#define wmi_err(params...) ((void)0)
+#define wmi_warn(params...) ((void)0)
+#define wmi_info(params...) ((void)0)
+#define wmi_debug(params...) ((void)0)
+
+#define wmi_nofl_alert(params...) ((void)0)
+#define wmi_nofl_err(params...) ((void)0)
+#define wmi_nofl_warn(params...) ((void)0)
+#define wmi_nofl_info(params...) ((void)0)
+#define wmi_nofl_debug(params...) ((void)0)
+
+#define wmi_alert_rl(params...) ((void)0)
+#define wmi_err_rl(params...) ((void)0)
+#define wmi_warn_rl(params...) ((void)0)
+#define wmi_info_rl(params...) ((void)0)
+#define wmi_debug_rl(params...) ((void)0)
 
 #endif /*WMI_INTERFACE_EVENT_LOGGING */
 
