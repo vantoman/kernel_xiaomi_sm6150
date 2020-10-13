@@ -126,6 +126,15 @@ static const struct tfa98xx_rate rate_to_fssel[] = {
 	{ 48000, 8 },
 };
 
+#ifdef TFA_NON_DSP_SOLUTION
+extern int send_tfa_cal_apr(void *buf, int cmd_size, bool bRead);
+#else
+int send_tfa_cal_apr(void *buf, int cmd_size, bool bRead)
+{
+    return 0;
+}
+#endif
+
 int nxp_spk_id_get(struct device_node *np)
 {
 	int id = VENDOR_ID_UNKNOWN;
@@ -740,16 +749,6 @@ static ssize_t tfa98xx_dbgfs_fw_state_get(struct file *file,
 
 	return simple_read_from_buffer(user_buf, count, ppos, str, strlen(str));
 }
-
-#ifdef TFA_NON_DSP_SOLUTION
-extern int send_tfa_cal_apr(void *buf, int cmd_size, bool bRead);
-#else
-int send_tfa_cal_apr(void *buf, int cmd_size, bool bRead)
-{
-	pr_info("this function is empty!!!\n");
-	return 0;
-}
-#endif
 
 static ssize_t tfa98xx_dbgfs_rpc_read(struct file *file,
 				     char __user *user_buf, size_t count,
