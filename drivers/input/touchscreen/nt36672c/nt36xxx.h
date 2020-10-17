@@ -23,14 +23,10 @@
 #include <linux/of.h>
 #include <linux/spi/spi.h>
 #include <linux/uaccess.h>
+#include <linux/pm_qos.h>
 #include <linux/platform_device.h>
 #include <linux/sysfs.h>
 #include <linux/workqueue.h>
-
-
-#ifdef CONFIG_HAS_EARLYSUSPEND
-#include <linux/earlysuspend.h>
-#endif
 
 #include "nt36xxx_mem_map.h"
 
@@ -58,8 +54,6 @@
 
 
 //---INT trigger mode---
-//#define IRQ_TYPE_EDGE_RISING 1
-//#define IRQ_TYPE_EDGE_FALLING 2
 #define INT_TRIGGER_TYPE IRQ_TYPE_EDGE_RISING
 
 
@@ -175,6 +169,7 @@ struct nvt_ts_data {
 	int db_wakeup;
 	u8 lockdown_info[NVT_LOCKDOWN_SIZE];
 	uint32_t config_array_size;
+	struct pm_qos_request pm_qos_req;
 	struct nvt_config_info *config_array;
 	int panel_index;
 	const u8 *fw_name;
