@@ -1860,7 +1860,7 @@ unsigned long mmap_region(struct file *file, unsigned long addr,
 				 * and cause general protection fault ultimately.
 				 */
 				fput(vma->vm_file);
-				vm_area_free(vma);
+				kmem_cache_free(vm_area_cachep, vma);
 				vma = merge;
 				/* Update vm_flags and possible addr to pick up the change. We don't
 				 * warn here if addr changed as the vma is not linked by vma_link().
