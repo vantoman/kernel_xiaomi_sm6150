@@ -2064,6 +2064,9 @@ hdd_rx_check_qdisc_for_adapter(struct hdd_adapter *adapter, uint8_t rx_ctx_id)
 	struct Qdisc *ingress_qdisc;
 	bool is_qdisc_ingress = false;
 
+	if (qdf_unlikely(!soc))
+		return;
+
 	/*
 	 * This additional ingress_queue NULL check is to avoid
 	 * doing RCU lock/unlock in the common scenario where
@@ -3176,6 +3179,17 @@ void hdd_reset_tcp_delack(struct hdd_context *hdd_ctx)
 	rx_tp_data.rx_tp_flags |= TCP_DEL_ACK_IND;
 	rx_tp_data.level = next_level;
 	hdd_ctx->rx_high_ind_cnt = 0;
+	wlan_hdd_update_tcp_rx_param(hdd_ctx, &rx_tp_data);
+}
+
+void hdd_reset_tcp_adv_win_scale(struct hdd_context *hdd_ctx)
+{
+	enum wlan_tp_level next_level = WLAN_SVC_TP_NONE;
+	struct wlan_rx_tp_data rx_tp_data = {0};
+
+	rx_tp_data.rx_tp_flags |= TCP_ADV_WIN_SCL;
+	rx_tp_data.level = next_level;
+	hdd_ctx->cur_rx_level = WLAN_SVC_TP_NONE;
 	wlan_hdd_update_tcp_rx_param(hdd_ctx, &rx_tp_data);
 }
 
