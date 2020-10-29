@@ -878,8 +878,6 @@ static irqreturn_t goodix_ts_threadirq_func(int irq, void *data)
 	int r;
 	struct i2c_client *client = NULL;
 
-	pm_qos_update_request(&core_data->pm_touch_req, 100);
-
 	client = to_i2c_client(ts_dev->dev);
 	i2c_set_clientdata(client, core_data);
 
@@ -890,7 +888,7 @@ static irqreturn_t goodix_ts_threadirq_func(int irq, void *data)
 		ts_info("device in suspend noirq, schedue to work");
 		pm_wakeup_event(&client->dev, msecs_to_jiffies(500));
 		queue_work(core_data->event_wq, &core_data->sleep_work);
-		goto handled;
+		return IRQ_HANDLED;
 	}
 
 	mutex_lock(&goodix_modules.mutex);
@@ -902,7 +900,7 @@ static irqreturn_t goodix_ts_threadirq_func(int irq, void *data)
 		if (r == EVT_CANCEL_IRQEVT) {
 			ts_debug("enter %s EVT_CANCEL_IRQEVT \n", __func__);
 			mutex_unlock(&goodix_modules.mutex);
-			goto handled;
+			return IRQ_HANDLED;
 		}
 	}
 	mutex_unlock(&goodix_modules.mutex);
@@ -918,9 +916,6 @@ static irqreturn_t goodix_ts_threadirq_func(int irq, void *data)
 	}
 	/* clean irq flag */
 	ts_dev->hw_ops->write_trans(ts_dev, ts_dev->reg.coor, &irq_flag, 1);/*TS_REG_COORDS_BASE*/
-
-handled:
-	pm_qos_update_request(&core_data->pm_touch_req, PM_QOS_DEFAULT_VALUE);
 	return IRQ_HANDLED;
 }
 
@@ -952,11 +947,6 @@ int goodix_ts_irq_setup(struct goodix_ts_core *core_data)
 		ts_err("Failed to requeset threaded irq:%d", r);
 	else
 		atomic_set(&core_data->irq_enabled, 1);
-
-	core_data->pm_touch_req.type = PM_QOS_REQ_AFFINE_IRQ;
-	core_data->pm_touch_req.irq = core_data->irq;
-	pm_qos_add_request(&core_data->pm_touch_req, PM_QOS_CPU_DMA_LATENCY,
-			   PM_QOS_DEFAULT_VALUE);
 	return r;
 }
 
