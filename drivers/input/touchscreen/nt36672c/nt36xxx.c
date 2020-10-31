@@ -1578,14 +1578,22 @@ err_pinctrl_get:
 	return retval;
 }
 
-static void nvt_switch_mode_work(struct work_struct *work)
-{
-	struct nvt_mode_switch *sw =
-			container_of(work, struct nvt_mode_switch, switch_mode_work);
-	struct nvt_ts_data *ts_data = sw->ts_data;
-	unsigned char value = sw->mode;
 
-	if (value >= INPUT_EVENT_WAKEUP_MODE_OFF && value <= INPUT_EVENT_WAKEUP_MODE_ON) {
+static int nvt_input_event(struct input_dev *dev, unsigned int type, unsigned int code, int value)
+{
+	struct nvt_ts_data *ts_data = input_get_drvdata(dev);
+	struct nvt_mode_switch sw;
+
+	if (!ts_data) {
+		NVT_ERR("ts_data is NULL");
+		return -EINVAL;
+	}
+
+	if (type == EV_SYN && code == SYN_CONFIG) {
+		if (value >= INPUT_EVENT_START && value <= INPUT_EVENT_END) {
+		sw.ts_data = ts_data;
+		sw.mode = (unsigned char)value;
+		if (value >= INPUT_EVENT_WAKEUP_MODE_OFF && value <= INPUT_EVENT_WAKEUP_MODE_ON) {
 		if (ts_data->ic_state <= NVT_IC_SUSPEND_OUT && ts_data->ic_state != NVT_IC_INIT) {
 			ts_data->gesture_command_delayed = value;
 			NVT_LOG("Panel off, don't set dbclick gesture flag util panel on");
@@ -1600,35 +1608,6 @@ static void nvt_switch_mode_work(struct work_struct *work)
 	if (ts_data->ic_state >= NVT_IC_RESUME_IN) {
 		tp_enable_doubleclick(!!ts->db_wakeup);
 	}
-
-	if (!sw) {
-		kfree(sw);
-		sw = NULL;
-	}
-}
-
-static int nvt_input_event(struct input_dev *dev, unsigned int type,
-													unsigned int code, int value)
-{
-	struct nvt_ts_data *ts_data = input_get_drvdata(dev);
-	struct nvt_mode_switch *sw;
-
-	if (!ts_data) {
-		NVT_ERR("ts_data is NULL");
-		return -EINVAL;
-	}
-
-	if (type == EV_SYN && code == SYN_CONFIG) {
-		if (value >= INPUT_EVENT_START && value <= INPUT_EVENT_END) {
-			sw = (struct nvt_mode_switch *)kzalloc(sizeof(*sw), GFP_ATOMIC);
-			if (!sw) {
-				NVT_ERR("alloc memory failed");
-				return -ENOMEM;
-			}
-			sw->ts_data = ts_data;
-			sw->mode = (unsigned char)value;
-			INIT_WORK(&sw->switch_mode_work, nvt_switch_mode_work);
-			schedule_work(&sw->switch_mode_work);
 		} else {
 			NVT_ERR("Invalid event value");
 			return -EINVAL;
@@ -1636,7 +1615,6 @@ static int nvt_input_event(struct input_dev *dev, unsigned int type,
 	}
 
 	return 0;
-
 }
 
 #ifdef CONFIG_TOUCHSCREEN_XIAOMI_TOUCHFEATURE
