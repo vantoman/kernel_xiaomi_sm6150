@@ -15,7 +15,7 @@
  * more details.
  *
  */
-#ifndef 	_LINUX_NVT_TOUCH_H
+#ifndef	_LINUX_NVT_TOUCH_H
 #define		_LINUX_NVT_TOUCH_H
 
 #include <linux/delay.h>
@@ -46,7 +46,7 @@
 #define PINCTRL_STATE_RELEASE		"pmx_ts_release"
 
 
-#define NVT_DEBUG 1
+#define NVT_DEBUG 0
 
 //---GPIO number---
 #define NVTTOUCH_RST_PIN 980
@@ -85,10 +85,10 @@ extern const uint16_t touch_key_array[TOUCH_KEY_NUM];
 #define NVT_TOUCH_SUPPORT_HW_RST 1
 
 //---Customerized func.---
-#define NVT_TOUCH_PROC 1
+#define NVT_TOUCH_PROC 0
 #define NVT_TOUCH_EXT_PROC 1
 #define NVT_TOUCH_MP 1
-#define NVT_TOUCH_MP_SETTING_CRITERIA_FROM_CSV 1
+#define NVT_TOUCH_MP_SETTING_CRITERIA_FROM_CSV 0
 #define MT_PROTOCOL_B 1
 #define WAKEUP_GESTURE 1
 #if WAKEUP_GESTURE
@@ -101,10 +101,10 @@ extern const uint16_t gesture_key_array[];
 #define DEFAULT_MP_UPDATE_FIRMWARE_NAME   "novatek_nt36672c_g7b_mp01.bin"
 
 //---ESD Protect.---
-#define NVT_TOUCH_ESD_PROTECT 1
+#define NVT_TOUCH_ESD_PROTECT 0
 #define NVT_TOUCH_ESD_CHECK_PERIOD 1500	/* ms */
-#define NVT_TOUCH_WDT_RECOVERY 1
-#define NVT_TOUCH_ESD_DISP_RECOVERY 1
+#define NVT_TOUCH_WDT_RECOVERY 0
+#define NVT_TOUCH_ESD_DISP_RECOVERY 0
 
 struct nvt_config_info {
 	u8 tp_vendor;
@@ -201,7 +201,7 @@ struct nvt_mode_switch {
 };
 
 #if NVT_TOUCH_PROC
-struct nvt_flash_data{
+struct nvt_flash_data {
 	rwlock_t lock;
 };
 #endif
