@@ -52,9 +52,9 @@ static struct proc_dir_entry *NVT_proc_xiaomi_lockdown_info_entry;
 static struct proc_dir_entry *NVT_proc_pocket_palm_switch_entry;
 
 // Xiaomi Config Info.
-static uint8_t nvt_xiaomi_conf_info_fw_ver = 0;
-static uint8_t nvt_xiaomi_conf_info_fae_id = 0;
-static uint64_t nvt_xiaomi_conf_info_reservation = 0;
+static uint8_t nvt_xiaomi_conf_info_fw_ver;
+static uint8_t nvt_xiaomi_conf_info_fae_id;
+static uint64_t nvt_xiaomi_conf_info_reservation;
 
 /*******************************************************
 Description:
@@ -92,7 +92,7 @@ return:
 *******************************************************/
 uint8_t nvt_get_fw_pipe(void)
 {
-	uint8_t buf[8]= {0};
+	uint8_t buf[8] = {0};
 
 	//---set xdata index to EVENT BUF ADDR---
 	nvt_set_page(ts->mmap->EVENT_BUF_ADDR | EVENT_MAP_HANDSHAKING_or_SUB_CMD_BYTE);
@@ -235,6 +235,7 @@ static int32_t c_show(struct seq_file *m, void *v)
 {
 	int32_t i = 0;
 	int32_t j = 0;
+
 	for (i = 0; i < ts->y_num; i++) {
 		for (j = 0; j < ts->x_num; j++) {
 			seq_printf(m, "%5d, ", xdata[i * ts->x_num + j]);
@@ -249,7 +250,7 @@ static int32_t c_show(struct seq_file *m, void *v)
 	seq_puts(m, "\n");
 #endif
 
-	seq_printf(m, "\n\n");
+	seq_puts(m, "\n\n");
 	return 0;
 }
 
@@ -783,7 +784,7 @@ return:
 *******************************************************/
 int32_t nvt_extra_proc_init(void)
 {
-	NVT_proc_fw_version_entry = proc_create(NVT_FW_VERSION, 0444, NULL,&nvt_fw_version_fops);
+	NVT_proc_fw_version_entry = proc_create(NVT_FW_VERSION, 0444, NULL, &nvt_fw_version_fops);
 	if (NVT_proc_fw_version_entry == NULL) {
 		NVT_ERR("create proc/%s Failed!\n", NVT_FW_VERSION);
 		return -ENOMEM;
@@ -791,7 +792,7 @@ int32_t nvt_extra_proc_init(void)
 		NVT_LOG("create proc/%s Succeeded!\n", NVT_FW_VERSION);
 	}
 
-	NVT_proc_baseline_entry = proc_create(NVT_BASELINE, 0444, NULL,&nvt_baseline_fops);
+	NVT_proc_baseline_entry = proc_create(NVT_BASELINE, 0444, NULL, &nvt_baseline_fops);
 	if (NVT_proc_baseline_entry == NULL) {
 		NVT_ERR("create proc/%s Failed!\n", NVT_BASELINE);
 		return -ENOMEM;
@@ -799,7 +800,7 @@ int32_t nvt_extra_proc_init(void)
 		NVT_LOG("create proc/%s Succeeded!\n", NVT_BASELINE);
 	}
 
-	NVT_proc_raw_entry = proc_create(NVT_RAW, 0444, NULL,&nvt_raw_fops);
+	NVT_proc_raw_entry = proc_create(NVT_RAW, 0444, NULL, &nvt_raw_fops);
 	if (NVT_proc_raw_entry == NULL) {
 		NVT_ERR("create proc/%s Failed!\n", NVT_RAW);
 		return -ENOMEM;
@@ -807,7 +808,7 @@ int32_t nvt_extra_proc_init(void)
 		NVT_LOG("create proc/%s Succeeded!\n", NVT_RAW);
 	}
 
-	NVT_proc_diff_entry = proc_create(NVT_DIFF, 0444, NULL,&nvt_diff_fops);
+	NVT_proc_diff_entry = proc_create(NVT_DIFF, 0444, NULL, &nvt_diff_fops);
 	if (NVT_proc_diff_entry == NULL) {
 		NVT_ERR("create proc/%s Failed!\n", NVT_DIFF);
 		return -ENOMEM;

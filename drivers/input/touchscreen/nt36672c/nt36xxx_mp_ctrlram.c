@@ -52,40 +52,40 @@
 #define NVT_RESULT_FAIL 1
 
 
-static uint8_t *RecordResult_Short = NULL;
-static uint8_t *RecordResult_Open = NULL;
-static uint8_t *RecordResult_FWMutual = NULL;
-static uint8_t *RecordResult_FW_CC = NULL;
-static uint8_t *RecordResult_FW_DiffMax = NULL;
-static uint8_t *RecordResult_FW_DiffMin = NULL;
+static uint8_t *RecordResult_Short;
+static uint8_t *RecordResult_Open;
+static uint8_t *RecordResult_FWMutual;
+static uint8_t *RecordResult_FW_CC;
+static uint8_t *RecordResult_FW_DiffMax;
+static uint8_t *RecordResult_FW_DiffMin;
 
-static int32_t TestResult_Short = 0;
-static int32_t TestResult_Open = 0;
-static int32_t TestResult_FW_Rawdata = 0;
-static int32_t TestResult_FWMutual = 0;
-static int32_t TestResult_FW_CC = 0;
-static int32_t TestResult_Noise = 0;
-static int32_t TestResult_FW_DiffMax = 0;
-static int32_t TestResult_FW_DiffMin = 0;
+static int32_t TestResult_Short;
+static int32_t TestResult_Open;
+static int32_t TestResult_FW_Rawdata;
+static int32_t TestResult_FWMutual;
+static int32_t TestResult_FW_CC;
+static int32_t TestResult_Noise;
+static int32_t TestResult_FW_DiffMax;
+static int32_t TestResult_FW_DiffMin;
 
-static int32_t *RawData_Short = NULL;
-static int32_t *RawData_Open = NULL;
-static int32_t *RawData_Diff = NULL;
-static int32_t *RawData_Diff_Min = NULL;
-static int32_t *RawData_Diff_Max = NULL;
-static int32_t *RawData_FWMutual = NULL;
-static int32_t *RawData_FW_CC = NULL;
+static int32_t *RawData_Short;
+static int32_t *RawData_Open;
+static int32_t *RawData_Diff;
+static int32_t *RawData_Diff_Min;
+static int32_t *RawData_Diff_Max;
+static int32_t *RawData_FWMutual;
+static int32_t *RawData_FW_CC;
 
-static struct proc_dir_entry *NVT_proc_selftest_entry = NULL;
+static struct proc_dir_entry *NVT_proc_selftest_entry;
 static struct proc_dir_entry *NVT_proc_aftersales_test_entry;
 
 
 #ifndef NVT_SAVE_TESTDATA_IN_FILE
-static struct proc_dir_entry *NVT_proc_test_data_entry = NULL;
+static struct proc_dir_entry *NVT_proc_test_data_entry;
 #endif
 
-static int8_t nvt_mp_test_result_printed = 0;
-static uint8_t mp_fw_ver;
+static int8_t nvt_mp_test_result_printed;
+static uint8_t fw_ver;
 
 extern void nvt_change_mode(uint8_t mode);
 extern uint8_t nvt_get_fw_pipe(void);
@@ -416,7 +416,7 @@ static int32_t nvt_save_rawdata_to_csv(int32_t *rawdata, uint8_t x_ch, uint8_t y
 		}
 		nvt_print_data_log_in_one_line(rawdata + y * x_ch, x_ch);
 		printk("\n");
-		sprintf(fbufp + (iArrayIndex + 1) * 7 + y * 2,"\r\n");
+		sprintf(fbufp + (iArrayIndex + 1) * 7 + y * 2, "\r\n");
 	}
 #if TOUCH_KEY_NUM > 0
 	keydata_output_offset = y_ch * x_ch * 7 + y_ch * 2;
@@ -554,7 +554,7 @@ static int32_t nvt_polling_hand_shake_status(void)
 {
 	uint8_t buf[8] = {0};
 	int32_t i = 0;
-	const int32_t retry = 50;
+	const int32_t retry = 70;
 
 	for (i = 0; i < retry; i++) {
 		//---set xdata index to EVENT BUF ADDR---
@@ -1064,10 +1064,10 @@ static int32_t RawDataTest_SinglePoint_Sub(int32_t rawdata[], uint8_t RecordResu
 
 			RecordResult[iArrayIndex] = 0x00; // default value for PASS
 
-			if(rawdata[iArrayIndex] > Rawdata_Limit_Postive[iArrayIndex])
+			if (rawdata[iArrayIndex] > Rawdata_Limit_Postive[iArrayIndex])
 				RecordResult[iArrayIndex] |= 0x01;
 
-			if(rawdata[iArrayIndex] < Rawdata_Limit_Negative[iArrayIndex])
+			if (rawdata[iArrayIndex] < Rawdata_Limit_Negative[iArrayIndex])
 				RecordResult[iArrayIndex] |= 0x02;
 		}
 	}
@@ -1077,10 +1077,10 @@ static int32_t RawDataTest_SinglePoint_Sub(int32_t rawdata[], uint8_t RecordResu
 
 		RecordResult[iArrayIndex] = 0x00; // default value for PASS
 
-		if(rawdata[iArrayIndex] > Rawdata_Limit_Postive[iArrayIndex])
+		if (rawdata[iArrayIndex] > Rawdata_Limit_Postive[iArrayIndex])
 			RecordResult[iArrayIndex] |= 0x01;
 
-		if(rawdata[iArrayIndex] < Rawdata_Limit_Negative[iArrayIndex])
+		if (rawdata[iArrayIndex] < Rawdata_Limit_Negative[iArrayIndex])
 			RecordResult[iArrayIndex] |= 0x02;
 	}
 #endif /* #if TOUCH_KEY_NUM > 0 */
@@ -1193,7 +1193,7 @@ static int32_t c_show_selftest(struct seq_file *m, void *v)
 {
 	NVT_LOG("++\n");
 
-	nvt_mp_seq_printf(m, "FW Version: %d\n\n", mp_fw_ver);
+	nvt_mp_seq_printf(m, "FW Version: %d\n\n", fw_ver);
 
 	nvt_mp_seq_printf(m, "Short Test");
 	if ((TestResult_Short == 0) || (TestResult_Short == 1)) {
@@ -1313,7 +1313,7 @@ static void copy_this_line(char *dest, char *src)
 		*copy_to = *copy_from;
 		copy_from++;
 		copy_to++;
-	} while((*copy_from != '\n') && (*copy_from != '\r'));
+	} while ((*copy_from != '\n') && (*copy_from != '\r'));
 	*copy_to = '\0';
 }
 
@@ -1363,7 +1363,7 @@ int32_t parse_mp_setting_ain_array(char **ptr, const char *item_string, uint8_t 
 	offset = strlen(tmp_buf);
 	tok_ptr = tmp_buf;
 	i = 0;
-	while ((token = strsep(&tok_ptr,", \t\r\0"))) {
+	while ((token = strsep(&tok_ptr, ", \t\r\0"))) {
 		if (strlen(token) == 0)
 			continue;
 		if (!strcmp(token, "0xFF") || !strcmp(token, "0xff"))
@@ -1414,7 +1414,7 @@ int32_t parse_mp_criteria_item_array(char **ptr, const char *item_string, int32_
 		offset = strlen(tmp_buf);
 		tok_ptr = tmp_buf;
 		j = 0;
-		while ((token = strsep(&tok_ptr,", \t\r\0"))) {
+		while ((token = strsep(&tok_ptr, ", \t\r\0"))) {
 			if (strlen(token) == 0)
 				continue;
 			item_array[i * X_Channel + j] = (int32_t) simple_strtol(token, NULL, 10);
@@ -1424,7 +1424,7 @@ int32_t parse_mp_criteria_item_array(char **ptr, const char *item_string, int32_
 		printk("\n");
 		// check if j equals to X_Channel
 		if (j != X_Channel) {
-			NVT_ERR("j not equal X_Channel!, j=%d, X_Channel=%d\n", j, X_Channel);
+			NVT_ERR("%s :j not equal X_Channel!, j=%d, X_Channel=%d\n", item_string, j, X_Channel);
 			return -1;
 		}
 		// go forward
@@ -1438,7 +1438,7 @@ int32_t parse_mp_criteria_item_array(char **ptr, const char *item_string, int32_
 	offset = strlen(tmp_buf);
 	tok_ptr = tmp_buf;
 	i = 0;
-	while ((token = strsep(&tok_ptr,", \t\r\0"))) {
+	while ((token = strsep(&tok_ptr, ", \t\r\0"))) {
 		if (strlen(token) == 0)
 			continue;
 		item_array[Y_Channel * X_Channel + i] = (int32_t) simple_strtol(token, NULL, 10);
@@ -1469,7 +1469,7 @@ static int32_t nvt_load_mp_setting_criteria_from_csv(const char *filename)
 
 	NVT_LOG("++\n");
 
-	if (NULL == filename) {
+	if (filename == NULL) {
 		NVT_ERR("filename is null\n");
 		retval = -1;
 		goto exit_free;
@@ -1691,9 +1691,7 @@ static int32_t nvt_selftest_open(struct inode *inode, struct file *file)
 		NVT_ERR("get fw info failed!\n");
 		return -EAGAIN;
 	}
-
-	mp_fw_ver = ts->fw_ver;
-
+	fw_ver = ts->fw_ver;
 #if NVT_TOUCH_MP_SETTING_CRITERIA_FROM_CSV
 	//---Check if MP Setting Criteria CSV file exist and load---
 	snprintf(mp_setting_criteria_csv_filename, PAGE_SIZE, "NT36xxx_MP_Setting_Criteria_%04X.csv", ts->nvt_pid);
@@ -1702,7 +1700,7 @@ static int32_t nvt_selftest_open(struct inode *inode, struct file *file)
 		NVT_ERR("SelfTest MP setting criteria CSV file not exist or load failed\n");
 #endif /* NVT_TOUCH_MP_SETTING_CRITERIA_FROM_CSV */
 		/* Parsing criteria from dts */
-		if(of_property_read_bool(np, "novatek,mp-support-dt")) {
+		if (of_property_read_bool(np, "novatek,mp-support-dt")) {
 			/*
 			 * Parsing Criteria by Novatek PID
 			 * The string rule is "novatek-mp-criteria-<nvt_pid>"
@@ -2089,7 +2087,7 @@ static int nvt_short_test(void)
 		NVT_ERR("get fw info failed!\n");
 		return -EAGAIN;
 	}
-
+	fw_ver = ts->fw_ver;
 #if NVT_TOUCH_MP_SETTING_CRITERIA_FROM_CSV
 	//---Check if MP Setting Criteria CSV file exist and load---
 	snprintf(mp_setting_criteria_csv_filename, PAGE_SIZE, "NT36xxx_MP_Setting_Criteria_%04X.csv", ts->nvt_pid);
@@ -2193,7 +2191,7 @@ static int nvt_open_test(void)
 		NVT_ERR("get fw info failed!\n");
 		return -EAGAIN;
 	}
-
+	fw_ver = ts->fw_ver;
 #if NVT_TOUCH_MP_SETTING_CRITERIA_FROM_CSV
 	//---Check if MP Setting Criteria CSV file exist and load---
 	snprintf(mp_setting_criteria_csv_filename, PAGE_SIZE, "NT36xxx_MP_Setting_Criteria_%04X.csv", ts->nvt_pid);
@@ -2347,11 +2345,10 @@ int32_t nvt_mp_proc_init(void)
 		NVT_ERR("create /proc/nvt_selftest Failed!\n");
 		return -1;
 	} else {
-		if(nvt_mp_buffer_init()) {
+		if (nvt_mp_buffer_init()) {
 			NVT_ERR("Allocate mp memory failed\n");
 			return -1;
-		}
-		else {
+		} else {
 			NVT_LOG("create /proc/nvt_selftest Succeeded!\n");
 		}
 	}
@@ -2389,19 +2386,13 @@ void nvt_mp_proc_deinit(void)
 #ifndef NVT_SAVE_TESTDATA_IN_FILE
 static void test_buff_free(struct test_buf *buf)
 {
-	if(buf) {
-		if (buf->shorttest.buf)
-			kfree(buf->shorttest.buf);
-		if (buf->opentest.buf)
-			kfree(buf->opentest.buf);
-		if (buf->fwmutualtest.buf)
-			kfree(buf->fwmutualtest.buf);
-		if (buf->fwcctest.buf)
-			kfree(buf->fwcctest.buf);
-		if (buf->noisetest_max.buf)
-			kfree(buf->noisetest_max.buf);
-		if (buf->noisetest_min.buf)
-			kfree(buf->noisetest_min.buf);
+	if (buf) {
+		kfree(buf->shorttest.buf);
+		kfree(buf->opentest.buf);
+		kfree(buf->fwmutualtest.buf);
+		kfree(buf->fwcctest.buf);
+		kfree(buf->noisetest_max.buf);
+		kfree(buf->noisetest_min.buf);
 		kfree(buf);
 	}
 	return;
@@ -2492,7 +2483,7 @@ static void *t_start(struct seq_file *m, loff_t *pos)
 	item_arr[NOISE_MIN_TEST] = &tbuf->noisetest_min;
 
 	if (*pos >= MAX_TEST_TYPE) {
-		*pos = 0;
+		/* *pos = 0; */
 		return NULL;
 	}
 
@@ -2510,7 +2501,7 @@ static void *t_next(struct seq_file *m, void *v, loff_t *pos)
 
 	++*pos;
 	if (*pos >= MAX_TEST_TYPE) {
-		*pos = 0;
+		/* *pos = 0; */
 		return NULL;
 	}
 
@@ -2531,22 +2522,22 @@ static int32_t t_show(struct seq_file *m, void *v)
 	switch (item->type)
 	{
 		case SHORT_TEST:
-			seq_printf(m, "========SHORT_TEST========\n");
+			seq_puts(m, "========SHORT_TEST========\n");
 		break;
 		case OPEN_TEST:
-			seq_printf(m, "========OPEN_TEST========\n");
+			seq_puts(m, "========OPEN_TEST========\n");
 		break;
 		case FWMUTUAL_TEST:
-			seq_printf(m, "========FWMUTUAL_TEST========\n");
+			seq_puts(m, "========FWMUTUAL_TEST========\n");
 		break;
 		case FWCC_TEST:
-			seq_printf(m, "========FWCC_TEST========\n");
+			seq_puts(m, "========FWCC_TEST========\n");
 		break;
 		case NOISE_MAX_TEST:
-			seq_printf(m, "========NOISE_MAX_TEST========\n");
+			seq_puts(m, "========NOISE_MAX_TEST========\n");
 		break;
 		case NOISE_MIN_TEST:
-			seq_printf(m, "========NOISE_MIN_TEST========\n");
+			seq_puts(m, "========NOISE_MIN_TEST========\n");
 		break;
 		default:
 			NVT_LOG("test type illegal (%d)\n", item->type);

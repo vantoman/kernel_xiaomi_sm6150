@@ -65,9 +65,9 @@
 #if NVT_TOUCH_ESD_PROTECT
 static struct delayed_work nvt_esd_check_work;
 static struct workqueue_struct *nvt_esd_check_wq;
-static unsigned long irq_timer = 0;
-uint8_t esd_check = false;
-uint8_t esd_retry = 0;
+static unsigned long irq_timer;
+uint8_t esd_check;
+uint8_t esd_retry;
 #endif /* #if NVT_TOUCH_ESD_PROTECT */
 
 #if NVT_TOUCH_EXT_PROC
@@ -95,8 +95,8 @@ static int32_t nvt_ts_resume(struct device *dev);
 static int32_t nvt_check_palm(uint8_t input_id, uint8_t *data);
 
 uint32_t ENG_RST_ADDR  = 0x7FFF80;
-uint32_t SWRST_N8_ADDR = 0;
-uint32_t SPI_RD_FAST_ADDR = 0;
+uint32_t SWRST_N8_ADDR;
+uint32_t SPI_RD_FAST_ADDR;
 
 #if TOUCH_KEY_NUM > 0
 const uint16_t touch_key_array[TOUCH_KEY_NUM] = {
@@ -142,9 +142,9 @@ static ssize_t nvt_display_maker_show(struct device *dev,
 	return snprintf(buf, PAGE_SIZE, "%c\n", ts->lockdown_info[1]);
 }
 
-static DEVICE_ATTR(cg_color, (S_IRUGO), nvt_cg_color_show, NULL);
-static DEVICE_ATTR(cg_maker, (S_IRUGO), nvt_cg_maker_show, NULL);
-static DEVICE_ATTR(display_maker, (S_IRUGO), nvt_display_maker_show, NULL);
+static DEVICE_ATTR(cg_color, (0444), nvt_cg_color_show, NULL);
+static DEVICE_ATTR(cg_maker, (0444), nvt_cg_maker_show, NULL);
+static DEVICE_ATTR(display_maker, (0444), nvt_display_maker_show, NULL);
 
 struct attribute *nvt_panel_attr[] = {
 	&dev_attr_cg_color.attr,
@@ -153,7 +153,7 @@ struct attribute *nvt_panel_attr[] = {
 	NULL,
 };
 
-static uint8_t bTouchIsAwake = 0;
+static uint8_t bTouchIsAwake;
 /*******************************************************
 Description:
 	Novatek touchscreen irq enable/disable function.
@@ -188,7 +188,7 @@ Description:
 return:
 	Executive outcomes. 0---succeed.
 *******************************************************/
-static inline int32_t spi_read_write(struct spi_device *client, uint8_t *buf, size_t len , NVT_SPI_RW rw)
+static inline int32_t spi_read_write(struct spi_device *client, uint8_t *buf, size_t len, NVT_SPI_RW rw)
 {
 	struct spi_message m;
 	struct spi_transfer t = {
@@ -258,6 +258,7 @@ int32_t CTP_SPI_WRITE(struct spi_device *client, uint8_t *buf, uint16_t len)
 {
 	int32_t ret = -1;
 	int32_t retries = 0;
+
 	mutex_lock(&ts->xbuf_lock);
 	buf[0] = SPI_WRITE_MASK(buf[0]);
 	while (retries < 5) {
@@ -304,6 +305,7 @@ int32_t nvt_write_addr(uint32_t addr, uint8_t data)
 {
 	int32_t ret = 0;
 	uint8_t buf[4] = {0};
+
 	NVT_ERR("nvt_write_addr enter\n");
 	/* ---set xdata index--- */
 	buf[0] = 0xFF;	/* set index/page/addr command */
@@ -411,7 +413,7 @@ return:
 void nvt_eng_reset(void)
 {
 	//---eng reset cmds to ENG_RST_ADDR---
-	NVT_ERR("%s \n", __func__);
+	NVT_ERR("%s\n", __func__);
 	nvt_write_addr(ENG_RST_ADDR, 0x5A);
 	NVT_ERR("%s leave\n", __func__);
 	mdelay(1);	//wait tMCU_Idle2TP_REX_Hi after TP_RST
@@ -575,7 +577,7 @@ int32_t nvt_check_fw_reset_state(RST_COMPLETE_STATE check_reset_state)
 		}
 
 		retry++;
-		if(unlikely(retry > retry_max)) {
+		if (unlikely(retry > retry_max)) {
 			NVT_ERR("error, retry=%d, buf[1]=0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X\n",
 				retry, buf[1], buf[2], buf[3], buf[4], buf[5]);
 			ret = -1;
@@ -658,13 +660,12 @@ info_retry:
 		ts->abs_y_max = TOUCH_DEFAULT_MAX_HEIGHT;
 		ts->max_button_num = TOUCH_KEY_NUM;
 
-		if(retry_count < 3) {
+		if (retry_count < 3) {
 			retry_count++;
 			NVT_ERR("retry_count=%d\n", retry_count);
 			goto info_retry;
 		} else {
-			NVT_ERR("Set default fw_ver=%d, x_num=%d, y_num=%d, "
-					"abs_x_max=%d, abs_y_max=%d, max_button_num=%d!\n",
+			NVT_ERR("Set default fw_ver=%d, x_num=%d, y_num=%d, abs_x_max=%d, abs_y_max=%d, max_button_num=%d!\n",
 					ts->fw_ver, ts->x_num, ts->y_num,
 					ts->abs_x_max, ts->abs_y_max, ts->max_button_num);
 			ret = -1;
@@ -709,14 +710,14 @@ static ssize_t nvt_flash_read(struct file *file, char __user *buff, size_t count
 
 	/* allocate buffer for spi transfer */
 	str = (uint8_t *)kzalloc((count), GFP_KERNEL);
-	if(str == NULL) {
+	if (str == NULL) {
 		NVT_ERR("kzalloc for buf failed!\n");
 		ret = -ENOMEM;
 		goto kzalloc_failed;
 	}
 
 	buf = (uint8_t *)kzalloc((count), GFP_KERNEL | GFP_DMA);
-	if(buf == NULL) {
+	if (buf == NULL) {
 		NVT_ERR("kzalloc for buf failed!\n");
 		ret = -ENOMEM;
 		kfree(str);
@@ -826,8 +827,7 @@ static int32_t nvt_flash_close(struct inode *inode, struct file *file)
 {
 	struct nvt_flash_data *dev = file->private_data;
 
-	if (dev)
-		kfree(dev);
+	kfree(dev);
 
 	return 0;
 }
@@ -848,7 +848,7 @@ return:
 *******************************************************/
 static int32_t nvt_flash_proc_init(void)
 {
-	NVT_proc_entry = proc_create(DEVICE_NAME, 0444, NULL,&nvt_flash_fops);
+	NVT_proc_entry = proc_create(DEVICE_NAME, 0444, NULL, &nvt_flash_fops);
 	if (NVT_proc_entry == NULL) {
 		NVT_ERR("Failed!\n");
 		return -ENOMEM;
@@ -1141,6 +1141,7 @@ bool is_lockdown_empty(u8 *lockdown)
 {
 	bool ret = true;
 	int i;
+
 	for (i = 0; i < NVT_LOCKDOWN_SIZE; i++) {
 		if (lockdown[i] != 0) {
 			ret = false;
@@ -1240,7 +1241,7 @@ static uint8_t nvt_fw_recovery(uint8_t *point_data)
 	uint8_t detected = true;
 
 	/* check pattern */
-	for (i=1 ; i<7 ; i++) {
+	for (i = 1 ; i < 7 ; i++) {
 		if (point_data[i] != 0x77) {
 			detected = false;
 			break;
@@ -1274,7 +1275,7 @@ static void nvt_esd_check_func(struct work_struct *work)
 #endif /* #if NVT_TOUCH_ESD_PROTECT */
 
 #if NVT_TOUCH_WDT_RECOVERY
-static uint8_t recovery_cnt = 0;
+static uint8_t recovery_cnt;
 static uint8_t nvt_wdt_fw_recovery(uint8_t *point_data)
 {
    uint32_t recovery_cnt_max = 10;
@@ -1284,14 +1285,14 @@ static uint8_t nvt_wdt_fw_recovery(uint8_t *point_data)
    recovery_cnt++;
 
    /* check pattern */
-   for (i=1 ; i<7 ; i++) {
+   for (i = 1 ; i < 7 ; i++) {
        if ((point_data[i] != 0xFD) && (point_data[i] != 0xFE)) {
-           recovery_cnt = 0;
-           break;
+	   recovery_cnt = 0;
+	break;
        }
    }
 
-   if (recovery_cnt > recovery_cnt_max){
+   if (recovery_cnt > recovery_cnt_max) {
        recovery_enable = true;
        recovery_cnt = 0;
    }
@@ -1321,11 +1322,11 @@ static irqreturn_t nvt_ts_work_func(int irq, void *data)
 #endif /* MT_PROTOCOL_B */
 	int32_t i = 0;
 	int32_t finger_cnt = 0;
-	
+
  pm_qos_update_request(&ts->pm_qos_req, 100);
 
 #if WAKEUP_GESTURE
- 	if (likely(bTouchIsAwake == 0)) {
+	if (likely(bTouchIsAwake == 0)) {
 		pm_wakeup_event(&ts->input_dev->dev, 5000);
 	}
 #endif
@@ -1341,7 +1342,7 @@ static irqreturn_t nvt_ts_work_func(int irq, void *data)
 	}
 
 	ret = CTP_SPI_READ(ts->client, point_data, POINT_DATA_LEN + 1);
- 	if (unlikely(ret < 0)) {
+	if (unlikely(ret < 0)) {
 		NVT_ERR("CTP_SPI_READ failed.(%d)\n", ret);
 		goto XFER_ERROR;
 	}
@@ -1372,11 +1373,11 @@ static irqreturn_t nvt_ts_work_func(int irq, void *data)
 #endif
 
 #if WAKEUP_GESTURE
- 	if (likely(bTouchIsAwake == 0)) {
+	if (likely(bTouchIsAwake == 0)) {
 		input_id = (uint8_t)(point_data[1] >> 3);
 		nvt_ts_wakeup_gesture_report(input_id, point_data);
 		nvt_irq_enable(true);
- 		goto XFER_ERROR;
+		goto XFER_ERROR;
 	}
 #endif
 
@@ -1420,7 +1421,7 @@ static irqreturn_t nvt_ts_work_func(int irq, void *data)
 
 #if MT_PROTOCOL_B
 	for (i = 0; i < ts->max_touch_num; i++) {
- 		if (likely(press_id[i] != 1)) {
+		if (likely(press_id[i] != 1)) {
 			input_mt_slot(ts->input_dev, i);
 			input_mt_report_slot_state(ts->input_dev, MT_TOOL_FINGER, false);
 			if (finger_cnt == 0 && test_bit(i, ts->slot_map)) {
@@ -1585,7 +1586,7 @@ static void nvt_switch_mode_work(struct work_struct *work)
 	unsigned char value = sw->mode;
 
 	if (value >= INPUT_EVENT_WAKEUP_MODE_OFF && value <= INPUT_EVENT_WAKEUP_MODE_ON) {
-		if (ts_data->ic_state <= NVT_IC_SUSPEND_OUT && ts_data->ic_state != NVT_IC_INIT ) {
+		if (ts_data->ic_state <= NVT_IC_SUSPEND_OUT && ts_data->ic_state != NVT_IC_INIT) {
 			ts_data->gesture_command_delayed = value;
 			NVT_LOG("Panel off, don't set dbclick gesture flag util panel on");
 			ts_data->db_wakeup = 0;
@@ -1788,6 +1789,7 @@ nvt_touchfeature_cmd_xsfer_out:
 static int nvt_touchfeature_set(uint8_t *touchfeature)
 {
 	int ret;
+
 	if (mutex_lock_interruptible(&ts->lock)) {
 		return -ERESTARTSYS;
 	}
@@ -1901,6 +1903,7 @@ static int nvt_set_cur_value(int nvt_mode, int nvt_value)
 static char nvt_touch_vendor_read(void)
 {
 	char value = '4';
+
 	NVT_LOG("%s Get touch vendor: %c\n", __func__, value);
 	return value;
 }
@@ -1909,6 +1912,7 @@ static char nvt_panel_vendor_read(void)
 {
 	char value = '0';
 	int ret = 0;
+
 	if (!ts)
 		return value;
 	ret = dsi_panel_get_lockdowninfo_for_tp(ts->lockdown_info);
@@ -1930,6 +1934,7 @@ static char nvt_panel_color_read(void)
 {
 	char value = '0';
 	int ret = 0;
+
 	if (!ts)
 		return value;
 	ret = dsi_panel_get_lockdowninfo_for_tp(ts->lockdown_info);
@@ -1951,6 +1956,7 @@ static char nvt_panel_display_read(void)
 {
 	char value = '0';
 	int ret = 0;
+
 	if (!ts)
 		return value;
 	ret = dsi_panel_get_lockdowninfo_for_tp(ts->lockdown_info);
@@ -2138,6 +2144,7 @@ static const struct file_operations tpdbg_ops = {
 static void nvt_resume_work(struct work_struct *work)
 {
 	struct nvt_ts_data *ts_core = container_of(work, struct nvt_ts_data, resume_work);
+
 	nvt_ts_resume(&ts_core->client->dev);
 }
 static void get_lockdown_info(struct work_struct *work)
@@ -2188,7 +2195,7 @@ static int32_t nvt_ts_probe(struct platform_device *pdev)
 		return -ENOMEM;
 	}
 	ts->xbuf = (uint8_t *)kzalloc((NVT_TRANSFER_LEN+1), GFP_KERNEL);
-	if(ts->xbuf == NULL) {
+	if (ts->xbuf == NULL) {
 		NVT_ERR("kzalloc for xbuf failed!\n");
 		if (ts) {
 			kfree(ts);
@@ -2327,7 +2334,7 @@ static int32_t nvt_ts_probe(struct platform_device *pdev)
 
 
 	//---set input device info.---
-	ts->input_dev->evbit[0] = BIT_MASK(EV_SYN) | BIT_MASK(EV_KEY) | BIT_MASK(EV_ABS) ;
+	ts->input_dev->evbit[0] = BIT_MASK(EV_SYN) | BIT_MASK(EV_KEY) | BIT_MASK(EV_ABS);
 	ts->input_dev->keybit[BIT_WORD(BTN_TOUCH)] = BIT_MASK(BTN_TOUCH | BTN_TOOL_FINGER);
 	ts->input_dev->propbit[0] = BIT(INPUT_PROP_DIRECT);
 
@@ -2356,7 +2363,7 @@ static int32_t nvt_ts_probe(struct platform_device *pdev)
 #endif
 
 #if WAKEUP_GESTURE
-	for (retry = 0; retry < (sizeof(gesture_key_array) / sizeof(gesture_key_array[0])); retry++) {
+	for (retry = 0; retry < (ARRAY_SIZE(gesture_key_array)); retry++) {
 		input_set_capability(ts->input_dev, EV_KEY, gesture_key_array[retry]);
 	}
 #endif
@@ -2389,12 +2396,12 @@ static int32_t nvt_ts_probe(struct platform_device *pdev)
 			nvt_irq_enable(false);
 			NVT_LOG("request irq %d succeed\n", ts->client->irq);
 		}
-		
+
 		ts->pm_qos_req.type = PM_QOS_REQ_AFFINE_IRQ;
 		ts->pm_qos_req.irq = ts->client->irq;
 		pm_qos_add_request(&ts->pm_qos_req, PM_QOS_CPU_DMA_LATENCY,
 				PM_QOS_DEFAULT_VALUE);
-	
+
 	}
 
 	nvt_lockdown_wq = alloc_workqueue("nvt_lockdown_wq", WQ_UNBOUND | WQ_MEM_RECLAIM, 1);
@@ -2495,7 +2502,7 @@ static int32_t nvt_ts_probe(struct platform_device *pdev)
 
 	ts->drm_notif.notifier_call = nvt_drm_notifier_callback;
 	ret = msm_drm_register_client(&ts->drm_notif);
-	if(ret) {
+	if (ret) {
 		NVT_ERR("register drm_notifier failed. ret=%d\n", ret);
 		goto err_register_drm_notif_failed;
 	}
@@ -2715,6 +2722,7 @@ static int32_t nvt_ts_suspend(struct device *dev)
 	uint32_t i = 0;
 #endif
 	int ret = 0;
+
 	if (!bTouchIsAwake) {
 		NVT_LOG("Touch is already suspend\n");
 		return 0;
@@ -2810,6 +2818,7 @@ return:
 static int32_t nvt_ts_resume(struct device *dev)
 {
 	int ret;
+
 	if (ts->dev_pm_suspend)
 		pm_stay_awake(dev);
 	if (!ts->db_wakeup) {
@@ -2872,7 +2881,7 @@ static int32_t nvt_ts_resume(struct device *dev)
 	else
 		NVT_ERR("IC state may error,caused by suspend/resume flow, please CHECK!!");
 
-	if (ts->gesture_command_delayed >= 0){
+	if (ts->gesture_command_delayed >= 0) {
 		ts->db_wakeup = ts->gesture_command_delayed;
 		ts->gesture_command_delayed = -1;
 		NVT_LOG("execute delayed command, set double click wakeup %d\n", ts->db_wakeup);
@@ -2890,7 +2899,7 @@ static int nvt_drm_notifier_callback(struct notifier_block *self, unsigned long 
 {
 	struct msm_drm_notifier *evdata = data;
 	int *blank;
-	struct nvt_ts_data *ts_data=
+	struct nvt_ts_data *ts_data =
 		container_of(self, struct nvt_ts_data, drm_notif);
 
 	if (!evdata || (evdata->id != 0))
