@@ -197,7 +197,6 @@ struct nvt_ts_data {
 struct nvt_mode_switch {
 	struct nvt_ts_data *ts_data;
 	unsigned char mode;
-	struct work_struct switch_mode_work;
 };
 
 #if NVT_TOUCH_PROC
