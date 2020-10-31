@@ -108,7 +108,6 @@ extern const uint16_t gesture_key_array[];
 
 struct nvt_config_info {
 	u8 tp_vendor;
-	u8 tp_color;
 	u8 display_maker;
 	u8 panel_cg;
 	const char *nvt_fw_name;

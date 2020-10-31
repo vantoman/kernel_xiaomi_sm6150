@@ -124,35 +124,6 @@ const uint16_t gesture_key_array[] = {
 };
 #endif
 
-static ssize_t nvt_cg_color_show(struct device *dev,
-				    struct device_attribute *attr, char *buf)
-{
-	return snprintf(buf, PAGE_SIZE, "%c\n", ts->lockdown_info[2]);
-}
-
-static ssize_t nvt_cg_maker_show(struct device *dev,
-				    struct device_attribute *attr, char *buf)
-{
-	return snprintf(buf, PAGE_SIZE, "%c\n", ts->lockdown_info[6]);
-}
-
-static ssize_t nvt_display_maker_show(struct device *dev,
-				    struct device_attribute *attr, char *buf)
-{
-	return snprintf(buf, PAGE_SIZE, "%c\n", ts->lockdown_info[1]);
-}
-
-static DEVICE_ATTR(cg_color, (0444), nvt_cg_color_show, NULL);
-static DEVICE_ATTR(cg_maker, (0444), nvt_cg_maker_show, NULL);
-static DEVICE_ATTR(display_maker, (0444), nvt_display_maker_show, NULL);
-
-struct attribute *nvt_panel_attr[] = {
-	&dev_attr_cg_color.attr,
-	&dev_attr_cg_maker.attr,
-	&dev_attr_display_maker.attr,
-	NULL,
-};
-
 static uint8_t bTouchIsAwake;
 /*******************************************************
 Description:
@@ -1617,6 +1588,8 @@ static int nvt_input_event(struct input_dev *dev, unsigned int type, unsigned in
 	return 0;
 }
 
+extern int dsi_panel_get_lockdowninfo_for_tp(unsigned char *plockdowninfo);
+
 #ifdef CONFIG_TOUCHSCREEN_XIAOMI_TOUCHFEATURE
 
 static struct xiaomi_touch_interface xiaomi_touch_interfaces;
@@ -1666,7 +1639,6 @@ static int nvt_palm_sensor_write(int value)
 	return ret;
 }
 
-extern int dsi_panel_get_lockdowninfo_for_tp(unsigned char *plockdowninfo);
 static void nvt_init_touchmode_data(void)
 {
 	int i;
@@ -1878,80 +1850,6 @@ static int nvt_set_cur_value(int nvt_mode, int nvt_value)
 	return 0;
 }
 
-static char nvt_touch_vendor_read(void)
-{
-	char value = '4';
-
-	NVT_LOG("%s Get touch vendor: %c\n", __func__, value);
-	return value;
-}
-
-static char nvt_panel_vendor_read(void)
-{
-	char value = '0';
-	int ret = 0;
-
-	if (!ts)
-		return value;
-	ret = dsi_panel_get_lockdowninfo_for_tp(ts->lockdown_info);
-	if (ret <= 0) {
-		NVT_ERR("can't get lockdown info");
-		return value;
-	}
-	if (!ts->lockdown_info[6]) {
-		NVT_ERR("%s lockdown info is NULL\n", __func__);
-		return value;
-	} else {
-		value = ts->lockdown_info[1];
-		NVT_LOG("%s Get touch vendor: %d\n", __func__, value);
-	}
-	return value;
-}
-
-static char nvt_panel_color_read(void)
-{
-	char value = '0';
-	int ret = 0;
-
-	if (!ts)
-		return value;
-	ret = dsi_panel_get_lockdowninfo_for_tp(ts->lockdown_info);
-	if (ret <= 0) {
-		NVT_ERR("can't get lockdown info");
-		return value;
-	}
-	if (!ts->lockdown_info[2]) {
-		NVT_ERR("%s lockdown info is NULL\n", __func__);
-		return value;
-	} else {
-		value = ts->lockdown_info[2];
-		NVT_LOG("%s Get touch vendor: %d\n", __func__, value);
-	}
-	return value;
-}
-
-static char nvt_panel_display_read(void)
-{
-	char value = '0';
-	int ret = 0;
-
-	if (!ts)
-		return value;
-	ret = dsi_panel_get_lockdowninfo_for_tp(ts->lockdown_info);
-	if (ret <= 0) {
-		NVT_ERR("can't get lockdown info");
-		return value;
-	}
-	if (!ts->lockdown_info[1]) {
-		NVT_ERR("%s lockdown info is NULL\n", __func__);
-		return value;
-	} else {
-		value = ts->lockdown_info[1];
-		NVT_LOG("%s Get touch vendor: %d\n", __func__, value);
-	}
-	return value;
-}
-
 static int nvt_get_mode_value(int mode, int value_type)
 {
 	int value = -1;
@@ -2005,7 +1903,6 @@ static int nvt_reset_mode(int mode)
 	return 0;
 }
 #endif
-
 
 #ifdef CONFIG_TOUCHSCREEN_NVT_DEBUG_FS
 static void tpdbg_shutdown(struct nvt_ts_data *ts_core, bool enable)
@@ -2465,7 +2362,6 @@ static int32_t nvt_ts_probe(struct platform_device *pdev)
 	}
 	ts->attrs = attrs_p;
 	attrs_p->name = "panel_info";
-	attrs_p->attrs = nvt_panel_attr;
 	ret = sysfs_create_group(&pdev->dev.kobj, ts->attrs);
 
 	ts->event_wq = alloc_workqueue("nvt-event-queue",
@@ -2486,10 +2382,6 @@ static int32_t nvt_ts_probe(struct platform_device *pdev)
 	}
 
 #ifdef CONFIG_TOUCHSCREEN_XIAOMI_TOUCHFEATURE
-			xiaomi_touch_interfaces.touch_vendor_read = nvt_touch_vendor_read;
-			xiaomi_touch_interfaces.panel_display_read = nvt_panel_display_read;
-			xiaomi_touch_interfaces.panel_vendor_read = nvt_panel_vendor_read;
-			xiaomi_touch_interfaces.panel_color_read = nvt_panel_color_read;
 			xiaomi_touch_interfaces.getModeValue = nvt_get_mode_value;
 			xiaomi_touch_interfaces.setModeValue = nvt_set_cur_value;
 			xiaomi_touch_interfaces.resetMode = nvt_reset_mode;
