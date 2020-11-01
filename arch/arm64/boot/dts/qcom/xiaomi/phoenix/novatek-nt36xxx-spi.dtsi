@@ -154,11 +154,6 @@
 
 /* Novatek device tree node */
 &soc {
-	xiaomi_touch {
-		compatible = "xiaomi-touch";
-		status = "ok";
-		touch,name = "xiaomi-touch";
-	};
 
 	ts_novatek {
 			compatible = "novatek,NVT-ts-spi";
@@ -171,9 +166,6 @@
 			pinctrl-names = "pmx_ts_active", "pmx_ts_suspend";
 			pinctrl-0 = <&ts_int_active &ts_reset_active &ts_cs_active>;
 			pinctrl-1 = <&ts_int_suspend &ts_reset_suspend &ts_cs_suspend>;
-
-			/* 672 */
-			//novatek,swrst-n8-addr = <0x01F01A>;
 
 			/* 672A */
 			novatek,swrst-n8-addr = <0x03F0FE>;
@@ -196,9 +188,6 @@
 				novatek,mp-name = "novatek_nt36672c_g7b_mp02.bin";
 				novatek,clicknum-file-name = "nvt+ebbg815";
 			};
-			/* MP */
-			//novatek,mp-support-dt;
-
 
 			novatek-mp-criteria-nvtpid@0 {
 				#address-cells = <1>;
