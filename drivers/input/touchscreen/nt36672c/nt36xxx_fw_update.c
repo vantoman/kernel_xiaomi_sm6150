@@ -797,108 +797,6 @@ static void nvt_read_bld_hw_crc(void)
 	return;
 }
 
-#if NVT_TOUCH_ESD_DISP_RECOVERY
-#define ILM_CRC_FLAG 0x01
-#define CRC_DONE 0x04
-static int32_t nvt_check_crc_done_ilm_err(void)
-{
-	uint8_t buf[8] = {0};
-
-	nvt_set_page(ts->mmap->BLD_ILM_DLM_CRC_ADDR);
-	buf[0] = ts->mmap->BLD_ILM_DLM_CRC_ADDR & 0x7F;
-	buf[1] = 0x00;
-	CTP_SPI_READ(ts->client, buf, 2);
-
-	NVT_LOG("CRC DONE, ILM DLM FLAG = 0x%02X\n", buf[1]);
-	if (((buf[1] & ILM_CRC_FLAG) && (buf[1] & CRC_DONE)) ||
-		(buf[1] == 0xFE))
-		return 1;
-	else
-		return 0;
-}
-
-#define DISP_OFF_ADDR 0x2800
-static int nvt_f2c_disp_off(void)
-{
-	uint8_t buf[8] = {0};
-	int ret = 0;
-	uint8_t tmp_val = 0;
-	int32_t write_disp_off_retry = 0;
-	int32_t retry = 0;
-
-	NVT_LOG("++\n");
-
-	// SW Reset & Idle
-	nvt_sw_reset_idle();
-
-	//Setp1: Set REG CPU_IF_ADDR[15:0]
-	nvt_write_addr(ts->mmap->CPU_IF_ADDR_LOW, DISP_OFF_ADDR & 0xFF);
-	nvt_write_addr(ts->mmap->CPU_IF_ADDR_HIGH, (DISP_OFF_ADDR >> 8) & 0xFF);
-
-	//Step2: Set REG FFM_ADDR[15:0]
-	// set FFM_ADDR to 0x20000
-	nvt_write_addr(ts->mmap->FFM_ADDR_LOW, 0x00);
-	nvt_write_addr(ts->mmap->FFM_ADDR_MID, 0x00);
-	if (ts->hw_crc > 1)
-		nvt_write_addr(ts->mmap->FFM_ADDR_HIGH, 0x00);
-
-	//Step3: Set REG F2C_LENGT[H7:0]
-	nvt_write_addr(ts->mmap->F2C_LENGTH, 1);
-
-nvt_write_disp_off_retry:
-	//Step4: Set REG CPU_Polling_En=1, F2C_RW=1, CPU_IF_ADDR_INC=1, F2C_EN=1
-	nvt_set_page(ts->mmap->FFM2CPU_CTL);
-	buf[0] = ts->mmap->FFM2CPU_CTL & 0x7F;
-	buf[1] = 0xFF;
-	ret = CTP_SPI_READ(ts->client, buf, 2);
-	if (ret) {
-		NVT_ERR("Read FFM2CPU control failed!\n");
-		return ret;
-	}
-	tmp_val = buf[1] | 0x27;
-	nvt_write_addr(ts->mmap->FFM2CPU_CTL, tmp_val);
-
-	//Step5: wait F2C_EN = 0
-	retry = 0;
-	while (1) {
-		nvt_set_page(ts->mmap->FFM2CPU_CTL);
-		buf[0] = ts->mmap->FFM2CPU_CTL & 0x7F;
-		buf[1] = 0xFF;
-		buf[2] = 0xFF;
-		ret = CTP_SPI_READ(ts->client, buf, 3);
-		if (ret) {
-			NVT_ERR("Read FFM2CPU control failed!\n");
-			return ret;
-		}
-
-		if ((buf[1] & 0x01) == 0x00)
-			break;
-
-		usleep_range(1000, 1000);
-		retry++;
-
-		if (unlikely(retry > 1)) {
-			NVT_ERR("Wait F2C_EN = 0 failed!\n");
-			return -EIO;
-		}
-	}
-
-	//Step6: Check REG TH_CPU_CHK  status (1: Success,  0: Fail), if 0, can Retry Step4.
-	if (((buf[2] & 0x04) >> 2) != 0x01) {
-		write_disp_off_retry++;
-		if (write_disp_off_retry <= 3) {
-			goto nvt_write_disp_off_retry;
-		} else {
-			NVT_ERR("Write display off failed!, buf[1]=0x%02X, buf[2]=0x%02X\n", buf[1], buf[2]);
-			return -EIO;
-		}
-	}
-	NVT_LOG("--\n");
-
-	return ret;
-}
-#endif /* #if NVT_TOUCH_ESD_DISP_RECOVERY */
-
 /*******************************************************
 Description:
 	Novatek touchscreen Download_Firmware with HW CRC
@@ -957,12 +855,6 @@ fail:
 		if (unlikely(retry > 2)) {
 			NVT_ERR("error, retry=%d\n", retry);
 			nvt_read_bld_hw_crc();
-#if NVT_TOUCH_ESD_DISP_RECOVERY
-			if (nvt_check_crc_done_ilm_err()) {
-				NVT_ERR("set display off to trigger display esd recovery.\n");
-				nvt_f2c_disp_off();
-			}
-#endif /* #if NVT_TOUCH_ESD_DISP_RECOVERY */
 			break;
 		}
 	}
