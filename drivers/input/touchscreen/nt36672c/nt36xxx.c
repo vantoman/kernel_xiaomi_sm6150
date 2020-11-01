@@ -52,11 +52,6 @@
 #define INPUT_EVENT_PALM_ON		13
 #define INPUT_EVENT_END				13
 
-#if NVT_TOUCH_EXT_PROC
-extern int32_t nvt_extra_proc_init(void);
-extern void nvt_extra_proc_deinit(void);
-#endif
-
 struct nvt_ts_data *ts;
 
 #if BOOT_UPDATE_FIRMWARE
@@ -1551,14 +1546,6 @@ static int32_t nvt_ts_probe(struct platform_device *pdev)
 	queue_delayed_work(nvt_fwu_wq, &ts->nvt_fwu_work, msecs_to_jiffies(14000));
 #endif
 
-#if NVT_TOUCH_EXT_PROC
-	ret = nvt_extra_proc_init();
-	if (ret != 0) {
-		NVT_ERR("nvt extra proc init failed. ret=%d\n", ret);
-		goto err_extra_proc_init_failed;
-	}
-#endif
-
 	attrs_p = (struct attribute_group *)devm_kzalloc(&pdev->dev, sizeof(*attrs_p), GFP_KERNEL);
 	if (!attrs_p) {
 		NVT_ERR("no mem to alloc");
@@ -1596,10 +1583,6 @@ static int32_t nvt_ts_probe(struct platform_device *pdev)
 err_register_drm_notif_failed:
 	destroy_workqueue(ts->event_wq);
 err_alloc_work_thread_failed:
-#if NVT_TOUCH_EXT_PROC
-nvt_extra_proc_deinit();
-err_extra_proc_init_failed:
-#endif
 #if BOOT_UPDATE_FIRMWARE
 	if (nvt_fwu_wq) {
 		cancel_delayed_work_sync(&ts->nvt_fwu_work);
@@ -1664,10 +1647,6 @@ static int32_t nvt_ts_remove(struct platform_device *pdev)
 
 	pm_qos_remove_request(&ts->pm_qos_req);
 
-#if NVT_TOUCH_EXT_PROC
-	nvt_extra_proc_deinit();
-#endif
-
 #if BOOT_UPDATE_FIRMWARE
 	if (nvt_fwu_wq) {
 		cancel_delayed_work_sync(&ts->nvt_fwu_work);
@@ -1712,10 +1691,6 @@ static void nvt_ts_shutdown(struct platform_device *pdev)
 
 	if (msm_drm_unregister_client(&ts->drm_notif))
 		NVT_ERR("Error occurred while unregistering drm_notifier.\n");
-
-#if NVT_TOUCH_EXT_PROC
-	nvt_extra_proc_deinit();
-#endif
 
 #if WAKEUP_GESTURE
 	device_init_wakeup(&ts->input_dev->dev, 0);

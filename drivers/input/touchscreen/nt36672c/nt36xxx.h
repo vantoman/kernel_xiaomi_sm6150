@@ -85,7 +85,6 @@ extern const uint16_t touch_key_array[TOUCH_KEY_NUM];
 #define NVT_TOUCH_SUPPORT_HW_RST 1
 
 //---Customerized func.---
-#define NVT_TOUCH_EXT_PROC 1
 #define MT_PROTOCOL_B 1
 #define WAKEUP_GESTURE 1
 
@@ -151,9 +150,6 @@ struct nvt_ts_data {
 	struct pinctrl *ts_pinctrl;
 	struct pinctrl_state *pinctrl_state_active;
 	struct pinctrl_state *pinctrl_state_suspend;
-#ifndef NVT_SAVE_TESTDATA_IN_FILE
-	void *testdata;
-#endif
 	bool lkdown_readed;
 	int db_wakeup;
 	u8 lockdown_info[NVT_LOCKDOWN_SIZE];
@@ -167,9 +163,6 @@ struct nvt_ts_data {
 	struct attribute_group *attrs;
 	/*bit map indicate which slot(0~9) has been used*/
 	unsigned long slot_map[BITS_TO_LONGS(10)];
-#ifdef CONFIG_TOUCHSCREEN_NVT_DEBUG_FS
-	struct dentry *debugfs;
-#endif
 	struct workqueue_struct *event_wq;
 	/*struct work_struct suspend_work;*/
 	struct work_struct resume_work;
