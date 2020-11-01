@@ -85,26 +85,15 @@ extern const uint16_t touch_key_array[TOUCH_KEY_NUM];
 #define NVT_TOUCH_SUPPORT_HW_RST 1
 
 //---Customerized func.---
-#define NVT_TOUCH_PROC 0
 #define NVT_TOUCH_EXT_PROC 1
-#define NVT_TOUCH_MP 1
-#define NVT_TOUCH_MP_SETTING_CRITERIA_FROM_CSV 0
 #define MT_PROTOCOL_B 1
 #define WAKEUP_GESTURE 1
 #if WAKEUP_GESTURE
 extern const uint16_t gesture_key_array[];
 #endif
 #define BOOT_UPDATE_FIRMWARE 1
-//#define DEFAULT_BOOT_UPDATE_FIRMWARE_NAME "novatek_ts_fw.bin"
-//#define DEFAULT_MP_UPDATE_FIRMWARE_NAME   "novatek_ts_mp.bin"
 #define DEFAULT_BOOT_UPDATE_FIRMWARE_NAME "novatek_nt36672c_g7b_fw01.bin"
 #define DEFAULT_MP_UPDATE_FIRMWARE_NAME   "novatek_nt36672c_g7b_mp01.bin"
-
-//---ESD Protect.---
-#define NVT_TOUCH_ESD_PROTECT 0
-#define NVT_TOUCH_ESD_CHECK_PERIOD 1500	/* ms */
-#define NVT_TOUCH_WDT_RECOVERY 0
-#define NVT_TOUCH_ESD_DISP_RECOVERY 0
 
 struct nvt_config_info {
 	u8 tp_vendor;
@@ -198,12 +187,6 @@ struct nvt_mode_switch {
 	unsigned char mode;
 };
 
-#if NVT_TOUCH_PROC
-struct nvt_flash_data {
-	rwlock_t lock;
-};
-#endif
-
 typedef enum {
 	RESET_STATE_INIT = 0xA0,// IC reset
 	RESET_STATE_REK,		// ReK baseline
@@ -255,7 +238,4 @@ int32_t nvt_set_page(uint32_t addr);
 int32_t nvt_write_addr(uint32_t addr, uint8_t data);
 void nvt_match_fw(void);
 int32_t nvt_set_pocket_palm_switch(uint8_t pocket_palm_switch);
-#if NVT_TOUCH_ESD_PROTECT
-extern void nvt_esd_check_enable(uint8_t enable);
-#endif /* #if NVT_TOUCH_ESD_PROTECT */
 #endif /* _LINUX_NVT_TOUCH_H */
