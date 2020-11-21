@@ -157,19 +157,13 @@ return:
 int32_t CTP_SPI_READ(struct spi_device *client, uint8_t *buf, uint16_t len)
 {
 	int32_t ret = -1;
-	int32_t retries = 0;
 
 	mutex_lock(&ts->xbuf_lock);
 
 	buf[0] = SPI_READ_MASK(buf[0]);
 
-	while (retries < 5) {
-		ret = spi_read_write(client, buf, len, NVTREAD);
-		if (ret == 0) break;
-		retries++;
-	}
-
-	if (unlikely(retries == 5)) {
+	ret = spi_read_write(client, buf, len, NVTREAD);
+	if (ret != 0) {
 		NVT_ERR("read error, ret=%d\n", ret);
 		ret = -EIO;
 	} else {
@@ -191,17 +185,12 @@ return:
 int32_t CTP_SPI_WRITE(struct spi_device *client, uint8_t *buf, uint16_t len)
 {
 	int32_t ret = -1;
-	int32_t retries = 0;
 
 	mutex_lock(&ts->xbuf_lock);
 	buf[0] = SPI_WRITE_MASK(buf[0]);
-	while (retries < 5) {
-		ret = spi_read_write(client, buf, len, NVTWRITE);
-		if (ret == 0)	break;
-		retries++;
-	}
-
-	if (unlikely(retries == 5)) {
+	
+	ret = spi_read_write(client, buf, len, NVTWRITE);
+	if (ret != 0) {
 		NVT_ERR("error, ret=%d\n", ret);
 		ret = -EIO;
 	}
