@@ -1313,18 +1313,6 @@ static int32_t nvt_ts_probe(struct platform_device *pdev)
 		goto err_spi_setup;
 	}
 
-#ifdef CONFIG_MTK_SPI
-    /* old usage of MTK spi API */
-    memcpy(&ts->spi_ctrl, &spi_ctrdata, sizeof(struct mt_chip_conf));
-    ts->client->controller_data = (void *)&ts->spi_ctrl;
-#endif
-
-#ifdef CONFIG_SPI_MT65XX
-    /* new usage of MTK spi API */
-    memcpy(&ts->spi_ctrl, &spi_ctrdata, sizeof(struct mtk_chip_config));
-    ts->client->controller_data = (void *)&ts->spi_ctrl;
-#endif
-
 	NVT_LOG("mode=%d, max_speed_hz=%d\n", ts->client->mode, ts->client->max_speed_hz);
 
 	ret = nvt_pinctrl_init(ts);
