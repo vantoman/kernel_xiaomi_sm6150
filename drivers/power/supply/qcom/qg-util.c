@@ -477,7 +477,7 @@ int qg_get_battery_current(struct qpnp_qg *chip, int *ibat_ua)
 	*ibat_ua = qg_iraw_to_ua(chip, last_ibat);
 	chip->last_ibat = *ibat_ua;
 	if (*ibat_ua < 0) {
-		pr_err("ibat_ua =%d", *ibat_ua);
+		pr_debug("ibat_ua =%d", *ibat_ua);
 		chip->sdam_data[SDAM_IBAT_UA] = 0;
 	} else
 		chip->sdam_data[SDAM_IBAT_UA] =  (chip->sdam_data[SDAM_IBAT_UA] != 0) ? (chip->sdam_data[SDAM_IBAT_UA] * 9 + *ibat_ua) / 10 :  *ibat_ua;

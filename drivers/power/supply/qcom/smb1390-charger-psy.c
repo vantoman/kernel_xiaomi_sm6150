@@ -909,7 +909,7 @@ static int smb1390_ilim_vote_cb(struct votable *votable, void *data,
 
 	/* ILIM should always have at least one active vote */
 	if (!client) {
-		pr_err("Client missing\n");
+		pr_debug("Client missing\n");
 		return -EINVAL;
 	}
 
