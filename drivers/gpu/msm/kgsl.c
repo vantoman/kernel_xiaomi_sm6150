@@ -400,6 +400,10 @@ kgsl_mem_entry_destroy(struct kref *kref)
 						    struct kgsl_mem_entry,
 						    refcount);
 	unsigned int memtype;
+	struct kgsl_device *device = NULL;
+
+	if (entry->memdesc.pagetable != NULL)
+		device = KGSL_MMU_DEVICE(entry->memdesc.pagetable->mmu);
 
 	if (entry == NULL)
 		return;
