@@ -2581,6 +2581,7 @@ int ufs_qcom_testbus_config(struct ufs_qcom_host *host)
 		goto out;
 	}
 	ufs_qcom_enable_test_bus(host);
+
 	/*
 	 * Make sure the test bus configuration is
 	 * committed before returning.

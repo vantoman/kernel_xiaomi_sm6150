@@ -571,9 +571,13 @@ static void virtio_gpu_cmd_get_capset_info_cb(struct virtio_gpu_device *vgdev,
 	int i = le32_to_cpu(cmd->capset_index);
 
 	spin_lock(&vgdev->display_info_lock);
-	vgdev->capsets[i].id = le32_to_cpu(resp->capset_id);
-	vgdev->capsets[i].max_version = le32_to_cpu(resp->capset_max_version);
-	vgdev->capsets[i].max_size = le32_to_cpu(resp->capset_max_size);
+	if (vgdev->capsets) {
+		vgdev->capsets[i].id = le32_to_cpu(resp->capset_id);
+		vgdev->capsets[i].max_version = le32_to_cpu(resp->capset_max_version);
+		vgdev->capsets[i].max_size = le32_to_cpu(resp->capset_max_size);
+	} else {
+		DRM_ERROR("invalid capset memory.");
+	}
 	spin_unlock(&vgdev->display_info_lock);
 	wake_up(&vgdev->resp_wq);
 }
@@ -1114,12 +1118,14 @@ void virtio_gpu_cmd_map(struct virtio_gpu_device *vgdev,
 	struct virtio_gpu_vbuffer *vbuf;
 	struct virtio_gpu_resp_map_info *resp_buf;
 
+	/* gets freed when the ring has consumed it */
 	resp_buf = kzalloc(sizeof(*resp_buf), GFP_KERNEL);
 	if (!resp_buf) {
 		DRM_ERROR("allocation failure\n");
 		return;
 	}
 
+	/* gets freed when the ring has consumed it */
 	cmd_p = virtio_gpu_alloc_cmd_resp(vgdev,
 		virtio_gpu_cmd_resource_map_cb, &vbuf, sizeof(*cmd_p),
 		sizeof(struct virtio_gpu_resp_map_info), resp_buf);
@@ -1138,6 +1144,7 @@ void virtio_gpu_cmd_unmap(struct virtio_gpu_device *vgdev,
 	struct virtio_gpu_resource_unmap *cmd_p;
 	struct virtio_gpu_vbuffer *vbuf;
 
+	/* gets freed when the ring has consumed it */
 	cmd_p = virtio_gpu_alloc_cmd(vgdev, &vbuf, sizeof(*cmd_p));
 	memset(cmd_p, 0, sizeof(*cmd_p));
 
@@ -1158,6 +1165,7 @@ virtio_gpu_cmd_resource_create_blob(struct virtio_gpu_device *vgdev,
 	struct virtio_gpu_resource_create_blob *cmd_p;
 	struct virtio_gpu_vbuffer *vbuf;
 
+	/* gets freed when the ring has consumed it */
 	cmd_p = virtio_gpu_alloc_cmd(vgdev, &vbuf, sizeof(*cmd_p));
 	memset(cmd_p, 0, sizeof(*cmd_p));
 
