@@ -1097,17 +1097,25 @@ static bool inline check_file(const char *name)
 {
 	int i, f;
 	for (f = 0; f < ARRAY_SIZE(paths_array); ++f) {
-		const char *path_to_check = paths_array[f];
+		char *path_to_check = paths_array[f];
 
 		if (unlikely(!strncmp(name, path_to_check, strlen(path_to_check)))) {
 			for (i = 0; i < ARRAY_SIZE(files_array); ++i) {
 				const char *filename = name + strlen(path_to_check) + 1;
-				const char *filename_to_check = files_array[i];
+				char *filename_to_check = files_array[i];
 
 				/* Leave only the actual filename */
 				if (!strncmp(filename, filename_to_check, strlen(filename_to_check))) {
 					pr_info("%s: blocking %s/%s\n", __func__, path_to_check, filename);
 					return 1;
+				} else {
+					const char *filename_doublecheck = strchr(filename, '/');
+					if (filename_doublecheck == NULL)
+						return 0;
+					if (!strncmp(filename_doublecheck + 1, filename_to_check, strlen(filename_to_check))) {
+						pr_info("%s: blocking %s/%s\n", __func__, path_to_check, filename);
+						return 1;
+					}
 				}
 			}
 		}
