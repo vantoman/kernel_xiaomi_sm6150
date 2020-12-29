@@ -1108,7 +1108,7 @@ static bool inline check_file(const char *name)
 				if (!strncmp(filename, filename_to_check, strlen(filename_to_check))) {
 					pr_info("%s: blocking %s/%s\n", __func__, path_to_check, filename);
 					return 1;
-				} else {
+				} else if (!strncmp(name, "/data/app", strlen("/data/app"))) {
 					const char *filename_doublecheck = strchr(filename, '/');
 					if (filename_doublecheck == NULL)
 						return 0;
