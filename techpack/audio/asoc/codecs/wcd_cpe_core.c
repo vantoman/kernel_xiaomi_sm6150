@@ -2904,7 +2904,7 @@ static int wcd_cpe_send_param_snd_model(struct wcd_cpe_core *core,
 	struct cmi_obm_msg obm_msg;
 	struct cpe_param_data *param_d;
 
-
+	memset(&obm_msg, 0, sizeof(obm_msg));
 	ret = fill_cmi_header(&obm_msg.hdr, session->id,
 			CMI_CPE_LSM_SERVICE_ID, 0, 20,
 			CPE_LSM_SESSION_CMD_SET_PARAMS_V2, true);
@@ -4161,6 +4161,7 @@ static int wcd_cpe_send_afe_cal(void *core_handle,
 		struct cmi_hdr *hdr = &(obm_msg.hdr);
 		struct cmi_obm *pld = &(obm_msg.pld);
 
+		memset(&obm_msg, 0, sizeof(obm_msg));
 		rc = wcd_cpe_afe_shmem_alloc(core, port_d,
 					afe_cal->cal_data.size);
 		if (rc) {
