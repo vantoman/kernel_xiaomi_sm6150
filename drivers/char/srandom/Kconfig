@@ -1,6 +1,6 @@
 config SRANDOM
 	tristate "Seed Random Number Generator by josenk"
-	default n
+	default y
 
 	---help---
 	  This driver provides kernel-side support for
