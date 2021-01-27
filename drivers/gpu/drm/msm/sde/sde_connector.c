@@ -624,6 +624,12 @@ void sde_connector_update_fod_hbm(struct drm_connector *connector)
 	mutex_unlock(&display->panel->panel_lock);
 
 	dsi_display_set_fod_ui(display, status);
+	if (display->panel->bl_config.dcs_type_ss_eb) {
+		if (status)
+			mdelay(20);
+		else if (!status)
+			mdelay(30);
+	}
 }
 
 int sde_connector_pre_kickoff(struct drm_connector *connector)
