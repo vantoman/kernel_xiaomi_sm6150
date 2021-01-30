@@ -930,7 +930,7 @@ int dsi_panel_set_backlight(struct dsi_panel *panel, u32 bl_lvl)
 
 	pr_debug("backlight type:%d lvl:%d\n", bl->type, bl_lvl);
 
-	if (bl_lvl > 0)
+	if (bl_lvl > 0 && !panel->bl_config.dcs_type_ss_eb)
 		bl_lvl = ea_panel_calc_backlight(bl_lvl < bl_dc_min ? bl_dc_min : bl_lvl);
 
 	switch (bl->type) {
