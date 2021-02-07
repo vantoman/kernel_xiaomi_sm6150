@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2013, Sony Mobile Communications AB.
+ * Copyright (C) 2021 XiaoMi, Inc.
  * Copyright (c) 2013-2020, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -40,6 +41,7 @@
 #include "../pinconf.h"
 #include "pinctrl-msm.h"
 #include "../pinctrl-utils.h"
+#include <soc/qcom/socinfo.h>
 #include <linux/suspend.h>
 #ifdef CONFIG_HIBERNATION
 #include <linux/notifier.h>
@@ -299,6 +301,23 @@ static int msm_config_group_get(struct pinctrl_dev *pctldev,
 	void __iomem *base;
 	int ret;
 	u32 val;
+	uint32_t hw_type = get_hw_version_platform();
+
+	if (HARDWARE_PLATFORM_DAVINCI == hw_type
+			|| HARDWARE_PLATFORM_TOCO   == hw_type
+			|| HARDWARE_PLATFORM_TUCANA == hw_type) {
+		/* gpio 0~3 is FP spi, gpio 59~62 is NFC spi */
+		if (group < 4 || (group > 58 && group < 63))
+			return 0;
+	} else if (HARDWARE_PLATFORM_PHOENIX == hw_type) {
+		/* gpio 0~3 is NFC spi, gpio 59~62 is FP spi */
+		if (group < 4 || (group > 58 && group < 63))
+			return 0;
+	} else {
+		/* gpio 0~3 is FP spi, gpio 6~9 is NFC spi */
+		if (group < 4 || (group > 5 && group < 10))
+			return 0;
+	}
 
 	g = &pctrl->soc->groups[group];
 	base = reassign_pctrl_reg(pctrl->soc, group);
@@ -620,8 +639,25 @@ static void msm_gpio_dbg_show(struct seq_file *s, struct gpio_chip *chip)
 {
 	unsigned gpio = chip->base;
 	unsigned i;
+	uint32_t hw_type = get_hw_version_platform();
 
 	for (i = 0; i < chip->ngpio; i++, gpio++) {
+		if (HARDWARE_PLATFORM_DAVINCI == hw_type
+				|| HARDWARE_PLATFORM_TOCO   == hw_type
+				|| HARDWARE_PLATFORM_TUCANA == hw_type) {
+			/* gpio 0~3 is FP spi, gpio 59~62 is NFC spi */
+			if (i < 4 || (i > 58 && i < 63))
+				continue;
+		} else if (HARDWARE_PLATFORM_PHOENIX == hw_type) {
+			/* gpio 0~3 is NFC spi, gpio 59~62 is FP spi */
+			if (i < 4 || (i > 58 && i < 63))
+				continue;
+
+		} else {
+			/* gpio 0~3 is FP spi, gpio 6~9 is NFC spi */
+			if (i < 4 || (i > 5 && i < 10))
+				continue;
+		}
 		msm_gpio_dbg_show_one(s, NULL, chip, i, gpio);
 		seq_puts(s, "\n");
 	}
