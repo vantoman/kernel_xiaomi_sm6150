@@ -135,6 +135,11 @@
 	};
 };
 
+&mdss_dsi_phy0 {
+        qcom,panel-allow-phy-poweroff;
+        qcom,ulps-enabled;
+};
+
 &tlmm {
         /* GPIO_58 : FP_RESET_N */
         msm_gpio_58: msm_gpio_58 {
