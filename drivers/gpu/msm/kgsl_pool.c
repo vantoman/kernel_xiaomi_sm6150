@@ -87,6 +87,7 @@ _kgsl_pool_add_page(struct kgsl_page_pool *pool, struct page *p)
 
 	llist_add((struct llist_node *)&p->lru, &pool->page_list);
 	atomic_inc(&pool->page_count);
+
 	mod_node_page_state(page_pgdat(p), NR_KERNEL_MISC_RECLAIMABLE,
 				(1 << pool->pool_order));
 }
