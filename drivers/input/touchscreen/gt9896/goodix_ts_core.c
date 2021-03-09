@@ -51,7 +51,6 @@
 #define PANEL_ORIENTATION_DEGREE_270	3	/* anticlockwise 270 degrees */
 
 extern int goodix_i2c_write(struct goodix_ts_device *dev, unsigned int reg, unsigned char *data, unsigned int len);
-extern void touch_irq_boost(void);
 static int goodix_ts_remove(struct platform_device *pdev);
 int goodix_start_later_init(struct goodix_ts_core *ts_core);
 void goodix_ts_dev_release(void);
@@ -1247,7 +1246,6 @@ static irqreturn_t goodix_ts_threadirq_func(int irq, void *data)
 		}
 	}
 #endif
-	touch_irq_boost();
 
 	/* inform external module */
 	mutex_lock(&goodix_modules.mutex);
