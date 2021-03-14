@@ -1164,6 +1164,11 @@ static __always_inline int is_connected_ep(struct snd_soc_dapm_widget *widget,
 	struct snd_soc_dapm_path *path;
 	int con = 0;
 
+	if (widget == NULL) {
+		printk("is_connected_input_ep: widget is null");
+		return 0;
+	}
+
 	if (widget->endpoints[dir] >= 0)
 		return widget->endpoints[dir];
 
