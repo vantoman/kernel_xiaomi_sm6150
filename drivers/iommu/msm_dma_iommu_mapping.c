@@ -42,7 +42,9 @@ struct msm_iommu_map {
 	struct rb_node node;
 	struct device *dev;
 	struct scatterlist *sgl;
-	unsigned int nents;
+#if defined(NO_DELAY_DMA_UNMAP_CAMERA)
+	struct dma_buf *dma_buf;
+#endif
 	enum dma_data_direction dir;
 	struct msm_iommu_meta *meta;
 	struct kref ref;
@@ -57,6 +59,38 @@ struct msm_iommu_meta {
 	struct mutex lock;
 	void *buffer;
 };
+
+#if defined(NO_DELAY_DMA_UNMAP_CAMERA)
+static struct msm_iommu_meta *msm_iommu_meta_dump()
+{
+	struct rb_root *root = &iommu_root;
+	struct msm_iommu_meta *tmp = NULL;
+	struct msm_iommu_meta *meta;
+
+	mutex_lock(&msm_iommu_map_mutex);
+	rbtree_postorder_for_each_entry_safe(meta, tmp, root, node) {
+		struct msm_iommu_map *iommu_map;
+		struct msm_iommu_map *iommu_map_next;
+
+		mutex_lock(&meta->lock);
+		list_for_each_entry_safe(iommu_map, iommu_map_next,
+			&meta->iommu_maps, lnode) {
+
+			pr_err("dev=%p(%s),buf=%p,iova=%lx,sz=%x,mapRef=%d,metaRef=%d",
+			iommu_map->dev, dev_name(iommu_map->dev),
+			meta->buffer,
+			iommu_map->sgl ? sg_dma_address(iommu_map->sgl) : 0,
+			meta->dma_buf ? meta->dma_buf->size : 0,
+			kref_read(&iommu_map->ref),
+			kref_read(&meta->ref));
+		}
+		mutex_unlock(&meta->lock);
+	}
+	mutex_unlock(&msm_iommu_map_mutex);
+
+	return NULL;
+}
+#endif
 
 static struct rb_root iommu_root;
 static DEFINE_MUTEX(msm_iommu_map_mutex);
