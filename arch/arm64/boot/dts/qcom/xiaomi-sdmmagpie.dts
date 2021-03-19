@@ -36,3 +36,7 @@
 	/delete-property/ pinctrl-names;
 	/delete-property/ pinctrl-0;
 };
+
+&icnss {
+	/delete-property/ vdd-3.3-ch1-supply;
+};
