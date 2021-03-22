@@ -18,6 +18,15 @@
 #define CAM_SENSOR_PINCTRL_STATE_SLEEP "cam_suspend"
 #define CAM_SENSOR_PINCTRL_STATE_DEFAULT "cam_default"
 
+#ifdef CONFIG_LDO_WL2866D
+extern int wl2866d_camera_power_up(int out_iotype);
+extern int wl2866d_camera_power_down(int out_iotype);
+
+#define MAX_DELAY_TIME 65420
+#define DELAY_SETP 1000
+
+#endif
+
 #define VALIDATE_VOLTAGE(min, max, config_val) ((config_val) && \
 	(config_val >= min) && (config_val <= max))
 
@@ -1541,6 +1550,10 @@ int cam_sensor_core_power_up(struct cam_sensor_power_ctrl_t *ctrl,
 	int32_t vreg_idx = -1;
 	struct cam_sensor_power_setting *power_setting = NULL;
 	struct msm_camera_gpio_num_info *gpio_num_info = NULL;
+#ifdef CONFIG_LDO_WL2866D
+	uint16_t wl2866_time_delay = 0;
+	int wl2866_iotype = -1;
+#endif
 
 	CAM_DBG(CAM_SENSOR, "Enter");
 	if (!ctrl) {
@@ -1761,6 +1774,32 @@ int cam_sensor_core_power_up(struct cam_sensor_power_ctrl_t *ctrl,
 				goto power_up_failed;
 			}
 			break;
+#ifdef CONFIG_LDO_WL2866D
+		case SENSOR_WL2866D_DVDD1:
+		case SENSOR_WL2866D_DVDD2:
+		case SENSOR_WL2866D_AVDD1:
+		case SENSOR_WL2866D_AVDD2:
+			//wl2866 out port num :
+			//		OUT_DVDD1 = 0
+			//		OUT_DVDD2 = 1
+			//		OUT_AVDD1 = 2
+			//		OUT_AVDD2 = 3
+			//but we pre set SENSOR_WL2866D_DVDD1 = 12.
+			wl2866_iotype = ((int)power_setting->seq_type) - 12;
+			rc = wl2866d_camera_power_up(wl2866_iotype);
+			if (rc < 0) {
+				CAM_ERR(CAM_SENSOR,"wl2866d_camera_power_up_io_type [%d] failed",power_setting->seq_type);
+				goto power_up_failed;
+			}
+			//if wl2866 exit, xml powerUpSequence delayMs now mean delay time
+			wl2866_time_delay = DELAY_SETP * (power_setting->delay);
+			if(MAX_DELAY_TIME < wl2866_time_delay) {
+				wl2866_time_delay = MAX_DELAY_TIME;
+			}
+			usleep_range(wl2866_time_delay , wl2866_time_delay + 100);
+			CAM_INFO(CAM_SENSOR,"wl2866d_iotype = [%d], wl2866_time_delay is [%d]", power_setting->seq_type, wl2866_time_delay);
+			break;
+#endif
 		default:
 			CAM_ERR(CAM_SENSOR, "error power seq type %d",
 				power_setting->seq_type);
@@ -1919,6 +1958,10 @@ int cam_sensor_util_power_down(struct cam_sensor_power_ctrl_t *ctrl,
 	struct cam_sensor_power_setting *pd = NULL;
 	struct cam_sensor_power_setting *ps = NULL;
 	struct msm_camera_gpio_num_info *gpio_num_info = NULL;
+#ifdef CONFIG_LDO_WL2866D
+	uint16_t wl2866_time_delay = 0;
+	int wl2866_iotype = -1;
+#endif
 
 	CAM_DBG(CAM_SENSOR, "Enter");
 	if (!ctrl || !soc_info) {
@@ -2039,6 +2082,32 @@ int cam_sensor_util_power_down(struct cam_sensor_power_ctrl_t *ctrl,
 				CAM_ERR(CAM_SENSOR,
 					"Error disabling VREG GPIO");
 			break;
+#ifdef CONFIG_LDO_WL2866D
+		case SENSOR_WL2866D_DVDD1:
+		case SENSOR_WL2866D_DVDD2:
+		case SENSOR_WL2866D_AVDD1:
+		case SENSOR_WL2866D_AVDD2:
+			//wl2866 out port num :
+			//		OUT_DVDD1 = 0
+			//		OUT_DVDD2 = 1
+			//		OUT_AVDD1 = 2
+			//		OUT_AVDD2 = 3
+			//but we pre set SENSOR_WL2866D_DVDD1 = 12.
+			wl2866_iotype = ((int)pd->seq_type) - 12;
+			ret = wl2866d_camera_power_down(wl2866_iotype);
+			if (ret < 0) {
+				CAM_ERR(CAM_SENSOR,"wl2866d_camera_power_down iotype [%d] failed", pd->seq_type);
+				break;
+			}
+			//if wl2866 exit, xml powerDownSequence delayMs now mean delay time
+			wl2866_time_delay = DELAY_SETP * (pd->delay);
+			if(MAX_DELAY_TIME < wl2866_time_delay) {
+				wl2866_time_delay = MAX_DELAY_TIME;
+			}
+			usleep_range(wl2866_time_delay , wl2866_time_delay + 100);
+			CAM_INFO(CAM_SENSOR,"wl2866d_iotype = [%d], wl2866_time_delay is [%d]", pd->seq_type, wl2866_time_delay);
+			break;
+#endif
 		default:
 			CAM_ERR(CAM_SENSOR, "error power seq type %d",
 				pd->seq_type);
