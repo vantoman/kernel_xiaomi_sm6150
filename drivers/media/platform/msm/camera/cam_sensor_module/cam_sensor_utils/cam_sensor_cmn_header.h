@@ -153,6 +153,12 @@ enum msm_camera_power_seq_type {
 	SENSOR_STANDBY,
 	SENSOR_CUSTOM_GPIO1,
 	SENSOR_CUSTOM_GPIO2,
+#ifdef CONFIG_LDO_WL2866D
+	SENSOR_WL2866D_DVDD1, //12
+	SENSOR_WL2866D_DVDD2,
+	SENSOR_WL2866D_AVDD1,
+	SENSOR_WL2866D_AVDD2,
+#endif
 	SENSOR_SEQ_TYPE_MAX,
 };
 
@@ -368,6 +374,9 @@ struct cam_sensor_board_info {
 	int32_t  subdev_intf[SUB_MODULE_MAX];
 	const char *misc_regulator;
 	struct cam_sensor_power_ctrl_t power_info;
+#ifdef CONFIG_LDO_WL2866D
+	uint16_t camera_id;
+#endif
 };
 
 enum msm_camera_vreg_name_t {

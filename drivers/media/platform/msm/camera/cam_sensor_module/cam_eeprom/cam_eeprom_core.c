@@ -23,6 +23,11 @@
 
 extern uint32_t hw_version_platform;
 
+#ifdef CONFIG_LDO_WL2866D
+extern int wl2866d_camera_power_up_eeprom(void);
+extern int wl2866d_camera_power_down_eeprom(void);
+#endif
+
 /**
  * cam_eeprom_read_memory() - read map data into buffer
  * @e_ctrl:     eeprom control struct
