@@ -160,6 +160,10 @@ struct cam_ife_csid_pxl_reg_offset {
 	uint32_t  early_eof_en_shift_val;
 	uint32_t  quad_cfa_bin_en_shift_val;
 	uint32_t  ccif_violation_en;
+#ifdef CONFIG_CSID_CAMERA
+	uint32_t  binning_enable_shift_val;
+	uint32_t  binning_mode_shift_val;
+#endif
 };
 
 struct cam_ife_csid_rdi_reg_offset {
@@ -476,6 +480,10 @@ struct cam_ife_csid_path_cfg {
 	uint32_t                        height;
 	enum cam_isp_hw_sync_mode       sync_mode;
 	uint32_t                        master_idx;
+#ifdef CONFIG_CSID_CAMERA
+	uint32_t                        enable_binning;
+	uint32_t                        binning_mode;
+#endif
 	uint64_t                        clk_rate;
 	uint32_t                        usage_type;
 	uint32_t                        init_frame_drop;

@@ -134,6 +134,9 @@ enum sensor_sub_module {
 	SUB_MODULE_OIS,
 	SUB_MODULE_IR_LED,
 	SUB_MODULE_EXT,
+#ifdef CONFIG_SOFTLED_CAMERA
+	SUB_MODULE_LED_SOFT,
+#endif
 	SUB_MODULE_MAX,
 };
 
@@ -175,7 +178,8 @@ enum cam_eeprom_packet_opcodes {
 
 enum cam_ois_packet_opcodes {
 	CAM_OIS_PACKET_OPCODE_INIT,
-	CAM_OIS_PACKET_OPCODE_OIS_CONTROL
+	CAM_OIS_PACKET_OPCODE_OIS_CONTROL,
+	CAM_OIS_PACKET_OPCODE_OIS_GETDATA
 };
 
 enum msm_bus_perf_setting {

@@ -543,6 +543,7 @@ static int32_t cam_flash_i2c_driver_probe(struct i2c_client *client,
 
 	i2c_set_clientdata(client, fctrl);
 
+	fctrl->of_node = client->dev.of_node;
 	fctrl->io_master_info.client = client;
 	fctrl->soc_info.dev = &client->dev;
 	fctrl->soc_info.dev_name = client->name;
@@ -573,7 +574,11 @@ static int32_t cam_flash_i2c_driver_probe(struct i2c_client *client,
 		INIT_LIST_HEAD(&(fctrl->i2c_data.per_frame[i].list_head));
 
 	fctrl->func_tbl.parser = cam_flash_i2c_pkt_parser;
+#ifdef CONFIG_SOFTLED_CAMERA
+	fctrl->func_tbl.apply_setting = cam_softflash_i2c_apply_setting;
+#else
 	fctrl->func_tbl.apply_setting = cam_flash_i2c_apply_setting;
+#endif
 	fctrl->func_tbl.power_ops = cam_flash_i2c_power_ops;
 	fctrl->func_tbl.flush_req = cam_flash_i2c_flush_request;
 
@@ -630,9 +635,8 @@ static int32_t __init cam_flash_init_module(void)
 	int32_t rc = 0;
 
 	rc = platform_driver_register(&cam_flash_platform_driver);
-	if (rc == 0) {
-		CAM_DBG(CAM_FLASH, "platform probe success");
-		return 0;
+	if (rc) {
+		CAM_ERR(CAM_FLASH, "platform probe failed rc: %d", rc);
 	}
 
 	rc = i2c_add_driver(&cam_flash_i2c_driver);

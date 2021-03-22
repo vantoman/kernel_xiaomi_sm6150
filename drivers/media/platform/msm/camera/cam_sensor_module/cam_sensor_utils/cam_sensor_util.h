@@ -65,4 +65,7 @@ int32_t cam_sensor_update_power_settings(void *cmd_buf,
 
 int cam_sensor_bob_pwm_mode_switch(struct cam_hw_soc_info *soc_info,
 	int bob_reg_idx, bool flag);
+
+int cam_sensor_core_mipi_switch(struct cam_sensor_power_ctrl_t *ctrl,
+		struct cam_hw_soc_info *soc_info, int gpio_en);
 #endif /* _CAM_SENSOR_UTIL_H_ */

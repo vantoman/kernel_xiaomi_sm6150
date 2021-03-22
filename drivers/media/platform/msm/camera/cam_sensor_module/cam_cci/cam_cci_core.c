@@ -14,6 +14,9 @@
 #include "cam_cci_core.h"
 #include "cam_cci_dev.h"
 
+#define  UT_AK7377_SID         0x74
+#define  UT_AK7377_THERMAL_REG 0x90
+
 static int32_t cam_cci_convert_type_to_num_bytes(
 	enum camera_sensor_i2c_type type)
 {
@@ -441,12 +444,14 @@ static int32_t cam_cci_calc_cmd_len(struct cci_device *cci_dev,
 	struct cam_cci_ctrl *c_ctrl, uint32_t cmd_size,
 	 struct cam_sensor_i2c_reg_array *i2c_cmd, uint32_t *pack)
 {
+#if 0 //disable I2C writing optimization due to OIS
 	uint8_t i;
+	struct cam_sensor_i2c_reg_array *cmd = i2c_cmd;
+#endif
 	uint32_t len = 0;
 	uint8_t data_len = 0, addr_len = 0;
 	uint8_t pack_max_len;
 	struct cam_sensor_i2c_reg_setting *msg;
-	struct cam_sensor_i2c_reg_array *cmd = i2c_cmd;
 	uint32_t size = cmd_size;
 
 	if (!cci_dev || !c_ctrl) {
@@ -468,6 +473,7 @@ static int32_t cam_cci_calc_cmd_len(struct cci_device *cci_dev,
 		len = data_len + addr_len;
 		pack_max_len = size < (cci_dev->payload_size-len) ?
 			size : (cci_dev->payload_size-len);
+#if 0 //disable I2C writing optimization due to OIS
 		for (i = 0; i < pack_max_len;) {
 			if (cmd->delay || ((cmd - i2c_cmd) >= (cmd_size - 1)))
 				break;
@@ -485,6 +491,7 @@ static int32_t cam_cci_calc_cmd_len(struct cci_device *cci_dev,
 			i += data_len;
 			cmd++;
 		}
+#endif
 	}
 
 	if (len > cci_dev->payload_size) {
@@ -1250,6 +1257,22 @@ static int32_t cam_cci_read(struct v4l2_subdev *sd,
 	if (rc < 0) {
 		CAM_DBG(CAM_CCI, "failed rc: %d", rc);
 		goto rel_mutex_q;
+	}
+
+	//hardcode: add 50us delay only for the thermal register of ut ak7377
+	if (c_ctrl->cci_info->sid == UT_AK7377_SID
+	    && read_cfg->addr == UT_AK7377_THERMAL_REG) {
+		val = (uint32_t)((50 * cci_dev->cycles_per_us) / 0x100);
+		val <<= 4;
+		val |= CCI_I2C_WAIT_CMD;
+
+		CAM_DBG(CAM_CCI, "UT AK7377 delay 50us sid 0x%x  val: %d",
+		c_ctrl->cci_info->sid, val);
+		rc = cam_cci_write_i2c_queue(cci_dev, val, master, queue);
+		if (rc < 0) {
+			CAM_DBG(CAM_CCI, "failed rc: %d", rc);
+			goto rel_mutex_q;
+		}
 	}
 
 	val = CCI_I2C_READ_CMD | (read_cfg->num_byte << 4);

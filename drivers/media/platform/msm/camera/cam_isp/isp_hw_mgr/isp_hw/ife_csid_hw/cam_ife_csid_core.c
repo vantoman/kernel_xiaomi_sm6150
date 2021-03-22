@@ -973,6 +973,10 @@ static int cam_ife_csid_path_reserve(struct cam_ife_csid_hw *csid_hw,
 		break;
 	case CAM_IFE_PIX_PATH_RES_IPP:
 		path_data->crop_enable = true;
+#ifdef CONFIG_CSID_CAMERA
+		path_data->enable_binning  = reserve->in_port->enable_binning;
+		path_data->binning_mode  = reserve->in_port->binning_mode;
+#endif
 		break;
 	case CAM_IFE_PIX_PATH_RES_PPP:
 		path_data->crop_enable = false;
@@ -1006,6 +1010,11 @@ static int cam_ife_csid_path_reserve(struct cam_ife_csid_hw *csid_hw,
 		CAM_DBG(CAM_ISP, "CSID:%d master:line start:0x%x line end:0x%x",
 			csid_hw->hw_intf->hw_idx, path_data->start_line,
 			path_data->end_line);
+#ifdef CONFIG_CSID_CAMERA
+		CAM_DBG(CAM_ISP, "CSID:%d master:enable_binning:%d binning_mode:%d",
+			csid_hw->hw_intf->hw_idx, path_data->enable_binning,
+			path_data->binning_mode);
+#endif
 	} else if (reserve->sync_mode == CAM_ISP_HW_SYNC_SLAVE) {
 		path_data->master_idx = reserve->master_idx;
 		CAM_DBG(CAM_ISP, "CSID:%d master_idx=%d",
@@ -1687,6 +1696,18 @@ static int cam_ife_csid_init_config_pxl_path(
 		(path_data->crop_enable <<
 		csid_reg->cmn_reg->crop_v_en_shift_val) |
 		(1 << 1) | 1;
+
+#ifdef CONFIG_CSID_CAMERA
+	if (path_data->enable_binning) {
+		val |= (1 << pxl_reg->binning_enable_shift_val);
+		if (path_data->binning_mode)
+			val |= (1 << pxl_reg->binning_mode_shift_val);
+	}
+	CAM_ERR(CAM_ISP, "CSID:%d enable binning:%d,binningmode:%d,shift:%d,%d",
+		csid_hw->hw_intf->hw_idx, path_data->enable_binning, path_data->binning_mode,
+		pxl_reg->binning_enable_shift_val,
+		pxl_reg->binning_mode_shift_val);
+#endif
 
 	val |= (1 << pxl_reg->pix_store_en_shift_val);
 	cam_io_w_mb(val, soc_info->reg_map[0].mem_base +

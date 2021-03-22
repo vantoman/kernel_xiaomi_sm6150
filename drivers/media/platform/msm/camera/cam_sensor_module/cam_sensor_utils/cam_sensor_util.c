@@ -2074,3 +2074,101 @@ int cam_sensor_util_power_down(struct cam_sensor_power_ctrl_t *ctrl,
 	return 0;
 }
 
+int cam_sensor_core_mipi_switch(struct cam_sensor_power_ctrl_t *ctrl,
+		struct cam_hw_soc_info *soc_info, int gpio_en)
+{
+	int rc = 0, index = 0;
+	struct cam_sensor_power_setting *power_setting = NULL;
+	struct cam_sensor_power_setting *power_down_setting = NULL;
+	struct msm_camera_gpio_num_info *gpio_num_info = NULL;
+
+	CAM_DBG(CAM_SENSOR, "Enter");
+	if (!ctrl) {
+		CAM_ERR(CAM_SENSOR, "Invalid ctrl handle");
+		return -EINVAL;
+	}
+
+	gpio_num_info = ctrl->gpio_num_info;
+
+	if (gpio_en == 1) {
+		CAM_DBG(CAM_SENSOR, "power setting size: %d", ctrl->power_setting_size);
+
+		for (index = 0; index < ctrl->power_setting_size; index++) {
+			CAM_DBG(CAM_SENSOR, "index: %d", index);
+			power_setting = &ctrl->power_setting[index];
+			if (!power_setting) {
+				CAM_ERR(CAM_SENSOR,
+					"Invalid power up settings for index %d",
+					index);
+				return -EINVAL;
+			}
+
+			CAM_DBG(CAM_SENSOR, "seq_type %d", power_setting->seq_type);
+
+			switch (power_setting->seq_type) {
+			case SENSOR_CUSTOM_GPIO1:
+			//case SENSOR_CUSTOM_GPIO2:
+				if (!gpio_num_info) {
+					CAM_ERR(CAM_SENSOR, "Invalid gpio_num_info");
+				}
+				CAM_DBG(CAM_SENSOR, "gpio set val %d",
+					gpio_num_info->gpio_num
+					[power_setting->seq_type]);
+
+				rc = msm_cam_sensor_handle_reg_gpio(
+					power_setting->seq_type,
+					gpio_num_info,
+					(int) power_setting->config_val);
+				if (rc < 0) {
+					CAM_ERR(CAM_SENSOR,
+						"Error in handling VREG GPIO");
+				}
+				break;
+			default:
+				//CAM_ERR(CAM_SENSOR, "error power seq type %d",
+				//	power_setting->seq_type);
+				break;
+			}
+		}
+	} else {
+		CAM_DBG(CAM_SENSOR, "power down setting size: %d", ctrl->power_down_setting_size);
+
+		for (index = 0; index < ctrl->power_down_setting_size; index++) {
+			CAM_DBG(CAM_SENSOR, "index: %d", index);
+			power_down_setting = &ctrl->power_down_setting[index];
+			if (!power_down_setting) {
+				CAM_ERR(CAM_SENSOR,
+					"Invalid power down settings for index %d",
+					index);
+				return -EINVAL;
+			}
+
+			CAM_DBG(CAM_SENSOR, "seq_type %d", power_down_setting->seq_type);
+			switch (power_down_setting->seq_type) {
+			case SENSOR_CUSTOM_GPIO1:
+			//case SENSOR_CUSTOM_GPIO2:
+				if (!gpio_num_info) {
+					CAM_ERR(CAM_SENSOR, "Invalid gpio_num_info");
+				}
+				CAM_DBG(CAM_SENSOR, "gpio set val %d",
+					gpio_num_info->gpio_num
+					[power_down_setting->seq_type]);
+
+				rc = msm_cam_sensor_handle_reg_gpio(
+					power_down_setting->seq_type,
+					gpio_num_info,
+					(int) power_down_setting->config_val);
+				if (rc < 0) {
+					CAM_ERR(CAM_SENSOR,
+						"Error in handling VREG GPIO");
+				}
+				break;
+			default:
+				//CAM_ERR(CAM_SENSOR, "error power seq type %d",
+				//	power_down_setting->seq_type);
+				break;
+			}
+		}
+	}
+	return rc;
+}

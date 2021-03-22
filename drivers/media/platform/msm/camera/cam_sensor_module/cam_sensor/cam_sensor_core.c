@@ -560,6 +560,10 @@ void cam_sensor_query_cap(struct cam_sensor_ctrl_t *s_ctrl,
 		s_ctrl->sensordata->subdev_id[SUB_MODULE_IR_LED];
 	query_cap->slot_info =
 		s_ctrl->soc_info.index;
+#ifdef CONFIG_SOFTLED_CAMERA
+	query_cap->soft_flash_slot_id =
+		s_ctrl->sensordata->subdev_id[SUB_MODULE_LED_SOFT];
+#endif
 }
 
 static uint16_t cam_sensor_id_by_mask(struct cam_sensor_ctrl_t *s_ctrl,
@@ -646,6 +650,7 @@ int cam_sensor_match_id(struct cam_sensor_ctrl_t *s_ctrl)
 	return rc;
 }
 
+static uint32_t g_operation_mode;
 int32_t cam_sensor_driver_cmd(struct cam_sensor_ctrl_t *s_ctrl,
 	void *arg)
 {
@@ -773,6 +778,9 @@ int32_t cam_sensor_driver_cmd(struct cam_sensor_ctrl_t *s_ctrl,
 			goto release_mutex;
 		}
 
+		g_operation_mode = sensor_acq_dev.operation_mode;
+		CAM_DBG(CAM_SENSOR, "operation mode :%d", g_operation_mode);
+
 		bridge_params.session_hdl = sensor_acq_dev.session_handle;
 		bridge_params.ops = &s_ctrl->bridge_intf.ops;
 		bridge_params.v4l2_sub_dev_flag = 0;
@@ -883,6 +891,14 @@ int32_t cam_sensor_driver_cmd(struct cam_sensor_ctrl_t *s_ctrl,
 			goto release_mutex;
 		}
 
+		if (s_ctrl->is_mipi_switch == 1) {
+			rc = cam_sensor_core_mipi_switch(power_info, &s_ctrl->soc_info, 1);
+			if (rc < 0) {
+				CAM_ERR(CAM_SENSOR, "mipi switch is failed:%d", rc);
+				goto release_mutex;
+			}
+		}
+
 		if (s_ctrl->i2c_data.streamon_settings.is_settings_valid &&
 			(s_ctrl->i2c_data.streamon_settings.request_id == 0)) {
 			rc = cam_sensor_apply_settings(s_ctrl, 0,
@@ -907,6 +923,14 @@ int32_t cam_sensor_driver_cmd(struct cam_sensor_ctrl_t *s_ctrl,
 			"Not in right state to stop : %d",
 			s_ctrl->sensor_state);
 			goto release_mutex;
+		}
+
+		if (s_ctrl->is_mipi_switch == 1) {
+			rc = cam_sensor_core_mipi_switch(power_info, &s_ctrl->soc_info, 0);
+			if (rc < 0) {
+				CAM_ERR(CAM_SENSOR, "mipi switch is failed:%d", rc);
+				goto release_mutex;
+			}
 		}
 
 		if (s_ctrl->i2c_data.streamoff_settings.is_settings_valid &&
@@ -990,6 +1014,98 @@ int32_t cam_sensor_driver_cmd(struct cam_sensor_ctrl_t *s_ctrl,
 		}
 	}
 		break;
+	case CAM_UPDATE_REG: {
+		struct cam_sensor_i2c_reg_setting user_reg_setting;
+		struct cam_sensor_i2c_reg_array *i2c_reg_setting = NULL;
+		int i;
+
+		rc = copy_from_user(&user_reg_setting, (void __user *)cmd->handle, sizeof(user_reg_setting));
+		if (rc < 0) {
+			CAM_ERR(CAM_SENSOR, "Copy data from user space failed\n");
+			goto release_mutex;
+		}
+
+		CAM_DBG(CAM_SENSOR, "CAM_UPDATE_REG reg setting size = %d", user_reg_setting.size);
+		i2c_reg_setting = kzalloc(sizeof(struct cam_sensor_i2c_reg_array) *
+			user_reg_setting.size, GFP_KERNEL);
+		if (!i2c_reg_setting) {
+			rc = -ENOMEM;
+			CAM_ERR(CAM_SENSOR, "kzalloc memory failed\n");
+			goto release_mutex;
+		}
+
+		rc = copy_from_user(i2c_reg_setting, (void __user *)user_reg_setting.reg_setting,
+			sizeof(struct cam_sensor_i2c_reg_array) * user_reg_setting.size);
+		if (rc < 0) {
+			CAM_ERR(CAM_SENSOR, "Copy i2c setting from user space failed\n");
+			kfree(i2c_reg_setting);
+			goto release_mutex;
+		}
+		user_reg_setting.reg_setting = i2c_reg_setting;
+
+		for (i = 0; i < user_reg_setting.size; i++) {
+			CAM_DBG(CAM_SENSOR, "CAM_UPDATE_REG reg_addr=0x%x, reg_value=0x%x",
+				i2c_reg_setting[i].reg_addr, i2c_reg_setting[i].reg_data);
+		}
+
+		rc = camera_io_dev_write(&s_ctrl->io_master_info, &user_reg_setting);
+		if (rc < 0)
+			CAM_ERR(CAM_SENSOR, "Write setting failed, rc = %d\n", rc);
+
+		kfree(i2c_reg_setting);
+	}
+		break;
+	case CAM_READ_REG: {
+		struct cam_sensor_i2c_reg_setting user_reg_setting;
+		struct cam_sensor_i2c_reg_array *i2c_reg_setting;
+		int ret = 0;
+		int i;
+
+		rc = copy_from_user(&user_reg_setting, (void __user *)cmd->handle, sizeof(user_reg_setting));
+		if (rc < 0) {
+			CAM_ERR(CAM_SENSOR, "Copy data from user space failed");
+			goto release_mutex;
+		}
+
+		CAM_DBG(CAM_SENSOR, "CAM_READ_REG reg setting size = %d", user_reg_setting.size);
+		i2c_reg_setting = kzalloc(sizeof(struct cam_sensor_i2c_reg_array) *
+			user_reg_setting.size, GFP_KERNEL);
+		if (!i2c_reg_setting) {
+			rc = -ENOMEM;
+			CAM_ERR(CAM_SENSOR, "kzalloc memory failed\n");
+			goto release_mutex;
+		}
+
+		rc = copy_from_user(i2c_reg_setting, (void __user *)user_reg_setting.reg_setting,
+			sizeof(struct cam_sensor_i2c_reg_array) * user_reg_setting.size);
+		if (rc < 0) {
+			CAM_ERR(CAM_SENSOR, "Copy i2c setting from user space failed");
+			kfree(i2c_reg_setting);
+			goto release_mutex;
+		}
+
+		for (i = 0; i < user_reg_setting.size; i++) {
+			ret += camera_io_dev_read(
+				&(s_ctrl->io_master_info),
+				i2c_reg_setting[i].reg_addr,
+				&i2c_reg_setting[i].reg_data, user_reg_setting.addr_type,
+				user_reg_setting.data_type);
+			CAM_DBG(CAM_SENSOR, "CAM_READ_REG reg_addr=0x%x, reg_value=0x%x, sid = 0x%x",
+				i2c_reg_setting[i].reg_addr, i2c_reg_setting[i].reg_data, s_ctrl->io_master_info.cci_client->sid);
+		}
+
+		if (copy_to_user((void __user *)user_reg_setting.reg_setting, i2c_reg_setting,
+			sizeof(struct cam_sensor_i2c_reg_array) * user_reg_setting.size) || ret != 0) {
+			CAM_ERR(CAM_SENSOR, "Copy data to user space failed");
+			rc = -EFAULT;
+		}
+		if (copy_to_user((void __user *)cmd->handle, &user_reg_setting, sizeof(user_reg_setting)) || ret != 0) {
+			CAM_ERR(CAM_SENSOR, "Copy data to user space failed");
+			rc = -EFAULT;
+		}
+		kfree(i2c_reg_setting);
+	}
+		break;
 	default:
 		CAM_ERR(CAM_SENSOR, "Invalid Opcode: %d", cmd->op_code);
 		rc = -EINVAL;
@@ -1029,11 +1145,19 @@ int cam_sensor_publish_dev_info(struct cam_req_mgr_device_info *info)
 
 	info->dev_id = CAM_REQ_MGR_DEVICE_SENSOR;
 	strlcpy(info->name, CAM_SENSOR_NAME, sizeof(info->name));
-	if (s_ctrl->pipeline_delay >= 1 && s_ctrl->pipeline_delay <= 3)
+	if (s_ctrl->pipeline_delay >= 0 && s_ctrl->pipeline_delay <= 3)
 		info->p_delay = s_ctrl->pipeline_delay;
 	else
 		info->p_delay = 2;
 	info->trigger = CAM_TRIGGER_POINT_SOF;
+
+	// Set pipeline delay for face unlock
+	if (g_operation_mode == 0x8006)
+		info->p_delay = 0;
+
+	// Set pipeline delay for bokeh
+	if (g_operation_mode == 0x8002)
+		info->p_delay = 1;
 
 	return rc;
 }
