@@ -21,6 +21,7 @@
 #include <video/mipi_display.h>
 
 #include "dsi_panel.h"
+#include "dsi_display.h"
 #include "dsi_ctrl_hw.h"
 #include "dsi_parser.h"
 
@@ -639,6 +640,51 @@ static int dsi_panel_wled_register(struct dsi_panel *panel,
 	return 0;
 }
 
+enum {
+	DEMURA_STATUS_NONE = 0,
+	DEMURA_STATUS_DC_L1,
+	DEMURA_STATUS_DC_L2,
+	DEMURA_STATUS_LEVEL2,
+	DEMURA_STATUS_LEVEL8,
+	DEMURA_STATUS_LEVELD,
+	DEMURA_STATUS_MAX,
+};
+
+static int dsi_panel_update_backlight_demura_level(struct dsi_panel *panel,
+	u32 bl_lvl)
+{
+	int rc = 0;
+
+	if (panel->dc_enable && panel->dc_demura_threshold) {
+		if (bl_lvl > panel->dc_demura_threshold
+				&& panel->backlight_demura_level != DEMURA_STATUS_DC_L1) {
+			rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_DC_DEMURA_L1);
+			panel->backlight_demura_level = DEMURA_STATUS_DC_L1;
+		} else if (bl_lvl <= panel->dc_demura_threshold
+				&& panel->backlight_demura_level != DEMURA_STATUS_DC_L2) {
+			rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_DC_DEMURA_L2);
+			panel->backlight_demura_level = DEMURA_STATUS_DC_L2;
+		}
+	} else {
+		if (bl_lvl > DEMURA_LEVEL_02 && panel->backlight_demura_level != DEMURA_STATUS_LEVEL2) {
+			rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_DEMURA_LEVEL02);
+			panel->backlight_demura_level = DEMURA_STATUS_LEVEL2;
+		} else if (bl_lvl >= DEMURA_LEVEL_08 && bl_lvl <= DEMURA_LEVEL_02
+				&& panel->backlight_demura_level != DEMURA_STATUS_LEVEL8) {
+			rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_DEMURA_LEVEL08);
+			panel->backlight_demura_level = DEMURA_STATUS_LEVEL8;
+		} else if (bl_lvl >= DEMURA_LEVEL_0D && bl_lvl < DEMURA_LEVEL_08
+				&& panel->backlight_demura_level != DEMURA_STATUS_LEVELD) {
+			rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_DEMURA_LEVEL0D);
+			panel->backlight_demura_level = DEMURA_STATUS_LEVELD;
+		}
+	}
+
+	pr_debug("backlight_demura_level: %d bkl: %d panel->dc_demura_threshold = %d\n",
+		panel->backlight_demura_level, bl_lvl, panel->dc_demura_threshold);
+	return rc;
+}
+
 static int dsi_panel_update_backlight(struct dsi_panel *panel,
 	u32 bl_lvl)
 {
@@ -675,6 +721,10 @@ static int dsi_panel_update_backlight(struct dsi_panel *panel,
 		rc = mipi_dsi_dcs_set_display_brightness_ss(dsi, bl_lvl);
 	else
 		rc = mipi_dsi_dcs_set_display_brightness(dsi, bl_lvl);
+
+	/* For the f4_41 panel, we need to switch the DEMURA_LEVEL according to the value of the 51 register. */
+	if (panel->bl_config.xiaomi_f4_41_flag)
+		rc = dsi_panel_update_backlight_demura_level(panel, bl_lvl);
 
 	if (rc < 0)
 		pr_err("failed to update dcs backlight:%d\n", bl_lvl);
@@ -844,6 +894,17 @@ int dsi_panel_set_fod_hbm(struct dsi_panel *panel, bool status)
 	return rc;
 }
 
+bool dc_skip_set_backlight(struct dsi_panel *panel, u32 bl_lvl)
+{
+	/* 1. dc enable is 1;
+	 * 2. bl lvl should less than dc theshold;
+	 * 3. bl lvl not 0, we should not skip set 0;
+	 * 4. dc type is 1 means need backlight control here, 0 means IC can switch automatically.
+	 * When meet all the 4 conditions at the same time, skip set this bl.
+	 */
+	return panel->dc_enable && bl_lvl < panel->dc_threshold && bl_lvl != 0 && panel->dc_type && panel->last_bl_lvl != 0;
+}
+
 int dsi_panel_set_backlight(struct dsi_panel *panel, u32 bl_lvl)
 {
 	int rc = 0;
@@ -853,6 +914,13 @@ int dsi_panel_set_backlight(struct dsi_panel *panel, u32 bl_lvl)
 		return 0;
 
 	pr_debug("backlight type:%d lvl:%d\n", bl->type, bl_lvl);
+
+	if (dc_skip_set_backlight(panel, bl_lvl)) {
+		panel->last_bl_lvl = bl_lvl;
+		pr_info("skip set backlight because dc is enabled %d, bl %d\n", panel->dc_enable, bl_lvl);
+		return rc;
+	}
+
 	switch (bl->type) {
 	case DSI_BACKLIGHT_WLED:
 		rc = backlight_device_set_brightness(bl->raw_bd, bl_lvl);
@@ -869,6 +937,8 @@ int dsi_panel_set_backlight(struct dsi_panel *panel, u32 bl_lvl)
 		pr_err("Backlight type(%d) not supported\n", bl->type);
 		rc = -ENOTSUPP;
 	}
+
+	panel->last_bl_lvl = bl_lvl;
 
 	return rc;
 }
@@ -1917,6 +1987,13 @@ const char *cmd_set_prop_map[DSI_CMD_SET_MAX] = {
 	"qcom,mdss-dsi-dispparam-hbm-fod-on-command",
 	"qcom,mdss-dsi-dispparam-hbm-fod-off-command",
 	"qcom,mdss-dsi-read-lockdown-info-command",
+	"qcom,mdss-dsi-dispparam-demura-level2-command",
+	"qcom,mdss-dsi-dispparam-demura-level8-command",
+	"qcom,mdss-dsi-dispparam-demura-leveld-command",
+	"qcom,mdss-dsi-dispparam-dc-demura-l1-command",
+	"qcom,mdss-dsi-dispparam-dc-demura-l2-command",
+	"qcom,mdss-dsi-dispparam-dc-on-command",
+	"qcom,mdss-dsi-dispparam-dc-off-command",
 };
 
 const char *cmd_set_state_map[DSI_CMD_SET_MAX] = {
@@ -1948,6 +2025,13 @@ const char *cmd_set_state_map[DSI_CMD_SET_MAX] = {
 	"qcom,mdss-dsi-dispparam-hbm-fod-on-command-state",
 	"qcom,mdss-dsi-dispparam-hbm-fod-off-command-state",
 	"qcom,mdss-dsi-read-lockdown-info-command-state",
+	"qcom,mdss-dsi-dispparam-demura-level2-command-state",
+	"qcom,mdss-dsi-dispparam-demura-level8-command-state",
+	"qcom,mdss-dsi-dispparam-demura-leveld-command-state",
+	"qcom,mdss-dsi-dispparam-dc-demura-l1-command-state",
+	"qcom,mdss-dsi-dispparam-dc-demura-l2-command-state",
+	"qcom,mdss-dsi-dispparam-dc-on-command-state",
+	"qcom,mdss-dsi-dispparam-dc-off-command-state",
 };
 
 static int dsi_panel_get_cmd_pkt_count(const char *data, u32 length, u32 *cnt)
@@ -2595,6 +2679,35 @@ static int dsi_panel_parse_bl_config(struct dsi_panel *panel)
 	} else {
 		panel->bl_config.bl_doze_hbm = val;
 	}
+
+	rc = utils->read_u32(utils->data,
+			"qcom,mdss-dsi-panel-dc-demura-threshold", &val);
+	if (rc) {
+		panel->dc_demura_threshold = 0;
+		pr_info("dc demura disabled\n");
+	} else {
+		panel->dc_demura_threshold = val;
+	}
+
+	rc = utils->read_u32(utils->data,
+			"mi,mdss-dsi-panel-dc-threshold", &val);
+	if (rc) {
+		panel->dc_threshold = 488;
+		pr_info("default dc backlight threshold is %d\n", panel->dc_threshold);
+	} else {
+		panel->dc_threshold = val;
+	}
+
+	rc = utils->read_u32(utils->data,
+			"mi,mdss-dsi-panel-dc-type", &val);
+	if (rc) {
+		panel->dc_type = 1;
+		pr_info("default dc backlight type is %d\n", panel->dc_type);
+	} else {
+		panel->dc_type = val;
+	}
+
+	panel->dc_enable = false;
 
 	rc = dsi_panel_parse_fod_dim_lut(panel, utils);
 	if (rc) {
@@ -4571,6 +4684,27 @@ int dsi_panel_enable(struct dsi_panel *panel)
 	if (panel->hbm_mode)
 		dsi_panel_apply_hbm_mode(panel);
 
+	if (panel->bl_config.xiaomi_f4_41_flag && panel->dc_enable && panel->dc_demura_threshold) {
+		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_DC_ON);
+		if (rc)
+			pr_err("[%s] failed to send DSI_CMD_SET_DISP_DC_ON cmd, rc=%d\n",
+					panel->name, rc);
+	}
+
+	if (panel->bl_config.xiaomi_f4_36_flag && panel->dc_enable) {
+		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_DC_ON);
+		if (rc)
+			pr_err("[%s] failed to send DSI_CMD_SET_DISP_DC_ON cmd, rc=%d\n",
+					panel->name, rc);
+	}
+
+	if (panel->dc_type == 0 && panel->dc_enable) {
+		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_DC_ON);
+		if (rc)
+			pr_err("[%s] failed to send DSI_CMD_SET_DISP_DC_ON cmd, rc=%d\n",
+					panel->name, rc);
+	}
+
 	return rc;
 }
 
@@ -4739,6 +4873,29 @@ int dsi_panel_apply_hbm_mode(struct dsi_panel *panel)
 	mutex_unlock(&panel->panel_lock);
 
 	return rc;
+}
+
+int dsi_panel_apply_dc_mode(struct dsi_panel *panel)
+{
+        int rc;
+
+        enum dsi_cmd_set_type type = panel->dc_enable
+                        ? DSI_CMD_SET_DISP_DC_ON
+                        : DSI_CMD_SET_DISP_DC_OFF;
+
+        mutex_lock(&panel->panel_lock);
+
+        rc = dsi_panel_tx_cmd_set(panel, type);
+        if (rc)
+                pr_err("[%s] failed to send %s cmd, rc=%d\n",
+                                panel->name, type, rc);
+        else
+                rc = dsi_panel_update_backlight(panel,
+                                panel->last_bl_lvl);
+
+        mutex_unlock(&panel->panel_lock);
+
+        return rc;
 }
 
 int dsi_display_read_panel(struct dsi_panel *panel, struct dsi_read_config *read_config);
