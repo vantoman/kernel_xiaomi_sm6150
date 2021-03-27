@@ -140,6 +140,9 @@ struct tfa98xx {
 	struct tfa98xx_firmware fw;
 	char *fw_name;
 	int rate;
+	/*[nxp34663] CR: support 16bit/24bit/32bit audio data. begin*/
+	u8 pcm_format;
+	/*[nxp34663] CR: support 16bit/24bit/32bit audio data. end*/
 	wait_queue_head_t wq;
 	struct device *dev;
 	unsigned int init_count;
