@@ -140,6 +140,7 @@ struct tfa98xx {
 	struct tfa98xx_firmware fw;
 	char *fw_name;
 	int rate;
+	u8 pcm_format;
 	wait_queue_head_t wq;
 	struct device *dev;
 	unsigned int init_count;

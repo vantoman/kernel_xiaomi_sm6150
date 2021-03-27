@@ -187,7 +187,7 @@ int tfa_dev_probe(int slave, struct tfa_device *tfa);
  *  @return tfa_error enum
  */
 
-enum tfa_error tfa_dev_start(struct tfa_device *tfa, int next_profile, int vstep);
+enum tfa_error tfa_dev_start(struct tfa_device *tfa, int next_profile, int vstep, u8 pcm_format);
 
 
 /**
