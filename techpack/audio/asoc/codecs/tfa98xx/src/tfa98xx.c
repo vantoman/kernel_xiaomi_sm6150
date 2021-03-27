@@ -99,10 +99,6 @@ static int no_reset = 0;
 module_param(no_reset, int, S_IRUGO);
 MODULE_PARM_DESC(no_reset, "do not use the reset line; for debugging via user\n");
 
-static int pcm_sample_format = 0;
-module_param(pcm_sample_format, int, S_IRUGO);
-MODULE_PARM_DESC(pcm_sample_format, "PCM sample format: 0=S16_LE, 1=S24_LE, 2=S32_LE\n");
-
 static int pcm_no_constraint = 0;
 module_param(pcm_no_constraint, int, S_IRUGO);
 MODULE_PARM_DESC(pcm_no_constraint, "do not use constraints for PCM parameters\n");
@@ -220,7 +216,13 @@ static enum tfa_error tfa98xx_tfa_start(struct tfa98xx *tfa98xx, int next_profil
 	}
 
 
+	/*[nxp34663] CR: support 16bit/24bit/32bit audio data. begin*/
+#ifdef __KERNEL__
+	err = tfa_dev_start(tfa98xx->tfa, next_profile, vstep, tfa98xx->pcm_format);
+#else
 	err = tfa_dev_start(tfa98xx->tfa, next_profile, vstep);
+#endif
+	/*[nxp34663] CR: support 16bit/24bit/32bit audio data. end*/
 
 	pr_debug("%s  after performed tfa_dev_start return (%d)\n", __func__, err);
 
@@ -2589,7 +2591,9 @@ static void tfa98xx_interrupt(struct work_struct *work)
 
 		mutex_lock(&tfa98xx->dsp_lock);
 
-		start_triggered = tfa_plop_noise_interrupt(tfa98xx->tfa, tfa98xx->profile, tfa98xx->vstep);
+		/*[nxp34663] CR: support 16bit/24bit/32bit audio data. begin*/
+		start_triggered = tfa_plop_noise_interrupt(tfa98xx->tfa, tfa98xx->profile, tfa98xx->vstep, tfa98xx->pcm_format);
+		/*[nxp34663] CR: support 16bit/24bit/32bit audio data. end*/
 
 		/* Only enable when the return value is 1, otherwise the interrupt is triggered twice */
 		if(start_triggered)
@@ -2613,8 +2617,6 @@ static int tfa98xx_startup(struct snd_pcm_substream *substream,
 	unsigned int sr;
 	int len, prof, nprof, idx = 0;
 	char *basename;
-	u64 formats;
-	int err;
 
 	/*
 	 * Support CODEC to CODEC links,
@@ -2625,23 +2627,6 @@ static int tfa98xx_startup(struct snd_pcm_substream *substream,
 
 	if (pcm_no_constraint != 0)
 		return 0;
-
-	switch (pcm_sample_format) {
-	case 1:
-		formats = SNDRV_PCM_FMTBIT_S24_LE;
-		break;
-	case 2:
-		formats = SNDRV_PCM_FMTBIT_S32_LE;
-		break;
-	default:
-		formats = SNDRV_PCM_FMTBIT_S16_LE;
-		break;
-	}
-
-	err = snd_pcm_hw_constraint_mask64(substream->runtime,
-					SNDRV_PCM_HW_PARAM_FORMAT, formats);
-	if (err < 0)
-		return err;
 
 	if (no_start != 0)
 		return 0;
@@ -2777,6 +2762,9 @@ static int tfa98xx_hw_params(struct snd_pcm_substream *substream,
 	/* update to new rate */
 	tfa98xx->rate = rate;
 
+	/*[nxp34663] CR: support 16bit/24bit/32bit audio data. begin*/
+	tfa98xx->pcm_format = snd_pcm_format_width(params_format(params));
+	/*[nxp34663] CR: support 16bit/24bit/32bit audio data. end*/
 
 	return 0;
 }
