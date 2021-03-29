@@ -9,3 +9,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  */
+
+#define CONFIG_SND_SOC_TFA9874 1
+#define CONFIG_SND_SOC_TFA9874_FOR_DAVI 1
+#define TFA_NON_DSP_SOLUTION 1
