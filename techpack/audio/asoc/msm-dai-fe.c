@@ -577,6 +577,52 @@ static struct snd_soc_dai_driver msm_fe_dais[] = {
 		.probe = fe_dai_probe,
 	},
 	{
+		.playback = {
+			.stream_name = "ULTRAOUND_HOSTLESS Playback",
+			.aif_name = "RX1_CDC_DMA_DL_US",
+			.rates = SNDRV_PCM_RATE_8000 | SNDRV_PCM_RATE_11025 |
+				SNDRV_PCM_RATE_16000 | SNDRV_PCM_RATE_22050 |
+				SNDRV_PCM_RATE_32000 | SNDRV_PCM_RATE_44100 |
+				SNDRV_PCM_RATE_48000 | SNDRV_PCM_RATE_88200 |
+				SNDRV_PCM_RATE_96000 | SNDRV_PCM_RATE_176400 |
+				SNDRV_PCM_RATE_192000 | SNDRV_PCM_RATE_352800 |
+				SNDRV_PCM_RATE_384000,
+			.formats = SNDRV_PCM_FMTBIT_S16_LE |
+				   SNDRV_PCM_FMTBIT_S24_LE |
+				   SNDRV_PCM_FMTBIT_S24_3LE,
+			.channels_min = 1,
+			.channels_max = 4,
+			.rate_min = 8000,
+			.rate_max = 384000,
+		},
+		.ops = &msm_fe_dai_ops,
+		.name = "CDC_DMA_HOSTLESS_USRX",
+		.probe = fe_dai_probe,
+	},
+	{
+		.capture = {
+			.stream_name = "ULTRAOUND_HOSTLESS Capture",
+			.aif_name = "TX4_CDC_DMA_UL_US",
+			.rates = SNDRV_PCM_RATE_8000 | SNDRV_PCM_RATE_11025 |
+				SNDRV_PCM_RATE_16000 | SNDRV_PCM_RATE_22050 |
+				SNDRV_PCM_RATE_32000 | SNDRV_PCM_RATE_44100 |
+				SNDRV_PCM_RATE_48000 | SNDRV_PCM_RATE_88200 |
+				SNDRV_PCM_RATE_96000 | SNDRV_PCM_RATE_176400 |
+				SNDRV_PCM_RATE_192000 | SNDRV_PCM_RATE_352800 |
+				SNDRV_PCM_RATE_384000,
+			.formats = SNDRV_PCM_FMTBIT_S16_LE |
+				   SNDRV_PCM_FMTBIT_S24_LE |
+				   SNDRV_PCM_FMTBIT_S24_3LE,
+			.channels_min = 1,
+			.channels_max = 8,
+			.rate_min = 8000,
+			.rate_max = 384000,
+		},
+		.ops = &msm_fe_dai_ops,
+		.name = "CDC_DMA_HOSTLESS_USTX",
+		.probe = fe_dai_probe,
+	},
+	{
 		.capture = {
 			.stream_name = "TX3_CDC_DMA_HOSTLESS Capture",
 			.aif_name = "TX3_CDC_DMA_UL_HL",
