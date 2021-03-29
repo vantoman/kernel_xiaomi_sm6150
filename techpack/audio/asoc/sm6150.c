@@ -6889,6 +6889,41 @@ static struct snd_soc_dai_link msm_common_misc_fe_dai_links[] = {
 	},
 };
 
+#ifdef CONFIG_SND_SOC_FOR_ULTRASOUND_PATH
+static struct snd_soc_dai_link msm_common_ultrasound_dai_links[] = {
+	{
+		.name = "CDC_DMA Hostless_USRX",
+		.stream_name = "CDC_DMA Hostless_USRX",
+		.cpu_dai_name = "CDC_DMA_HOSTLESS_USRX",
+		.platform_name = "msm-pcm-hostless",
+		.dynamic = 1,
+		.dpcm_playback = 1,
+		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
+			SND_SOC_DPCM_TRIGGER_POST},
+		.no_host_mode = SND_SOC_DAI_LINK_NO_HOST,
+		.ignore_suspend = 1,
+		/* this dailink has playback support */
+		.ignore_pmdown_time = 1,
+		.codec_dai_name = "snd-soc-dummy-dai",
+		.codec_name = "snd-soc-dummy",
+	},
+	{
+		.name = "CDC_DMA Hostless_USTX",
+		.stream_name = "CDC_DMA Hostless_USTX",
+		.cpu_dai_name = "CDC_DMA_HOSTLESS_USTX",
+		.platform_name = "msm-pcm-hostless",
+		.dynamic = 1,
+		.dpcm_capture = 1,
+		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
+			SND_SOC_DPCM_TRIGGER_POST},
+		.no_host_mode = SND_SOC_DAI_LINK_NO_HOST,
+		.ignore_suspend = 1,
+		.codec_dai_name = "snd-soc-dummy-dai",
+		.codec_name = "snd-soc-dummy",
+	},
+};
+#endif
+
 static struct snd_soc_dai_link msm_common_be_dai_links[] = {
 	/* Backend AFE DAI Links */
 	{
@@ -7998,6 +8033,9 @@ static struct snd_soc_dai_link msm_sm6150_dai_links[
 			 ARRAY_SIZE(msm_tavil_fe_dai_links) +
 			 ARRAY_SIZE(msm_tasha_fe_dai_links) +
 			 ARRAY_SIZE(msm_common_misc_fe_dai_links) +
+#ifdef CONFIG_SND_SOC_FOR_ULTRASOUND_PATH
+			 ARRAY_SIZE(msm_common_ultrasound_dai_links) +
+#endif
 			 ARRAY_SIZE(msm_int_compress_capture_dai) +
 			 ARRAY_SIZE(msm_common_be_dai_links) +
 			 ARRAY_SIZE(msm_tavil_be_dai_links) +
@@ -8327,6 +8365,14 @@ static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev)
 		       sizeof(msm_common_misc_fe_dai_links));
 
 		total_links += ARRAY_SIZE(msm_common_misc_fe_dai_links);
+
+#ifdef CONFIG_SND_SOC_FOR_ULTRASOUND_PATH
+		memcpy(msm_sm6150_dai_links + total_links,
+		       msm_common_ultrasound_dai_links,
+		       sizeof(msm_common_ultrasound_dai_links));
+
+		total_links += ARRAY_SIZE(msm_common_ultrasound_dai_links);
+#endif
 
 		rc = of_property_read_u32(dev->of_node, "qcom,tavil_codec",
 						&tavil_codec);
