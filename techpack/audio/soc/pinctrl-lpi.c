@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
+ * Copyright (C) 2021 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -483,6 +484,8 @@ static void lpi_gpio_dbg_show(struct seq_file *s, struct gpio_chip *chip)
 	unsigned int i;
 
 	for (i = 0; i < chip->ngpio; i++, gpio++) {
+		/* skip lpi gpio 0~7 and 12 ~ 17 */
+		if(i < 8 || (i > 11 && i < 18))continue;
 		lpi_gpio_dbg_show_one(s, NULL, chip, i, gpio);
 		seq_puts(s, "\n");
 	}
