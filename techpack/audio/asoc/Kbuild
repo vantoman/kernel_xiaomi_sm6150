@@ -190,6 +190,11 @@ ifneq (,$(filter $(TARGET_PRODUCT), davinci davinciin phoenix phoenixin tucana t
 	CDEFINES += -DCONFIG_SND_SOC_TFA9874_FOR_DAVI
 endif
 
+
+ifneq (,$(filter $(TARGET_PRODUCT), phoenix phoenixin tucana toco tocoin))
+	CDEFINES += -DCONFIG_SND_SOC_FOR_ULTRASOUND_PATH
+endif
+
 KBUILD_CPPFLAGS += $(CDEFINES)
 
 # Currently, for versions of gcc which support it, the kernel Makefile
