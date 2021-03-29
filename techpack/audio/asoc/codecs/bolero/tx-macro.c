@@ -1,4 +1,5 @@
 /* Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+ * Copyright (C) 2021 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -47,7 +48,7 @@
 #define TX_MACRO_SWR_MIC_MUX_SEL_MASK 0xF
 #define TX_MACRO_ADC_MUX_CFG_OFFSET 0x2
 
-#define TX_MACRO_TX_UNMUTE_DELAY_MS	40
+#define TX_MACRO_TX_UNMUTE_DELAY_MS	150
 
 static int tx_unmute_delay = TX_MACRO_TX_UNMUTE_DELAY_MS;
 module_param(tx_unmute_delay, int, 0664);
@@ -369,9 +370,6 @@ static int tx_macro_event_handler(struct snd_soc_codec *codec, u16 event,
 		tx_macro_mclk_reset(tx_dev);
 		break;
 	case BOLERO_MACRO_EVT_BCS_CLK_OFF:
-		if (tx_priv->bcs_clk_en)
-			snd_soc_update_bits(codec,
-				BOLERO_CDC_TX0_TX_PATH_SEC7, 0x40, data << 6);
 		if (data)
 			tx_priv->hs_slow_insert_complete = true;
 		else
@@ -752,7 +750,7 @@ static int tx_macro_enable_dec(struct snd_soc_dapm_widget *w,
 							CF_MIN_3DB_150HZ) {
 			schedule_delayed_work(
 					&tx_priv->tx_hpf_work[decimator].dwork,
-					msecs_to_jiffies(300));
+					msecs_to_jiffies(50));
 			snd_soc_update_bits(codec, hpf_gate_reg, 0x02, 0x02);
 			/*
 			 * Minimum 1 clk cycle delay is required as per HW spec
@@ -1711,7 +1709,7 @@ static int tx_macro_init(struct snd_soc_codec *codec)
 	}
 	tx_priv->codec = codec;
 	snd_soc_update_bits(codec,
-		BOLERO_CDC_TX0_TX_PATH_SEC7, 0x3F, 0x0E);
+		BOLERO_CDC_TX0_TX_PATH_SEC7, 0x7F, 0x6A);
 
 	return 0;
 }
