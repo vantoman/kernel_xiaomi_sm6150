@@ -1,4 +1,5 @@
 /* Copyright (c) 2012-2020, The Linux Foundation. All rights reserved.
+ * Copyright (C) 2021 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -259,6 +260,8 @@ enum {
 	IDX_SECONDARY_SPDIF_RX,
 	IDX_PRIMARY_SPDIF_TX,
 	IDX_SECONDARY_SPDIF_TX,
+
+	IDX_AFE_PORT_ID_PSEUDOPORT_01,
 	/* IDX 185 to 186 */
 	IDX_SLIMBUS_9_RX,
 	IDX_SLIMBUS_9_TX,
