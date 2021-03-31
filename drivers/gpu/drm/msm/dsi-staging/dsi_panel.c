@@ -881,12 +881,6 @@ int dsi_panel_set_backlight(struct dsi_panel *panel, u32 bl_lvl)
 
 	pr_info("backlight type:%d lvl:%d\n", bl->type, bl_lvl);
 
-	if (dc_skip_set_backlight(panel, bl_lvl)) {
-		panel->last_bl_lvl = bl_lvl;
-		pr_info("skip set backlight because dc is enabled %d, bl %d\n", panel->dc_enable, bl_lvl);
-		return rc;
-	}
-
 	switch (bl->type) {
 	case DSI_BACKLIGHT_WLED:
 		rc = backlight_device_set_brightness(bl->raw_bd, bl_lvl);
