@@ -894,17 +894,6 @@ int dsi_panel_set_fod_hbm(struct dsi_panel *panel, bool status)
 	return rc;
 }
 
-bool dc_skip_set_backlight(struct dsi_panel *panel, u32 bl_lvl)
-{
-	/* 1. dc enable is 1;
-	 * 2. bl lvl should less than dc theshold;
-	 * 3. bl lvl not 0, we should not skip set 0;
-	 * 4. dc type is 1 means need backlight control here, 0 means IC can switch automatically.
-	 * When meet all the 4 conditions at the same time, skip set this bl.
-	 */
-	return panel->dc_enable && bl_lvl < panel->dc_threshold && bl_lvl != 0 && panel->dc_type && panel->last_bl_lvl != 0;
-}
-
 int dsi_panel_set_backlight(struct dsi_panel *panel, u32 bl_lvl)
 {
 	int rc = 0;
@@ -914,12 +903,6 @@ int dsi_panel_set_backlight(struct dsi_panel *panel, u32 bl_lvl)
 		return 0;
 
 	pr_debug("backlight type:%d lvl:%d\n", bl->type, bl_lvl);
-
-	if (dc_skip_set_backlight(panel, bl_lvl)) {
-		panel->last_bl_lvl = bl_lvl;
-		pr_info("skip set backlight because dc is enabled %d, bl %d\n", panel->dc_enable, bl_lvl);
-		return rc;
-	}
 
 	switch (bl->type) {
 	case DSI_BACKLIGHT_WLED:
