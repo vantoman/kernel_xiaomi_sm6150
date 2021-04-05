@@ -25,6 +25,7 @@
 #include <linux/err.h>
 #include <linux/page_ref.h>
 #include <linux/memremap.h>
+#include <linux/sched.h>
 
 struct mempolicy;
 struct anon_vma;
@@ -1510,6 +1511,23 @@ static inline bool can_reuse_spf_vma(struct vm_area_struct *vma,
 extern int fixup_user_fault(struct task_struct *tsk, struct mm_struct *mm,
 			    unsigned long address, unsigned int fault_flags,
 			    bool *unlocked);
+
+static inline void task_enter_user_fault(void)
+{
+	WARN_ON(current->in_user_fault);
+	current->in_user_fault = 1;
+}
+
+static inline void task_exit_user_fault(void)
+{
+	WARN_ON(!current->in_user_fault);
+	current->in_user_fault = 0;
+}
+
+static inline bool task_in_user_fault(void)
+{
+	return current->in_user_fault;
+}
 #else
 static inline int handle_mm_fault(struct vm_area_struct *vma,
 		unsigned long address, unsigned int flags)
@@ -1525,6 +1543,19 @@ static inline int fixup_user_fault(struct task_struct *tsk,
 	/* should never happen if there's no MMU */
 	BUG();
 	return -EFAULT;
+}
+
+static inline void task_enter_user_fault(void)
+{
+}
+
+static inline void task_exit_user_fault(void)
+{
+}
+
+static inline bool task_in_user_fault(void)
+{
+	return false;
 }
 #endif
 

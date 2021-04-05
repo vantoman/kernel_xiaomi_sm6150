@@ -913,14 +913,6 @@ static inline void mem_cgroup_handle_over_high(void)
 {
 }
 
-static inline void mem_cgroup_enter_user_fault(void)
-{
-}
-
-static inline void mem_cgroup_exit_user_fault(void)
-{
-}
-
 static inline bool task_in_memcg_oom(struct task_struct *p)
 {
 	return false;
