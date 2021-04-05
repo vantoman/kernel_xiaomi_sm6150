@@ -165,6 +165,8 @@ struct memcg_padding {
 #define MEMCG_PADDING(name)
 #endif
 
+struct lru_gen_mm_list;
+
 /*
  * The memory controller data structure. The memory controller controls both
  * page cache and RSS per cgroup. We would eventually like to provide
@@ -280,6 +282,10 @@ struct mem_cgroup {
 	/* List of events which userspace want to receive */
 	struct list_head event_list;
 	spinlock_t event_list_lock;
+
+#ifdef CONFIG_LRU_GEN
+	struct lru_gen_mm_list *mm_list;
+#endif
 
 	struct mem_cgroup_per_node *nodeinfo[0];
 	/* WARNING: nodeinfo must be the last member here */
@@ -741,6 +747,14 @@ static inline void memcg_memory_event_mm(struct mm_struct *mm,
 void mem_cgroup_split_huge_fixup(struct page *head);
 #endif
 
+struct mem_cgroup *get_mem_cgroup_from_mm(struct mm_struct *mm);
+
+static inline void mem_cgroup_put(struct mem_cgroup *memcg)
+{
+	if (memcg)
+		css_put(&memcg->css);
+}
+
 #else /* CONFIG_MEMCG */
 
 #define MEM_CGROUP_ID_SHIFT	0
@@ -1008,6 +1022,15 @@ static inline void count_memcg_page_event(struct page *page,
 
 static inline
 void count_memcg_event_mm(struct mm_struct *mm, enum vm_event_item idx)
+{
+}
+
+static inline struct mem_cgroup *get_mem_cgroup_from_mm(struct mm_struct *mm)
+{
+	return NULL;
+}
+
+static inline void mem_cgroup_put(struct mem_cgroup *memcg)
 {
 }
 #endif /* CONFIG_MEMCG */
