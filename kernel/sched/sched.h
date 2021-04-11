@@ -2049,7 +2049,7 @@ static inline unsigned long __cpu_util(int cpu)
 	unsigned int util;
 
 #ifdef CONFIG_SCHED_WALT
-	if (likely(!walt_disabled && sysctl_sched_use_walt_cpu_util)) {
+	if (!walt_disabled && sysctl_sched_use_walt_cpu_util) {
 		u64 walt_cpu_util =
 			cpu_rq(cpu)->walt_stats.cumulative_runnable_avg_scaled;
 
@@ -2076,13 +2076,15 @@ struct sched_walt_cpu_load {
 
 static inline unsigned long cpu_util_cum(int cpu, int delta)
 {
-	u64 util = cpu_rq(cpu)->cfs.avg.util_avg;
 	unsigned long capacity = capacity_orig_of(cpu);
+	u64 util;
 
 #ifdef CONFIG_SCHED_WALT
-	if (!walt_disabled && sysctl_sched_use_walt_cpu_util)
-		util = cpu_rq(cpu)->cum_window_demand_scaled;
+	util = cpu_util(cpu);
+#else
+	util = __cpu_util(cpu);
 #endif
+
 	delta += util;
 	if (delta < 0)
 		return 0;
