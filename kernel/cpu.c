@@ -2439,7 +2439,7 @@ const struct cpumask *const cpu_perf_first_mask = to_cpumask(&perf_cpu_first_bit
 #else
 const struct cpumask *const cpu_perf_first_mask = cpu_possible_mask;
 #endif
-EXPORT_SYMBOL(cpu_perf_drm_mask);
+EXPORT_SYMBOL(cpu_perf_first_mask);
 
 #if CONFIG_BIG_CPU_SECOND_MASK
 static const unsigned long perf_cpu_second_bits = CONFIG_BIG_CPU_SECOND_MASK;
@@ -2447,7 +2447,7 @@ const struct cpumask *const cpu_perf_second_mask = to_cpumask(&perf_cpu_second_b
 #else
 const struct cpumask *const cpu_perf_second_mask = cpu_possible_mask;
 #endif
-EXPORT_SYMBOL(cpu_perf_kgsl_mask);
+EXPORT_SYMBOL(cpu_perf_second_mask);
 
 void init_cpu_present(const struct cpumask *src)
 {
