@@ -560,6 +560,10 @@ void cam_sensor_query_cap(struct cam_sensor_ctrl_t *s_ctrl,
 		s_ctrl->sensordata->subdev_id[SUB_MODULE_IR_LED];
 	query_cap->slot_info =
 		s_ctrl->soc_info.index;
+#ifdef CONFIG_SOFTLED_CAMERA
+	query_cap->soft_flash_slot_id =
+		s_ctrl->sensordata->subdev_id[SUB_MODULE_LED_SOFT];
+#endif
 }
 
 static uint16_t cam_sensor_id_by_mask(struct cam_sensor_ctrl_t *s_ctrl,
