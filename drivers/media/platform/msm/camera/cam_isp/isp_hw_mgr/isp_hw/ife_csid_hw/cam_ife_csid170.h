@@ -53,6 +53,10 @@ static struct cam_ife_csid_pxl_reg_offset  cam_ife_csid_170_ipp_reg_offset = {
 	/* configurations */
 	.pix_store_en_shift_val              = 7,
 	.early_eof_en_shift_val              = 29,
+#ifdef CONFIG_CSID_CAMERA
+	.binning_enable_shift_val			 = 2,
+	.binning_mode_shift_val 			 = 30,
+#endif
 };
 
 static struct cam_ife_csid_rdi_reg_offset cam_ife_csid_170_rdi_0_reg_offset = {
