@@ -42,6 +42,10 @@ menuconfig CSID_CAMERA
     bool "use CSID binning"
     default n
 
+menuconfig SOFTLED_CAMERA
+    bool "use soft flash led"
+    default n
+
 menuconfig MSMB_CAMERA
     bool "QTI MSM camera and video capture 2.0 support"
     depends on ARCH_QCOM && VIDEO_V4L2 && I2C

@@ -92,6 +92,23 @@ int32_t cam_sensor_get_sub_module_index(struct device_node *of_node,
 		of_node_put(src_node);
 	}
 
+#ifdef CONFIG_SOFTLED_CAMERA
+	src_node = of_parse_phandle(of_node, "soft-led-flash-src", 0);
+	if (!src_node) {
+		CAM_DBG(CAM_SENSOR, " src_node NULL");
+	} else {
+		rc = of_property_read_u32(src_node, "cell-index", &val);
+		CAM_ERR(CAM_SENSOR, "FXF led flash cell index %d, rc %d", val, rc);
+		if (rc < 0) {
+			CAM_ERR(CAM_SENSOR, "failed %d", rc);
+			of_node_put(src_node);
+			return rc;
+		}
+		sensor_info->subdev_id[SUB_MODULE_LED_SOFT] = val;
+		of_node_put(src_node);
+	}
+#endif
+
 	rc = of_property_read_u32(of_node, "csiphy-sd-index", &val);
 	if (rc < 0)
 		CAM_ERR(CAM_SENSOR, "paring the dt node for csiphy rc %d", rc);
