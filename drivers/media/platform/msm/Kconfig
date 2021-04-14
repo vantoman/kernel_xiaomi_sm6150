@@ -38,6 +38,10 @@ config MSM_CAMERA_DEBUG
     ---help---
       Enable printk() debug for msm camera
 
+menuconfig CSID_CAMERA
+    bool "use CSID binning"
+    default n
+
 menuconfig MSMB_CAMERA
     bool "QTI MSM camera and video capture 2.0 support"
     depends on ARCH_QCOM && VIDEO_V4L2 && I2C
