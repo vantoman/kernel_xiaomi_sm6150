@@ -18,6 +18,15 @@
 #include "cam_common_util.h"
 #include "cam_packet_util.h"
 
+#ifdef CONFIG_SOFTLED_CAMERA
+#define REG_ENABLE (0x1)
+#define TORCH_ENABLE (0x8b)
+#define FLASH_ENABLE (0x8F)
+#define LED_DISABLE (0x80)
+static atomic_t init_cnt = ATOMIC_INIT(0);
+static atomic_t operate_cnt = ATOMIC_INIT(0);
+#endif
+
 static int cam_flash_prepare(struct cam_flash_ctrl *flash_ctrl,
 	bool regulator_enable)
 {
@@ -275,6 +284,10 @@ int cam_flash_i2c_power_ops(struct cam_flash_ctrl *fctrl,
 		}
 		camera_io_release(&(fctrl->io_master_info));
 		fctrl->is_regulator_enabled = false;
+#ifdef CONFIG_SOFTLED_CAMERA
+		atomic_set(&init_cnt, 0);
+		atomic_set(&operate_cnt, 0);
+#endif
 		goto free_pwr_settings;
 	}
 	return rc;
@@ -655,6 +668,104 @@ static int32_t cam_flash_slaveInfo_pkt_parser(struct cam_flash_ctrl *fctrl,
 
 	return rc;
 }
+
+#ifdef CONFIG_SOFTLED_CAMERA
+uint32_t cam_flash_i2c_parse_setting(struct i2c_settings_array *i2c_reg_settings)
+{
+	struct cam_sensor_i2c_reg_array *reg_setting;
+	struct i2c_settings_list *i2c_list;
+	int i;
+	enum camera_flash_opcode opcode =  CAMERA_SENSOR_FLASH_OP_INVALID;
+	list_for_each_entry(i2c_list,
+			&(i2c_reg_settings->list_head), list) {
+		reg_setting = i2c_list->i2c_settings.reg_setting;
+		for (i = 0; i < i2c_list->i2c_settings.size; i++) {
+			if (reg_setting->reg_addr == REG_ENABLE) {
+				switch (reg_setting->reg_data) {
+				case LED_DISABLE:
+					opcode = CAMERA_SENSOR_FLASH_OP_OFF;
+					break;
+				case TORCH_ENABLE:
+					opcode = CAMERA_SENSOR_FLASH_OP_FIRELOW;
+					break;
+				case FLASH_ENABLE:
+					opcode = CAMERA_SENSOR_FLASH_OP_FIREHIGH;
+					break;
+				default:
+					CAM_ERR(CAM_FLASH,
+					"can't parse regdata: %x", reg_setting->reg_data);
+				}
+				if (opcode != CAMERA_SENSOR_FLASH_OP_INVALID)
+					break;
+			}
+			reg_setting++;
+		}
+	}
+	return opcode;
+}
+
+int cam_softflash_i2c_apply_setting(struct cam_flash_ctrl *fctrl,
+		uint64_t req_id)
+{
+	int rc = 0, frame_offset = 0;
+	struct i2c_settings_array *i2c_set = NULL;
+	enum camera_flash_opcode opcode;
+
+	CAM_DBG(CAM_FLASH, "init_cnt: %d operate_cnt: %d opcode: %d",
+			atomic_read(&init_cnt),
+				atomic_read(&operate_cnt), opcode);
+	if (req_id == 0) {
+		if (atomic_inc_return(&init_cnt) == 1) {
+			rc = cam_flash_i2c_apply_setting(fctrl, req_id);
+		if (rc < 0) {
+			atomic_dec_return(&init_cnt);
+		}
+		} else {
+		atomic_dec_return(&init_cnt);
+		goto dele_req;
+		}
+	} else {
+		frame_offset = req_id % MAX_PER_FRAME_ARRAY;
+		i2c_set = &fctrl->i2c_data.per_frame[frame_offset];
+		if ((i2c_set->is_settings_valid == true) &&
+				(i2c_set->request_id == req_id)) {
+			opcode = cam_flash_i2c_parse_setting(i2c_set);
+		switch (opcode) {
+		case CAMERA_SENSOR_FLASH_OP_OFF:
+			if (atomic_dec_return(&operate_cnt) == 0) {
+			rc = cam_flash_i2c_apply_setting(fctrl, req_id);
+				if (rc < 0) {
+					atomic_inc_return(&operate_cnt);
+				}
+			} else {
+			atomic_inc_return(&operate_cnt);
+			  goto dele_req;
+			  }
+			break;
+		case CAMERA_SENSOR_FLASH_OP_FIRELOW:
+			if (atomic_inc_return(&operate_cnt) == 1) {
+			rc = cam_flash_i2c_apply_setting(fctrl, req_id);
+				if (rc < 0) {
+					atomic_dec_return(&operate_cnt);
+				}
+			} else {
+			atomic_dec_return(&operate_cnt);
+
+			goto dele_req;
+			}
+			break;
+		default:
+			CAM_ERR(CAM_FLASH,
+					"error operate code: %d", opcode);
+		}
+		}
+	}
+	return rc;
+dele_req:
+	cam_flash_i2c_delete_req(fctrl, req_id);
+	return rc;
+}
+#endif
 
 int cam_flash_i2c_apply_setting(struct cam_flash_ctrl *fctrl,
 	uint64_t req_id)
@@ -1151,7 +1262,11 @@ int cam_flash_i2c_pkt_parser(struct cam_flash_ctrl *fctrl, void *arg)
 		if (i2c_reg_settings->is_settings_valid == true) {
 			i2c_reg_settings->request_id = 0;
 			i2c_reg_settings->is_settings_valid = false;
+#ifdef CONFIG_SOFTLED_CAMERA
+			delete_request(i2c_reg_settings);
+#else
 			goto update_req_mgr;
+#endif
 		}
 		i2c_reg_settings->is_settings_valid = true;
 		i2c_reg_settings->request_id =
