@@ -73,6 +73,7 @@ obj-$(CONFIG_TEST_IRQ_REQUESTER) += irq_requester.o
 obj-$(CONFIG_AKM09970)		+= akm09970.o
 obj-$(CONFIG_TI_DRV8846) 	+= drv8846.o
 obj-$(CONFIG_SIMTRAY_STATUS)	+= simtray.o
+obj-$(CONFIG_LDO_WL2866D)	+= wl2866d.o
 
 lkdtm-$(CONFIG_LKDTM)		+= lkdtm_core.o
 lkdtm-$(CONFIG_LKDTM)		+= lkdtm_bugs.o
