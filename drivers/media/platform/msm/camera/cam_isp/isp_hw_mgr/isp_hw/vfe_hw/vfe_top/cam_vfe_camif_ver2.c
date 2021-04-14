@@ -45,6 +45,9 @@ struct cam_vfe_mux_camif_data {
 	uint32_t                           irq_debug_cnt;
 	uint32_t                           camif_debug;
 	uint32_t                           fps;
+#ifdef CONFIG_CSID_CAMERA
+	uint32_t                           enable_binning;
+#endif
 };
 
 static int cam_vfe_camif_validate_pix_pattern(uint32_t pattern)
@@ -143,6 +146,10 @@ int cam_vfe_camif_ver2_acquire_resource(
 	camif_data->last_pixel  = acquire_data->vfe_in.in_port->left_stop;
 	camif_data->first_line  = acquire_data->vfe_in.in_port->line_start;
 	camif_data->last_line   = acquire_data->vfe_in.in_port->line_stop;
+
+#ifdef CONFIG_CSID_CAMERA
+	camif_data->enable_binning = acquire_data->vfe_in.in_port->enable_binning;
+#endif
 
 	CAM_DBG(CAM_ISP, "hw id:%d pix_pattern:%d dsp_mode=%d",
 		camif_res->hw_intf->hw_idx,
@@ -279,6 +286,12 @@ static int cam_vfe_camif_resource_start(
 				rsrc_data->first_line) * 2) / 3) +
 				rsrc_data->first_line;
 		}
+
+#ifdef CONFIG_CSID_CAMERA
+		if (rsrc_data->enable_binning)
+			epoch0_irq_mask >>= 1;
+#endif
+
 		epoch1_irq_mask = rsrc_data->reg_data->epoch_line_cfg &
 				0xFFFF;
 		computed_epoch_line_cfg = (epoch0_irq_mask << 16) |
