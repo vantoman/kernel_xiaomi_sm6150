@@ -134,6 +134,9 @@ enum sensor_sub_module {
 	SUB_MODULE_OIS,
 	SUB_MODULE_IR_LED,
 	SUB_MODULE_EXT,
+#ifdef CONFIG_SOFTLED_CAMERA
+	SUB_MODULE_LED_SOFT,
+#endif
 	SUB_MODULE_MAX,
 };
 
