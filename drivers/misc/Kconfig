@@ -627,6 +627,11 @@ config SIMTRAY_STATUS
 	help
 	  Say 'y' here to support SIM tray GPIO detection
 
+config LDO_WL2866D
+	bool  "multi ldo wl2866d"
+	---help---
+	  This option enables multi ldo wl2866d.
+
 source "drivers/misc/c2port/Kconfig"
 source "drivers/misc/eeprom/Kconfig"
 source "drivers/misc/cb710/Kconfig"
