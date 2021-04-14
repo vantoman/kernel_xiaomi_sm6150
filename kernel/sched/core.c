@@ -7001,6 +7001,10 @@ static int __sched_updown_migrate_handler(struct ctl_table *table, int write,
 		goto unlock_mutex;
 	}
 
+	// Restrict boot process writes on boot time (120s)
+	if (ktime_to_us(ktime_get()) < 120 * USEC_PER_SEC)
+		goto unlock_mutex;
+
 	/*
 	 * Cache the old values so that they can be restored
 	 * if either the write fails (for example out of range values)
