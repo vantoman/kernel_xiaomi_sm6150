@@ -887,6 +887,14 @@ int32_t cam_sensor_driver_cmd(struct cam_sensor_ctrl_t *s_ctrl,
 			goto release_mutex;
 		}
 
+		if (s_ctrl->is_mipi_switch == 1) {
+			rc = cam_sensor_core_mipi_switch(power_info, &s_ctrl->soc_info, 1);
+			if (rc < 0) {
+				CAM_ERR(CAM_SENSOR, "mipi switch is failed:%d", rc);
+				goto release_mutex;
+			}
+		}
+
 		if (s_ctrl->i2c_data.streamon_settings.is_settings_valid &&
 			(s_ctrl->i2c_data.streamon_settings.request_id == 0)) {
 			rc = cam_sensor_apply_settings(s_ctrl, 0,
@@ -911,6 +919,14 @@ int32_t cam_sensor_driver_cmd(struct cam_sensor_ctrl_t *s_ctrl,
 			"Not in right state to stop : %d",
 			s_ctrl->sensor_state);
 			goto release_mutex;
+		}
+
+		if (s_ctrl->is_mipi_switch == 1) {
+			rc = cam_sensor_core_mipi_switch(power_info, &s_ctrl->soc_info, 0);
+			if (rc < 0) {
+				CAM_ERR(CAM_SENSOR, "mipi switch is failed:%d", rc);
+				goto release_mutex;
+			}
 		}
 
 		if (s_ctrl->i2c_data.streamoff_settings.is_settings_valid &&

@@ -226,6 +226,12 @@ static int32_t cam_sensor_driver_get_dt_data(struct cam_sensor_ctrl_t *s_ctrl)
 		sensordata->pos_yaw = 360;
 	}
 
+	if (of_property_read_u32(of_node, "is-mipi-switch",
+		&s_ctrl->is_mipi_switch) < 0) {
+		CAM_DBG(CAM_SENSOR, "Invalid flag of is-mipi-switch");
+		s_ctrl->is_mipi_switch = 0;
+	}
+
 	return rc;
 
 FREE_SENSOR_DATA:
