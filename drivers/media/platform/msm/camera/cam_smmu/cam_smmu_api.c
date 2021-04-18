@@ -1754,6 +1754,9 @@ static int cam_smmu_map_buffer_validate(struct dma_buf *buf,
 		}
 	} else if (region_id == CAM_SMMU_REGION_IO) {
 		attach->dma_map_attrs |= DMA_ATTR_DELAYED_UNMAP;
+#if defined(NO_DELAY_DMA_UNMAP_CAMERA)
+		attach->dma_map_attrs |= DMA_ATTR_NO_DELAYED_UNMAP;
+#endif
 
 		table = dma_buf_map_attachment(attach, dma_dir);
 		if (IS_ERR_OR_NULL(table)) {
@@ -1938,6 +1941,9 @@ static int cam_smmu_unmap_buf_and_remove_from_list(
 
 	} else if (mapping_info->region_id == CAM_SMMU_REGION_IO) {
 		mapping_info->attach->dma_map_attrs |= DMA_ATTR_DELAYED_UNMAP;
+#if defined(NO_DELAY_DMA_UNMAP_CAMERA)
+		mapping_info->attach->dma_map_attrs |= DMA_ATTR_NO_DELAYED_UNMAP;
+#endif
 	}
 
 	dma_buf_unmap_attachment(mapping_info->attach,
