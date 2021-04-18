@@ -207,6 +207,9 @@ static int cam_icp_probe(struct platform_device *pdev)
 		cam_icp_dev_iommu_fault_handler, node);
 
 	g_icp_dev.open_cnt = 0;
+
+	cam_smmu_mi_init(iommu_hdl);
+
 	mutex_init(&g_icp_dev.icp_lock);
 
 	CAM_DBG(CAM_ICP, "ICP probe complete");
