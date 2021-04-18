@@ -123,6 +123,7 @@ struct cam_sensor_ctrl_t {
 	bool bob_pwm_switch;
 	uint32_t last_flush_req;
 	uint16_t pipeline_delay;
+	uint32_t is_mipi_switch;
 };
 
 #endif /* _CAM_SENSOR_DEV_H_ */
