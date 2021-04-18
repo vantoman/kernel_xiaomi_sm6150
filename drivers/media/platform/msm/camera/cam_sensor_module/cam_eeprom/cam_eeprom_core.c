@@ -13,12 +13,15 @@
 #include <linux/module.h>
 #include <linux/crc32.h>
 #include <media/cam_sensor.h>
+#include <soc/qcom/socinfo.h>
 
 #include "cam_eeprom_core.h"
 #include "cam_eeprom_soc.h"
 #include "cam_debug_util.h"
 #include "cam_common_util.h"
 #include "cam_packet_util.h"
+
+extern uint32_t hw_version_platform;
 
 /**
  * cam_eeprom_read_memory() - read map data into buffer
@@ -46,6 +49,8 @@ static int cam_eeprom_read_memory(struct cam_eeprom_ctrl_t *e_ctrl,
 
 	eb_info = (struct cam_eeprom_soc_private *)e_ctrl->soc_info.soc_private;
 
+	CAM_DBG(CAM_EEPROM, "hw_version_platform = %d", hw_version_platform);
+
 	for (j = 0; j < block->num_map; j++) {
 		CAM_DBG(CAM_EEPROM, "slave-addr = 0x%X", emap[j].saddr);
 		if (emap[j].saddr) {
@@ -66,7 +71,22 @@ static int cam_eeprom_read_memory(struct cam_eeprom_ctrl_t *e_ctrl,
 			i2c_reg_settings.size = 1;
 			i2c_reg_array.reg_addr = emap[j].page.addr;
 			i2c_reg_array.reg_data = emap[j].page.data;
-			i2c_reg_array.delay = emap[j].page.delay;
+			/**
+			 * toco s5k5e9 read otp need delay 1ms after write 0x0A00,
+			 * hardcode here temporary for the kernel driver may add
+			 * delay for all write operation which cause read failed.
+			 **/
+			if (i2c_reg_array.reg_addr == 0x0A00 && i2c_reg_array.reg_data == 0x01
+					&& (hw_version_platform == HARDWARE_PLATFORM_TOCO)) {
+				CAM_ERR(CAM_EEPROM, "add 1ms delay for otp read.");
+				i2c_reg_array.delay = 1200;
+			} else if (i2c_reg_array.reg_addr == 0x0100 && i2c_reg_array.reg_data == 0x01
+					&& (hw_version_platform == HARDWARE_PLATFORM_TOCO)) {
+				CAM_ERR(CAM_EEPROM, "add 50ms delay for otp read.");
+				i2c_reg_array.delay = 52000;
+			} else {
+				i2c_reg_array.delay = emap[j].page.delay;
+			}
 			i2c_reg_settings.reg_setting = &i2c_reg_array;
 			rc = camera_io_dev_write(&e_ctrl->io_master_info,
 				&i2c_reg_settings);
