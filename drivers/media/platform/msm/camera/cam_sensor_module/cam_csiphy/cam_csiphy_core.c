@@ -726,6 +726,7 @@ int32_t cam_csiphy_core_cfg(void *phy_dev,
 		}
 
 		csiphy_acq_params.combo_mode = 0;
+		csiphy_acq_params.reserved = 0;
 
 		if (copy_from_user(&csiphy_acq_params,
 			u64_to_user_ptr(csiphy_acq_dev.info_handle),
@@ -754,7 +755,8 @@ int32_t cam_csiphy_core_cfg(void *phy_dev,
 
 		if ((csiphy_acq_params.combo_mode != 1) &&
 			(csiphy_dev->is_acquired_dev_combo_mode != 1) &&
-			(csiphy_dev->acquire_count == 1)) {
+			(csiphy_dev->acquire_count == 1) &&
+			(csiphy_acq_params.reserved != 1)) {
 			CAM_ERR(CAM_CSIPHY,
 				"Multiple Acquires are not allowed cm: %d acm: %d",
 				csiphy_acq_params.combo_mode,
