@@ -4422,14 +4422,13 @@ int dsi_panel_prepare(struct dsi_panel *panel)
 	mutex_lock(&panel->panel_lock);
 
 	if (panel->lp11_init) {
-#if 0
 		rc = dsi_panel_power_on(panel);
 		if (rc) {
 			pr_err("[%s] panel power on failed, rc=%d\n",
 			       panel->name, rc);
 			goto error;
 		}
-#endif
+
 		rc = dsi_panel_reset(panel);
 		if (rc) {
 			pr_err("[%s] failed to reset panel, rc=%d\n", panel->name, rc);
