@@ -91,8 +91,6 @@ static void adreno_ringbuffer_wptr(struct adreno_device *adreno_dev,
 {
 	struct adreno_gpudev *gpudev = ADRENO_GPU_DEVICE(adreno_dev);
 	unsigned long flags;
-	bool write = false;
-	unsigned int val;
 	int ret = 0;
 
 	spin_lock_irqsave(&rb->preempt_lock, flags);
@@ -116,8 +114,13 @@ static void adreno_ringbuffer_wptr(struct adreno_device *adreno_dev,
 			if (gpudev->gpu_keepalive)
 				gpudev->gpu_keepalive(adreno_dev, true);
 
-			write = true;
-			val = rb->_wptr;
+			/*
+			 * Ensure the write posted after a possible
+			 * GMU wakeup (write could have dropped during wakeup)
+			 */
+			ret = adreno_gmu_fenced_write(adreno_dev,
+				ADRENO_REG_CP_RB_WPTR, rb->_wptr,
+				FENCE_STATUS_WRITEDROPPED0_MASK);
 			rb->skip_inline_wptr = false;
 			if (gpudev->gpu_keepalive)
 				gpudev->gpu_keepalive(adreno_dev, false);
@@ -135,14 +138,6 @@ static void adreno_ringbuffer_wptr(struct adreno_device *adreno_dev,
 
 	rb->wptr = rb->_wptr;
 	spin_unlock_irqrestore(&rb->preempt_lock, flags);
-
-	/*
-	 * Ensure the write posted after a possible
-	 * GMU wakeup (write could have dropped during wakeup)
-	 */
-	if (write)
-		ret = adreno_gmu_fenced_write(adreno_dev, ADRENO_REG_CP_RB_WPTR,
-			val, FENCE_STATUS_WRITEDROPPED0_MASK);
 
 	if (ret) {
 		/* If WPTR update fails, set the fault and trigger recovery */
