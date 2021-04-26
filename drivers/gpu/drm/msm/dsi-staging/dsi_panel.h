@@ -124,6 +124,8 @@ struct dsi_backlight_config {
 
 	bool dcs_type_ss_ea;
 	bool dcs_type_ss_eb;
+	bool xiaomi_f4_36_flag;
+	bool xiaomi_f4_41_flag;
 
 	/* PWM params */
 	struct pwm_device *pwm_bl;

@@ -2282,6 +2282,12 @@ static int dsi_panel_parse_bl_config(struct dsi_panel *panel)
 	panel->bl_config.dcs_type_ss_eb = utils->read_bool(utils->data,
 			"qcom,mdss-dsi-bl-dcs-type-ss-eb");
 
+	panel->bl_config.xiaomi_f4_36_flag = utils->read_bool(utils->data,
+			"qcom,mdss-dsi-bl-xiaomi-f4-36-flag");
+
+	panel->bl_config.xiaomi_f4_41_flag = utils->read_bool(utils->data,
+			"qcom,mdss-dsi-bl-xiaomi-f4-41-flag");
+
 	data = utils->get_property(utils->data, "qcom,bl-update-flag", NULL);
 	if (!data) {
 		panel->bl_config.bl_update = BL_UPDATE_NONE;
