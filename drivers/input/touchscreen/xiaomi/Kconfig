@@ -25,3 +25,12 @@ config TOUCHSCREEN_XIAOMI_TOUCHFEATURE_GAMEMODE
 	  If unsure, say N.
 
 	  To compile this driver as a module, choose M here:
+config NEW_TOUCH_GAMEMODE
+	tristate "Xiaomi New Touch GameMode"
+	depends on TOUCHSCREEN_GOODIX_GTX9896_I2C
+	help
+	  Say Y here if you enable xiaomi touch feature.
+
+	  If unsure, say N.
+
+	  To compile this driver as a module, choose M here:
