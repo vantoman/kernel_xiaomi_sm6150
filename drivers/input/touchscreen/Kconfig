@@ -13,6 +13,7 @@ if INPUT_TOUCHSCREEN
 source "drivers/input/touchscreen/f4_goodix_driver_gt9886/Kconfig"
 source "drivers/input/touchscreen/fts_521/Kconfig"
 source "drivers/input/touchscreen/goodix_driver_gt9886/Kconfig"
+source "drivers/input/touchscreen/gt9896/Kconfig"
 source "drivers/input/touchscreen/nt36672c/Kconfig"
 source "drivers/input/touchscreen/xiaomi/Kconfig"
 
