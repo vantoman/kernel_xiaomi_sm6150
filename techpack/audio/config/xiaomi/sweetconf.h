@@ -10,4 +10,6 @@
  * GNU General Public License for more details.
  */
 
+#define CONFIG_SND_SMARTPA_AW882XX 1
+#define CONFIG_SND_SOC_AWINIC_AW882XX 1
 #define CONFIG_SND_SOC_FOR_ULTRASOUND_PATH 1
