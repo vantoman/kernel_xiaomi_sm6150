@@ -75,11 +75,19 @@ enum MODE_CMD {
 enum  MODE_TYPE {
 	Touch_Game_Mode        = 0,
 	Touch_Active_MODE      = 1,
+#ifdef CONFIG_NEW_TOUCH_GAMEMODE
+	Touch_Tap_Sensitivity	    = 2,
+	Touch_Follow_Performance    = 3,
+	Touch_Aim_Sensitivity       = 4,
+	Touch_Tap_Stability         = 5,
+	Touch_Expert_Mode           = 6,
+#else
 	Touch_UP_THRESHOLD     = 2,
 	Touch_Tolerance        = 3,
 	Touch_Wgh_Min          = 4,
 	Touch_Wgh_Max          = 5,
 	Touch_Wgh_Step         = 6,
+#endif
 	Touch_Edge_Filter      = 7,
 	Touch_Panel_Orientation = 8,
 	Touch_Report_Rate      = 9,
