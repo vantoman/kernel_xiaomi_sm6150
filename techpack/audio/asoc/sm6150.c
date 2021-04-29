@@ -417,7 +417,11 @@ static struct dev_config proxy_rx_cfg = {
 
 /* Default configuration of MI2S channels */
 static struct dev_config mi2s_rx_cfg[] = {
+#ifdef CONFIG_SND_SOC_AWINIC_AW882XX
+	[PRIM_MI2S] = {SAMPLING_RATE_96KHZ, SNDRV_PCM_FORMAT_S16_LE, 2},
+#else
 	[PRIM_MI2S] = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 2},
+#endif
 	[SEC_MI2S]  = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 2},
 	[TERT_MI2S] = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 2},
 	[QUAT_MI2S] = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 2},
@@ -427,6 +431,8 @@ static struct dev_config mi2s_rx_cfg[] = {
 static struct dev_config mi2s_tx_cfg[] = {
 #ifdef CONFIG_SND_SOC_TFA9874_FOR_DAVI
 	[PRIM_MI2S] = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 2},
+#elif defined(CONFIG_SND_SOC_AWINIC_AW882XX)
+	[PRIM_MI2S] = {SAMPLING_RATE_96KHZ, SNDRV_PCM_FORMAT_S16_LE, 2},
 #else
 	[PRIM_MI2S] = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1},
 #endif
@@ -6853,6 +6859,34 @@ static struct snd_soc_dai_link msm_tasha_fe_dai_links[] = {
 	},
 };
 
+#ifdef CONFIG_SND_SOC_AWINIC_AW882XX
+#define AW882XX_SPEAKER_NAME "aw882xx_smartpa.3-0034"
+#define AW882XX_RECEIVER_NAME "aw882xx_smartpa.3-0035"
+struct snd_soc_dai_link_component awinic_codecs[] = {
+	{
+		.of_node = NULL,
+		.dai_name = "aw882xx-aif-3-34",
+		.name = AW882XX_SPEAKER_NAME,
+	},
+	{
+		.of_node = NULL,
+		.dai_name = "aw882xx-aif-3-35",
+		.name = AW882XX_RECEIVER_NAME,
+	},
+};
+
+static struct snd_soc_codec_conf aw882xx_codec_conf[] = {
+	{
+		.dev_name = AW882XX_SPEAKER_NAME,
+		.name_prefix = "SPK",
+	},
+	{
+		.dev_name = AW882XX_RECEIVER_NAME,
+		.name_prefix = "RCV",
+	},
+};
+#endif
+
 static struct snd_soc_dai_link msm_common_misc_fe_dai_links[] = {
 	{
 		.name = MSM_DAILINK_NAME(ASM Loopback),
@@ -7635,8 +7669,13 @@ static struct snd_soc_dai_link msm_mi2s_be_dai_links[] = {
 		.stream_name = "Primary MI2S Playback",
 		.cpu_dai_name = "msm-dai-q6-mi2s.0",
 		.platform_name = "msm-pcm-routing",
+#ifdef CONFIG_SND_SOC_AWINIC_AW882XX
+		.num_codecs = ARRAY_SIZE(awinic_codecs),
+		.codecs = awinic_codecs,
+#else
 		.codec_name = "msm-stub-codec.1",
 		.codec_dai_name = "msm-stub-rx",
+#endif
 		.no_pcm = 1,
 		.dpcm_playback = 1,
 		.id = MSM_BACKEND_DAI_PRI_MI2S_RX,
@@ -7650,8 +7689,13 @@ static struct snd_soc_dai_link msm_mi2s_be_dai_links[] = {
 		.stream_name = "Primary MI2S Capture",
 		.cpu_dai_name = "msm-dai-q6-mi2s.0",
 		.platform_name = "msm-pcm-routing",
+#ifdef CONFIG_SND_SOC_AWINIC_AW882XX
+		.num_codecs = ARRAY_SIZE(awinic_codecs),
+		.codecs = awinic_codecs,
+#else
 		.codec_name = "msm-stub-codec.1",
 		.codec_dai_name = "msm-stub-tx",
+#endif
 		.no_pcm = 1,
 		.dpcm_capture = 1,
 		.id = MSM_BACKEND_DAI_PRI_MI2S_TX,
@@ -8323,6 +8367,10 @@ static struct snd_soc_dai_link msm_stub_dai_links[
 
 struct snd_soc_card snd_soc_card_stub_msm = {
 	.name		= "sm6150-stub-snd-card",
+#ifdef CONFIG_SND_SOC_AWINIC_AW882XX
+	.codec_conf = aw882xx_codec_conf,
+	.num_configs = ARRAY_SIZE(aw882xx_codec_conf),
+#endif
 };
 
 static const struct of_device_id sm6150_asoc_machine_of_match[]  = {
