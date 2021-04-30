@@ -479,6 +479,8 @@ struct cam_ife_csid_path_cfg {
  * @irq_debug_cnt:            Counter to track sof irq's when above flag is set.
  * @error_irq_count           Error IRQ count, if continuous error irq comes
  *                            need to stop the CSID and mask interrupts.
+ * @prev_boot_timestamp       first bootime stamp at the start
+ * @prev_qtimer_ts            stores csid timestamp
  *
  */
 struct cam_ife_csid_hw {
@@ -507,6 +509,8 @@ struct cam_ife_csid_hw {
 	uint32_t                         error_irq_count;
 	uint32_t                         device_enabled;
 	spinlock_t                       lock_state;
+	uint64_t                         prev_boot_timestamp;
+	uint64_t                         prev_qtimer_ts;
 };
 
 int cam_ife_csid_hw_probe_init(struct cam_hw_intf  *csid_hw_intf,

@@ -1,4 +1,4 @@
-/* Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
  * Copyright (C) 2021 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -332,6 +332,9 @@ static int cam_cpastop_reset_irq(struct cam_hw_info *cpas_hw)
 {
 	int i;
 
+	if (camnoc_info->irq_sbm->sbm_enable.enable == false)
+		return 0;
+
 	cam_cpas_util_reg_update(cpas_hw, CAM_CPAS_REG_CAMNOC,
 		&camnoc_info->irq_sbm->sbm_clear);
 	for (i = 0; i < camnoc_info->irq_err_size; i++) {
@@ -407,6 +410,12 @@ static void cam_cpastop_work(struct work_struct *work)
 		return;
 	}
 
+	mutex_lock(&cpas_hw->hw_mutex);
+	if (cpas_hw->hw_state == CAM_HW_STATE_POWER_DOWN) {
+		CAM_ERR(CAM_CPAS, "CPAS CORE is off");
+		mutex_unlock(&cpas_hw->hw_mutex);
+		return;
+	}
 	for (i = 0; i < camnoc_info->irq_err_size; i++) {
 		if ((payload->irq_status & camnoc_info->irq_err[i].sbm_port) &&
 			(camnoc_info->irq_err[i].enable)) {
@@ -452,6 +461,7 @@ static void cam_cpastop_work(struct work_struct *work)
 				~camnoc_info->irq_err[i].sbm_port;
 		}
 	}
+	mutex_unlock(&cpas_hw->hw_mutex);
 	atomic_dec(&cpas_core->irq_count);
 	wake_up(&cpas_core->irq_count_wq);
 	CAM_DBG(CAM_CPAS, "irq_count=%d\n", atomic_read(&cpas_core->irq_count));
@@ -506,6 +516,7 @@ static int cam_cpastop_poweron(struct cam_hw_info *cpas_hw)
 {
 	int i;
 
+	cam_cpastop_reset_irq(cpas_hw);
 	for (i = 0; i < camnoc_info->specific_size; i++) {
 		if (camnoc_info->specific[i].enable) {
 			cam_cpas_util_reg_update(cpas_hw, CAM_CPAS_REG_CAMNOC,
