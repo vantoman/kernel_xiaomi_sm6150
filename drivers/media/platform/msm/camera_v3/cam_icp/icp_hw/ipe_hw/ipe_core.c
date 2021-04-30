@@ -163,7 +163,8 @@ static int cam_ipe_handle_pc(struct cam_hw_info *ipe_dev)
 			hw_info->pwr_ctrl, true, 0x1);
 
 		if (pwr_status >> IPE_PWR_ON_MASK)
-			return -EINVAL;
+			CAM_WARN(CAM_ICP, "BPS: pwr_status(%x):pwr_ctrl(%x)",
+				pwr_status, pwr_ctrl);
 
 	}
 	cam_ipe_get_gdsc_control(soc_info);
@@ -341,7 +342,11 @@ int cam_ipe_process_cmd(void *device_priv, uint32_t cmd_type,
 
 	case CAM_ICP_IPE_CMD_CPAS_STOP:
 		if (core_info->cpas_start) {
-			cam_cpas_stop(core_info->cpas_handle);
+			rc = cam_cpas_stop(core_info->cpas_handle);
+			if (rc) {
+				CAM_ERR(CAM_ICP, "CPAS stop failed %d", rc);
+				return rc;
+			}
 			core_info->cpas_start = false;
 		}
 		break;
