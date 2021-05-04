@@ -93,7 +93,7 @@
 #define GTP_GAME_CMD_ENTER				0x0E
 #define GTP_GAME_CMD_EXIT				0x0F
 
-#define CONFIG_TOUCHSCREEN_FOD          1
+#define CONFIG_TOUCHSCREEN_FOD          0
 
 /*
  * struct goodix_module - external modules container
