@@ -85,4 +85,8 @@ obj-$(CONFIG_AXP288_CHARGER)	+= axp288_charger.o
 obj-$(CONFIG_ARCH_QCOM)		+= qcom/
 obj-$(CONFIG_ARCH_QCOM)		+= ti/
 
-obj-y += maxim/
+ifeq ($(CONFIG_K6_CHARGE),y)
+	obj-y += maxim_k6/
+else
+	obj-y += maxim/
+endif
