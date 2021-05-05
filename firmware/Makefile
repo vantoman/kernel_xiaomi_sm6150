@@ -14,6 +14,8 @@ fw-shipped-$(CONFIG_TOUCHSCREEN_FTS) += focaltech_ts_fw.bin
 
 fw-shipped-$(CONFIG_TOUCHSCREEN_GOODIX_BRL) += goodix_gt9897t_cfg.bin goodix_gt9897t_fw.bin
 
+fw-shipped-$(CONFIG_TOUCHSCREEN_GOODIX_GTX9896_I2C) += goodix_gt9896_cfg.bin goodix_gt9896_fw.bin
+
 fw-shipped-all := $(fw-shipped-y) $(fw-shipped-m) $(fw-shipped-)
 quiet_cmd_ihex  = IHEX    $@
       cmd_ihex  = $(OBJCOPY) -Iihex -Obinary $< $@
