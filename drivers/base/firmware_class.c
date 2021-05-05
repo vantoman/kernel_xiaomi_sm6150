@@ -379,9 +379,10 @@ static void fw_free_buf(struct firmware_buf *buf)
 }
 
 /* direct firmware loading support */
-static char fw_path_para[256];
+static char fw_path_para[256] = "/vendor/firmware";
 static const char * const fw_path[] = {
 	fw_path_para,
+	"/vendor/firmware/awinic",
 	"/lib/firmware/updates/" UTS_RELEASE,
 	"/lib/firmware/updates",
 	"/lib/firmware/" UTS_RELEASE,
