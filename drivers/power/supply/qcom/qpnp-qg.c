@@ -3561,12 +3561,12 @@ static int qg_load_battery_profile(struct qpnp_qg *chip)
 #ifdef CONFIG_K6_CHARGE
 		if (is_batt_vendor_swd) {
 			pr_err("is_batt_vendor_swd is %d\n", is_batt_vendor_swd);
-			profile_node = of_batterydata_get_best_profile(batt_node,
+			profile_node = of_batterydata_get_best_profile(chip->batt_node,
 							chip->batt_id_ohm / 1000, "K6_sunwoda_5020mah");
 			chip->profile_judge_done = true;
 		} else if (is_batt_vendor_nvt) {
 			pr_err("is_batt_vendor_nvt is %d\n", is_batt_vendor_nvt);
-			profile_node = of_batterydata_get_best_profile(batt_node,
+			profile_node = of_batterydata_get_best_profile(chip->batt_node,
 							chip->batt_id_ohm / 1000, "K6_nvt_5020mah");
 			chip->profile_judge_done = true;
 		}
