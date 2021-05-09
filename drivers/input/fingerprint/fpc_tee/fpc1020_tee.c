@@ -41,7 +41,6 @@
 #include <linux/regulator/consumer.h>
 #include <linux/pm_wakeup.h>
 #include <linux/fb.h>
-#include <linux/pinctrl/qcom-pinctrl.h>
 #include <drm/drm_bridge.h>
 
 #define FPC_GPIO_NO_DEFAULT -1
@@ -945,12 +944,6 @@ static int fpc1020_probe(struct platform_device *pdev)
 	}
 
 	//rc = hw_reset(fpc1020);
-
-	if (msm_gpio_mpm_wake_set(121, true)) {
-		dev_info(dev, "%s: GPIO 121 wake set failed!\n", __func__);
-	} else {
-		dev_info(dev, "%s: GPIO 121 wake set success!\n", __func__);
-	}
 
 	dev_info(dev, "%s: ok\n", __func__);
 
