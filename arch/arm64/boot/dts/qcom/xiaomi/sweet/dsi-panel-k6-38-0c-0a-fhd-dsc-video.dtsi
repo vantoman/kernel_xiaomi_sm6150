@@ -40,8 +40,8 @@
 		qcom,mdss-dsi-mdp-trigger = "none";
 		qcom,mdss-dsi-bl-dcs-type-ss-ea;
 		qcom,mdss-dsi-reset-sequence = <0 1>, <1 10>;
-		qcom,mdss-pan-physical-width-dimension = <695>;
-		qcom,mdss-pan-physical-height-dimension = <1546>;
+		qcom,mdss-pan-physical-width-dimension = <69>;
+		qcom,mdss-pan-physical-height-dimension = <154>;
 		qcom,mdss-dsi-tx-eot-append;
 		qcom,dispparam-enabled;
 		qcom,mdss-dsi-panel-hdr-enabled;
