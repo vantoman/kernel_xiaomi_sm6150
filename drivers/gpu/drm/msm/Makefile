@@ -56,6 +56,7 @@ msm_drm-y := \
 	sde_hdcp_2x.o \
 	sde_dbg.o \
 	sde_dbg_evtlog.o \
+	xiaomi_frame_stat.o
 
 msm_drm-$(CONFIG_DRM_MSM_HDMI) += hdmi/hdmi.o \
 	hdmi/hdmi_audio.o \
