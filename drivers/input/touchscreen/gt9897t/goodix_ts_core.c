@@ -1202,7 +1202,7 @@ static void goodix_ts_report_finger(struct input_dev *dev,
 			input_mt_slot(dev, i);
 			input_mt_report_slot_state(dev, MT_TOOL_FINGER, false);
 			if (__test_and_clear_bit(i, &core_data->touch_id)) {
-				ts_info("finger report leave:%d", i);
+				ts_debug("finger report leave:%d", i);
 			}
 			continue;
 		}
@@ -1216,7 +1216,7 @@ static void goodix_ts_report_finger(struct input_dev *dev,
 		input_report_abs(dev, ABS_MT_POSITION_Y,
 				touch_data->coords[i].y);
 		if (!__test_and_set_bit(i, &core_data->touch_id)) {
-			ts_info("finger report press:%d", i);
+			ts_debug("finger report press:%d", i);
 		}
 	}
 
