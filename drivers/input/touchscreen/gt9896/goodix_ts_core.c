@@ -1146,7 +1146,7 @@ static void goodix_ts_report_finger(struct input_dev *dev,
 			input_mt_slot(dev, i);
 			input_mt_report_slot_state(dev, MT_TOOL_FINGER, false);
 			if (__test_and_clear_bit(i, &core_data->touch_id)) {
-				ts_info("finger report leave:%d", i);
+				ts_debug("finger report leave:%d", i);
 				pre_coords[i].status = 0;
 			}
 			continue;
@@ -1166,13 +1166,13 @@ static void goodix_ts_report_finger(struct input_dev *dev,
 				touch_data->coords[i].y - pre_coords[i].y) &&
 				test_bit(i, &core_data->touch_id) &&
 				pre_coords[i].status == 0) {
-			ts_notice("finger report move:%d", i);
+			ts_debug("finger report move:%d", i);
 			pre_coords[i].status = 1;
 		}
 		pre_coords[i].x = (u16)touch_data->coords[i].x;
 		pre_coords[i].y = (u16)touch_data->coords[i].y;
 		if (!__test_and_set_bit(i, &core_data->touch_id)) {
-				ts_info("finger report press:%d", i);
+				ts_debug("finger report press:%d", i);
 		}
 		/*ts_info("Report x=%d, y=%d, touch_major=%d, overlapping_area=%d",
                        touch_data->coords[i].x, touch_data->coords[i].y,
