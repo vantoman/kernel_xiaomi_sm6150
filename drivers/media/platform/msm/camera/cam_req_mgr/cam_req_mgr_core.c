@@ -337,6 +337,52 @@ static void __cam_req_mgr_tbl_set_all_skip_cnt(
 	} while (tbl != NULL);
 }
 
+#ifdef CONFIG_SPECTRA_CAMERA_UPGRADE
+/**
+ * __cam_req_mgr_flush_req_slot()
+ *
+ * @brief    : reset all the slots/pd tables when flush is
+ *             invoked
+ * @link     : link pointer
+ *
+ */
+static void __cam_req_mgr_flush_req_slot(
+	struct cam_req_mgr_core_link *link)
+{
+	int                           idx = 0;
+	struct cam_req_mgr_slot      *slot;
+	struct cam_req_mgr_req_tbl   *tbl;
+	struct cam_req_mgr_req_queue *in_q = link->req.in_q;
+
+	for (idx = 0; idx < in_q->num_slots; idx++) {
+		slot = &in_q->slot[idx];
+		tbl = link->req.l_tbl;
+		CAM_DBG(CAM_CRM,
+			"RESET idx: %d req_id: %lld slot->status: %d",
+			idx, slot->req_id, slot->status);
+
+		/* Reset input queue slot */
+		slot->req_id = -1;
+		slot->skip_idx = 1;
+		slot->recover = 0;
+		slot->sync_mode = CAM_REQ_MGR_SYNC_MODE_NO_SYNC;
+		slot->status = CRM_SLOT_STATUS_NO_REQ;
+
+		/* Reset all pd table slot */
+		while (tbl != NULL) {
+			CAM_DBG(CAM_CRM, "pd: %d: idx %d state %d",
+				tbl->pd, idx, tbl->slot[idx].state);
+			tbl->slot[idx].req_ready_map = 0;
+			tbl->slot[idx].state = CRM_REQ_STATE_EMPTY;
+			tbl = tbl->next;
+		}
+	}
+
+	in_q->wr_idx = 0;
+	in_q->rd_idx = 0;
+}
+#endif
+
 /**
  * __cam_req_mgr_reset_req_slot()
  *
@@ -1957,6 +2003,9 @@ int cam_req_mgr_process_flush_req(void *priv, void *data)
 		link->last_flush_id = flush_info->req_id;
 		CAM_INFO(CAM_CRM, "Last request id to flush is %lld",
 			flush_info->req_id);
+#ifdef CONFIG_SPECTRA_CAMERA_UPGRADE
+		__cam_req_mgr_flush_req_slot(link);
+#else
 		for (i = 0; i < in_q->num_slots; i++) {
 			slot = &in_q->slot[i];
 			slot->req_id = -1;
@@ -1978,6 +2027,7 @@ int cam_req_mgr_process_flush_req(void *priv, void *data)
 		}
 		in_q->wr_idx = 0;
 		in_q->rd_idx = 0;
+#endif
 	} else if (flush_info->flush_type ==
 		CAM_REQ_MGR_FLUSH_TYPE_CANCEL_REQ) {
 		idx = __cam_req_mgr_find_slot_for_req(in_q, flush_info->req_id);
@@ -2284,6 +2334,33 @@ end:
 	return rc;
 }
 
+#ifdef CONFIG_SPECTRA_CAMERA_UPGRADE
+/**
+* cam_req_mgr_process_stop()
+*
+* @brief: This runs in workque thread context. stop notification.
+* @priv : link information.
+* @data : contains information about frame_id, link etc.
+*
+* @return: 0 on success.
+*/
+int cam_req_mgr_process_stop(void *priv, void *data)
+{
+   int                                  rc = 0;
+   struct cam_req_mgr_core_link        *link = NULL;
+
+   if (!data || !priv) {
+	   CAM_ERR(CAM_CRM, "input args NULL %pK %pK", data, priv);
+	   rc = -EINVAL;
+	   goto end;
+   }
+   link = (struct cam_req_mgr_core_link *)priv;
+   __cam_req_mgr_flush_req_slot(link);
+end:
+   return rc;
+}
+#endif
+
 static void cam_req_mgr_process_reset_for_dual_link(
 	struct cam_req_mgr_core_link *link,
 	struct cam_req_mgr_trigger_notify *trigger_data)
@@ -2585,6 +2662,68 @@ end:
 	return rc;
 }
 
+#ifdef CONFIG_SPECTRA_CAMERA_UPGRADE
+/*
+ * cam_req_mgr_cb_notify_stop()
+ *
+ * @brief    : Stop received from device, resets the morked slots
+ * @err_info : contains information about error occurred like bubble/overflow
+ *
+ * @return   : 0 on success, negative in case of failure
+ *
+ */
+static int cam_req_mgr_cb_notify_stop(
+	struct cam_req_mgr_notify_stop *stop_info)
+{
+	int                              rc = 0;
+	struct crm_workq_task           *task = NULL;
+	struct cam_req_mgr_core_link    *link = NULL;
+	struct cam_req_mgr_notify_stop  *notify_stop;
+	struct crm_task_payload         *task_data;
+
+	if (!stop_info) {
+		CAM_ERR(CAM_CRM, "stop_info is NULL");
+		rc = -EINVAL;
+		goto end;
+	}
+
+	link = (struct cam_req_mgr_core_link *)
+		cam_get_device_priv(stop_info->link_hdl);
+	if (!link) {
+		CAM_DBG(CAM_CRM, "link ptr NULL %x", stop_info->link_hdl);
+		rc = -EINVAL;
+		goto end;
+	}
+
+	spin_lock_bh(&link->link_state_spin_lock);
+	if (link->state != CAM_CRM_LINK_STATE_READY) {
+		CAM_WARN(CAM_CRM, "invalid link state:%d", link->state);
+		spin_unlock_bh(&link->link_state_spin_lock);
+		rc = -EPERM;
+		goto end;
+	}
+	crm_timer_reset(link->watchdog);
+	spin_unlock_bh(&link->link_state_spin_lock);
+
+	task = cam_req_mgr_workq_get_task(link->workq);
+	if (!task) {
+		CAM_ERR(CAM_CRM, "no empty task");
+		rc = -EBUSY;
+		goto end;
+	}
+
+	task_data = (struct crm_task_payload *)task->payload;
+	task_data->type = CRM_WORKQ_TASK_NOTIFY_ERR;
+	notify_stop = (struct cam_req_mgr_notify_stop *)&task_data->u;
+	notify_stop->link_hdl = stop_info->link_hdl;
+	task->process_cb = &cam_req_mgr_process_stop;
+	rc = cam_req_mgr_workq_enqueue_task(task, link, CRM_TASK_PRIORITY_0);
+
+end:
+	return rc;
+}
+#endif
+
 /**
  * cam_req_mgr_cb_notify_trigger()
  *
@@ -2673,6 +2812,9 @@ static struct cam_req_mgr_crm_cb cam_req_mgr_ops = {
 	.notify_trigger = cam_req_mgr_cb_notify_trigger,
 	.notify_err     = cam_req_mgr_cb_notify_err,
 	.add_req        = cam_req_mgr_cb_add_req,
+#ifdef CONFIG_SPECTRA_CAMERA_UPGRADE
+	.notify_stop    = cam_req_mgr_cb_notify_stop,
+#endif
 };
 
 /**
