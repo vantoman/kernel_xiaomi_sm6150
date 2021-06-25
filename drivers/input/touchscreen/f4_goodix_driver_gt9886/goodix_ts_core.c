@@ -43,22 +43,6 @@
 #include <linux/backlight.h>
 #include "../xiaomi/xiaomi_touch.h"
 
-#define INPUT_EVENT_START						0
-#define INPUT_EVENT_SENSITIVE_MODE_OFF			0
-#define INPUT_EVENT_SENSITIVE_MODE_ON			1
-#define INPUT_EVENT_STYLUS_MODE_OFF				2
-#define INPUT_EVENT_STYLUS_MODE_ON				3
-#define INPUT_EVENT_WAKUP_MODE_OFF				4
-#define INPUT_EVENT_WAKUP_MODE_ON				5
-#define INPUT_EVENT_COVER_MODE_OFF				6
-#define INPUT_EVENT_COVER_MODE_ON				7
-#define INPUT_EVENT_SLIDE_FOR_VOLUME			8
-#define INPUT_EVENT_DOUBLE_TAP_FOR_VOLUME		9
-#define INPUT_EVENT_SINGLE_TAP_FOR_VOLUME		10
-#define INPUT_EVENT_LONG_SINGLE_TAP_FOR_VOLUME	11
-#define INPUT_EVENT_PALM_OFF					12
-#define INPUT_EVENT_PALM_ON						13
-#define INPUT_EVENT_END							13
 #define IS_USB_EXIST							0x06
 #define IS_USB_NOT_EXIST						0x07
 
@@ -1396,55 +1380,6 @@ static DEVICE_ATTR(fod_test, (S_IRUGO | S_IWUSR | S_IWGRP),
 static DEVICE_ATTR(touch_suspend_notify, (S_IRUGO | S_IRGRP),
 		gtp_touch_suspend_notify_show, NULL);
 
-static void goodix_switch_mode_work(struct work_struct *work)
-{
-	struct goodix_mode_switch *ms =
-		container_of(work, struct goodix_mode_switch, switch_mode_work);
-
-	struct goodix_ts_core *info = ms->info;
-	unsigned char value = ms->mode;
-
-	if (value >= INPUT_EVENT_WAKUP_MODE_OFF
-		&& value <= INPUT_EVENT_WAKUP_MODE_ON) {
-		info->double_wakeup = value - INPUT_EVENT_WAKUP_MODE_OFF;
-		info->gesture_enabled = info->double_wakeup || info->aod_status;
-		/*goodix_gesture_enable(!!info->gesture_enabled);*/
-	}
-}
-
-static int goodix_input_event(struct input_dev *dev, unsigned int type,
-		unsigned int code, int value)
-{
-	struct goodix_ts_core *core_data = input_get_drvdata(dev);
-	struct goodix_mode_switch *ms;
-
-	if (!core_data) {
-		ts_err("core_data is NULL");
-		return 0;
-	}
-
-	if (type == EV_SYN && code == SYN_CONFIG) {
-		if (value >= INPUT_EVENT_START && value <= INPUT_EVENT_END) {
-			ms = (struct goodix_mode_switch *)
-				kmalloc(sizeof(struct goodix_mode_switch), GFP_ATOMIC);
-			if (ms != NULL) {
-				ms->info = core_data;
-				ms->mode = (unsigned char)value;
-				INIT_WORK(&ms->switch_mode_work,
-					goodix_switch_mode_work);
-				schedule_work(&ms->switch_mode_work);
-			} else {
-				ts_err("failed in allocating memory for switching mode");
-				return -ENOMEM;
-			}
-		} else {
-			ts_err("Invalid event value");
-			return -EINVAL;
-		}
-	}
-	return 0;
-}
-
 /**
  * goodix_input_set_params - set input parameters
  */
@@ -1504,7 +1439,6 @@ int goodix_ts_input_dev_config(struct goodix_ts_core *core_data)
 	input_dev->id.product = 0xDEAD;
 	input_dev->id.vendor = 0xBEEF;
 	input_dev->id.version = 10427;
-	input_dev->event = goodix_input_event;
 
 	__set_bit(EV_SYN, input_dev->evbit);
 	__set_bit(EV_KEY, input_dev->evbit);
