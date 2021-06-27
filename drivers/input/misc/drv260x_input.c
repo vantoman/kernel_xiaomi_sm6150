@@ -1359,7 +1359,11 @@ drv260x_probe(struct i2c_client *client, const struct i2c_device_id *id)
 		goto err_free_mem;
 	}
 
+#ifdef CONFIG_INPUT_QTI_HAPTICS
 	haptics->input_dev->name = "drv260x:haptics";
+#else
+	haptics->input_dev->name = "qti-haptics";
+#endif
 	haptics->input_dev->close = drv260x_close;
 	input_set_drvdata(haptics->input_dev, haptics);
 	//input_set_capability(haptics->input_dev, EV_FF, FF_RUMBLE);
