@@ -2619,6 +2619,7 @@ static int gtp_set_cur_value(int gtp_mode, int gtp_value)
 	int edge_filter_corner_size = 170;
 	int ret = 0;
 	int i = 0, update = 0;
+	bool suspended;
 	struct goodix_ts_device *dev = goodix_core_data->ts_dev;
 
 	ts_info("mode:%d, value:%d", gtp_mode, gtp_value);
@@ -2630,6 +2631,10 @@ static int gtp_set_cur_value(int gtp_mode, int gtp_value)
 	}
 
 	if (gtp_mode == Touch_Fod_Enable && goodix_core_data) {
+		suspended = atomic_read(&goodix_core_data->suspended);
+		if (suspended) {
+			goodix_ts_resume(goodix_core_data);
+		}
 		goodix_core_data->fod_status = gtp_value;
 		if (goodix_core_data->fod_status == -1 || goodix_core_data->fod_status == 100) {
 			goodix_core_data->fod_enabled = false;
@@ -2639,6 +2644,9 @@ static int gtp_set_cur_value(int gtp_mode, int gtp_value)
 			goodix_core_data->fod_enabled = true;
 			goodix_core_data->gesture_enabled = goodix_core_data->double_wakeup |
 				goodix_core_data->fod_enabled | goodix_core_data->aod_status;
+		}
+		if (suspended) {
+			goodix_ts_suspend(goodix_core_data);
 		}
 		return 0;
 	}
