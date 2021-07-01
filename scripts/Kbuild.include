@@ -218,6 +218,11 @@ else
 		ld-name = bfd
 	endif
 endif
+ifeq ($(LD),)
+ifneq ($(LLVM),)
+	ld-name = lld
+endif
+endif
 
 # ld-version
 # Note this is mainly for HJ Lu's 3 number binutil versions
