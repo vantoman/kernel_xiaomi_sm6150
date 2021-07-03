@@ -56,6 +56,7 @@ enum dsi_backlight_type {
 enum dsi_doze_mode_type {
 	DSI_DOZE_LPM = 0,
 	DSI_DOZE_HBM,
+	DSI_DOZE_DARK,
 };
 
 enum bl_update_flag {

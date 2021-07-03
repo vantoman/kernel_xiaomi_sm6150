@@ -622,6 +622,11 @@ static int dsi_panel_update_backlight(struct dsi_panel *panel,
 		return -EINVAL;
 	}
 
+	if (panel->doze_enabled && panel->doze_mode == DSI_DOZE_DARK) {
+		pr_info("Setting backlight level to zero\n");
+		bl_lvl = 0;
+	}
+
 	if (panel->bl_config.bl_remap_flag && panel->bl_config.brightness_max_level &&
 			panel->bl_config.bl_max_level) {
 		/*
@@ -708,6 +713,8 @@ static u32 dsi_panel_get_backlight(struct dsi_panel *panel)
 		bl_level = panel->bl_config.bl_doze_hbm;
 	else if (panel->doze_enabled && panel->doze_mode == DSI_DOZE_LPM)
 		bl_level = panel->bl_config.bl_doze_lpm;
+	else if (panel->doze_enabled && panel->doze_mode == DSI_DOZE_DARK)
+		bl_level = 0;
 	else if (!panel->doze_enabled)
 		bl_level = panel->bl_config.bl_level;
 
@@ -755,12 +762,14 @@ int dsi_panel_update_doze(struct dsi_panel *panel) {
 		if (rc)
 			pr_err("[%s] failed to send DSI_CMD_SET_DOZE_LBM cmd, rc=%d\n",
 					panel->name, rc);
-	} else if (!panel->doze_enabled) {
+	} else {
 		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_NOLP);
 		if (rc)
 			pr_err("[%s] failed to send DSI_CMD_SET_NOLP cmd, rc=%d\n",
 					panel->name, rc);
 	}
+
+	dsi_panel_set_backlight(panel, panel->bl_config.bl_level);
 
 	return rc;
 }
