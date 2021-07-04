@@ -521,6 +521,17 @@ static int aw8624_haptic_set_repeat_wav_seq(struct aw8624 *aw8624,
 	return 0;
 }
 
+static unsigned char aw8624_haptic_set_level(struct aw8624 *aw8624, int gain)
+{
+    int val = 80;
+
+    val = aw8624->ulevel * gain / 128;
+    if (val > 255)
+        val = 255;
+
+    return val;
+}
+
 static int aw8624_haptic_set_gain(struct aw8624 *aw8624, unsigned char gain)
 {
 	unsigned char comp_gain = 0;
@@ -532,9 +543,9 @@ static int aw8624_haptic_set_gain(struct aw8624 *aw8624, unsigned char gain)
 		if (comp_gain > (128 * AW8624_VBAT_REFER / AW8624_VBAT_MIN)) {
 			comp_gain = 128 * AW8624_VBAT_REFER / AW8624_VBAT_MIN;
 		}
-		aw8624_i2c_write(aw8624, AW8624_REG_DATDBG, comp_gain);
+		aw8624_i2c_write(aw8624, AW8624_REG_DATDBG, aw8624_haptic_set_level(aw8624, comp_gain));
 	} else {
-		aw8624_i2c_write(aw8624, AW8624_REG_DATDBG, gain);
+		aw8624_i2c_write(aw8624, AW8624_REG_DATDBG, aw8624_haptic_set_level(aw8624, gain));
 	}
 	return 0;
 }
@@ -1817,6 +1828,7 @@ static int aw8624_haptic_init(struct aw8624 *aw8624)
 	}
 
 	aw8624->activate_mode = aw8624->info.mode;
+	aw8624->ulevel = 128;
 	aw8624->osc_cali_run = 0;
 	ret = aw8624_i2c_read(aw8624, AW8624_REG_WAVSEQ1, &reg_val);
 	aw8624->index = reg_val & 0x7F;
@@ -2562,7 +2574,7 @@ static void aw8624_haptics_set_gain_work_routine(struct work_struct *work)
 		if (comp_level > (128 * AW8624_VBAT_REFER / AW8624_VBAT_MIN)) {
 			comp_level = 128 * AW8624_VBAT_REFER / AW8624_VBAT_MIN;
 		}
-		aw8624_i2c_write(aw8624, AW8624_REG_DATDBG, comp_level);
+		aw8624_i2c_write(aw8624, AW8624_REG_DATDBG, aw8624_haptic_set_level(aw8624, comp_level));
 	}
 }
 
@@ -2980,6 +2992,37 @@ static ssize_t aw8624_gain_store(struct device *dev,
 	mutex_lock(&aw8624->lock);
 	aw8624->level = val;
 	aw8624_haptic_set_gain(aw8624, aw8624->level);
+	mutex_unlock(&aw8624->lock);
+	return count;
+}
+
+static ssize_t aw8624_ulevel_show(struct device *dev,
+				struct device_attribute *attr, char *buf)
+{
+	struct aw8624 *aw8624 = dev_get_drvdata(dev);
+	return snprintf(buf, PAGE_SIZE, "0x%02x\n", aw8624->gain);
+}
+
+static ssize_t aw8624_ulevel_store(struct device *dev,
+				struct device_attribute *attr, const char *buf,
+				size_t count)
+{
+	struct aw8624 *aw8624 = dev_get_drvdata(dev);
+	unsigned int val = 0;
+	int rc = 0;
+
+	rc = kstrtouint(buf, 0, &val);
+	if (rc < 0)
+		return rc;
+
+	if (val < 0 || val > 128)
+		val = 128;
+
+	pr_info("%s: value=%d\n", __FUNCTION__, val);
+
+	mutex_lock(&aw8624->lock);
+	aw8624->ulevel = val;
+	aw8624_haptic_set_gain(aw8624, aw8624->gain);
 	mutex_unlock(&aw8624->lock);
 	return count;
 }
@@ -3634,6 +3677,8 @@ static DEVICE_ATTR(index, S_IWUSR | S_IRUGO, aw8624_index_show,
 		   aw8624_index_store);
 static DEVICE_ATTR(gain, S_IWUSR | S_IRUGO, aw8624_gain_show,
 		   aw8624_gain_store);
+static DEVICE_ATTR(ulevel, 0644, aw8624_ulevel_show,
+                   aw8624_ulevel_store);
 static DEVICE_ATTR(seq, S_IWUSR | S_IRUGO, aw8624_seq_show, aw8624_seq_store);
 static DEVICE_ATTR(loop, S_IWUSR | S_IRUGO, aw8624_loop_show,
 		   aw8624_loop_store);
@@ -3680,6 +3725,7 @@ static struct attribute *aw8624_vibrator_attributes[] = {
 	&dev_attr_activate_mode.attr,
 	&dev_attr_index.attr,
 	&dev_attr_gain.attr,
+	&dev_attr_ulevel.attr,
 	&dev_attr_seq.attr,
 	&dev_attr_loop.attr,
 	&dev_attr_rtp.attr,
