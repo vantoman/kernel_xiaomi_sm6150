@@ -350,6 +350,9 @@ struct aw8624 {
 	int index;
 	int vmax;
 	int gain;
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+	int ulevel;
+#endif
 	u16 new_gain;
 	int f0_value;
 	unsigned char level;
