@@ -23592,7 +23592,7 @@ static const struct snd_soc_dapm_route intercon_mi2s[] = {
 	{"INT0_MI2S_RX", NULL, "INT0_MI2S_RX_DL_HL"},
 	{"INT4_MI2S_RX_DL_HL", "Switch", "INT4_MI2S_DL_HL"},
 	{"INT4_MI2S_RX", NULL, "INT4_MI2S_RX_DL_HL"},
-#if defined(CONFIG_SND_SOC_AWINIC_AW882XX)
+#if defined(CONFIG_TARGET_PRODUCT_K9A) || defined(CONFIG_SND_SOC_AWINIC_AW882XX)
 	{"PRI_MI2S_RX_DL_HL", "Switch", "PRI_MI2S_DL_HL"},
 #else
 	{"PRI_MI2S_RX_DL_HL", "Switch", "CDC_DMA_DL_HL"},
@@ -23614,7 +23614,7 @@ static const struct snd_soc_dapm_route intercon_mi2s[] = {
 	{"PRI_MI2S_UL_HL", NULL, "PRI_MI2S_TX"},
 	{"SEC_MI2S_UL_HL", NULL, "SEC_MI2S_TX"},
 	{"SEC_MI2S_RX", NULL, "SEC_MI2S_DL_HL"},
-#if defined(CONFIG_SND_SOC_AWINIC_AW882XX)
+#if defined(CONFIG_TARGET_PRODUCT_K9A) || defined(CONFIG_SND_SOC_AWINIC_AW882XX)
 #else
 	{"PRI_MI2S_RX", NULL, "PRI_MI2S_DL_HL"},
 #endif

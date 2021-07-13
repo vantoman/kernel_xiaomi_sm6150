@@ -235,6 +235,34 @@ struct msm_asoc_wcd93xx_codec {
 				   enum afe_config_type config_type);
 };
 
+#ifdef CONFIG_TARGET_PRODUCT_K9A
+/* the name and codec name is depended on which i2s bus and TFA address used. */
+static struct snd_soc_dai_link_component tfa98xx_dai_link_component[]=
+{
+	{
+		.name= "tfa98xx.1-0034",
+		.dai_name="tfa98xx-aif-1-34",
+	},
+
+	{
+		.name= "tfa98xx.1-0035",
+		.dai_name="tfa98xx-aif-1-35",
+	},
+};
+
+static struct snd_soc_codec_conf tfa98xx_codec_conf[] = {
+	{
+		.dev_name       = "tfa98xx-aif-1-34",
+		.name_prefix    = "RCV",
+	},
+
+	{
+		.dev_name       = "tfa98xx-aif-1-35",
+		.name_prefix    = "SPK",
+	},
+};
+#endif
+
 static struct snd_soc_card snd_soc_card_sm6150_msm;
 
 /* TDM default config */
@@ -7672,6 +7700,9 @@ static struct snd_soc_dai_link msm_mi2s_be_dai_links[] = {
 #ifdef CONFIG_SND_SOC_AWINIC_AW882XX
 		.num_codecs = ARRAY_SIZE(awinic_codecs),
 		.codecs = awinic_codecs,
+#elif defined(CONFIG_TARGET_PRODUCT_K9A)
+		.num_codecs = ARRAY_SIZE(tfa98xx_dai_link_component),
+		.codecs = tfa98xx_dai_link_component,
 #else
 		.codec_name = "msm-stub-codec.1",
 		.codec_dai_name = "msm-stub-rx",
@@ -8370,6 +8401,10 @@ struct snd_soc_card snd_soc_card_stub_msm = {
 #ifdef CONFIG_SND_SOC_AWINIC_AW882XX
 	.codec_conf = aw882xx_codec_conf,
 	.num_configs = ARRAY_SIZE(aw882xx_codec_conf),
+#endif
+#ifdef CONFIG_TARGET_PRODUCT_K9A
+	.codec_conf = tfa98xx_codec_conf,
+	.num_configs = ARRAY_SIZE(tfa98xx_codec_conf),
 #endif
 };
 
