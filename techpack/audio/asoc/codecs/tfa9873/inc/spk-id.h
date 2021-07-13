@@ -1,4 +1,5 @@
-/* Copyright (c) 2018, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2016, The Linux Foundation. All rights reserved.
+ * Copyright (C) 2021 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -10,8 +11,23 @@
  * GNU General Public License for more details.
  */
 
-#define CONFIG_SND_SOC_FOR_ULTRASOUND_PATH 1
-#define CONFIG_SND_SOC_TFA9873 1
-#define CONFIG_SND_SOC_TFA9874_FOR_DAVI 1
-#define CONFIG_TARGET_PRODUCT_K9A 1
-#define TFA_NON_DSP_SOLUTION 1
+#ifndef __SPK_ID_H_
+#define __SPK_ID_H_
+
+#include <linux/types.h>
+#include <linux/of.h>
+
+#define PIN_PULL_DOWN		0
+#define PIN_PULL_UP		1
+#define PIN_FLOAT		2
+
+#define VENDOR_ID_NONE		0
+#define VENDOR_ID_AAC		1
+#define VENDOR_ID_SSI		2
+#define VENDOR_ID_GOER		3
+
+#define VENDOR_ID_UNKNOWN	4
+
+extern int spk_id_get_pin_3state(struct device_node *np);
+
+#endif
