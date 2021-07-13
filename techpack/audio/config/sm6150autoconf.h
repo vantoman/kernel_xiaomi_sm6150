@@ -59,3 +59,22 @@
 #define CONFIG_SND_SOC_WCD937X 1
 #define CONFIG_SND_SOC_WCD937X_SLAVE 1
 #define CONFIG_SND_EVENT 1
+
+#ifdef CONFIG_MACH_XIAOMI_COURBET
+#include "xiaomi/courbetconf.h"
+#endif
+#ifdef CONFIG_MACH_XIAOMI_DAVINCI
+#include "xiaomi/davinciconf.h"
+#endif
+#ifdef CONFIG_MACH_XIAOMI_PHOENIX
+#include "xiaomi/phoenixconf.h"
+#endif
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+#include "xiaomi/sweetconf.h"
+#endif
+#ifdef CONFIG_MACH_XIAOMI_TOCO
+#include "xiaomi/tococonf.h"
+#endif
+#ifdef CONFIG_MACH_XIAOMI_TUCANA
+#include "xiaomi/tucanaconf.h"
+#endif
