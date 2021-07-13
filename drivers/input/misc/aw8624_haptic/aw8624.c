@@ -4303,7 +4303,11 @@ aw8624_i2c_probe(struct i2c_client *i2c, const struct i2c_device_id *id)
 		     HRTIMER_MODE_REL);
 	aw8624->hap_disable_timer.function = qti_hap_disable_timer;
 
+#ifdef CONFIG_INPUT_QTI_HAPTICS
 	input_dev->name = "aw8624_haptic";
+#else
+	input_dev->name = "qti-haptics";
+#endif
 	input_set_drvdata(input_dev, aw8624);
 	aw8624->input_dev = input_dev;
 	input_set_capability(input_dev, EV_FF, FF_CONSTANT);
@@ -4457,4 +4461,3 @@ module_exit(aw8624_i2c_exit);
 
 MODULE_DESCRIPTION("AW8624 Haptic Driver");
 MODULE_LICENSE("GPL v2");
-
