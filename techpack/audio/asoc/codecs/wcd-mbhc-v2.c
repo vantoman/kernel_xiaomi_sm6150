@@ -1000,6 +1000,12 @@ static void wcd_mbhc_swch_irq_handler(struct wcd_mbhc *mbhc)
 		mbhc->mbhc_cfg->flip_switch = false;
 		if (mbhc->mbhc_fn)
 			mbhc->mbhc_fn->wcd_mbhc_detect_plug_type(mbhc);
+#if defined(CONFIG_TARGET_PRODUCT_K9A)
+		if (mbhc->mbhc_cfg->enable_usbc_analog &&
+				mbhc->mbhc_cfg->fsa_enable)
+			WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_L_DET_EN, 0);
+		pr_err("line 1008: WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_L_DET_EN, 0)");
+#endif
 	} else if ((mbhc->current_plug != MBHC_PLUG_TYPE_NONE)
 			&& !detection_type) {
 		/* Disable external voltage source to micbias if present */
@@ -1662,9 +1668,20 @@ static int wcd_mbhc_usbc_ana_event_handler(struct notifier_block *nb,
 
 	if (mode == POWER_SUPPLY_TYPEC_SINK_AUDIO_ADAPTER) {
 		if (mbhc->mbhc_cb->clk_setup)
+#if defined(CONFIG_TARGET_PRODUCT_K9A)
+			mbhc->mbhc_cb->clk_setup(mbhc->codec, false);
+#endif
 			mbhc->mbhc_cb->clk_setup(mbhc->codec, true);
 		/* insertion detected, enable L_DET_EN */
+#if defined(CONFIG_TARGET_PRODUCT_K9A)
+		WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_L_DET_EN, 0);
+#endif
 		WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_L_DET_EN, 1);
+#if defined(CONFIG_TARGET_PRODUCT_K9A)
+	} else if (mode == POWER_SUPPLY_TYPEC_NONE) {
+		WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_L_DET_EN, 1);
+		pr_err("line 1684: WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_L_DET_EN, 1)");
+#endif
 	}
 	return 0;
 }
