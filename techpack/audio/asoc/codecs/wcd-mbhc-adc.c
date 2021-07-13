@@ -32,7 +32,11 @@
 #include "wcd-mbhc-v2.h"
 #include "pdata.h"
 
+#if defined(CONFIG_TARGET_PRODUCT_K9A)
+#define WCD_MBHC_ADC_HS_THRESHOLD_MV    1600
+#else
 #define WCD_MBHC_ADC_HS_THRESHOLD_MV    1700
+#endif
 #define WCD_MBHC_ADC_HPH_THRESHOLD_MV   75
 #define WCD_MBHC_ADC_MICBIAS_MV         1800
 #define WCD_MBHC_FAKE_INS_RETRY         4
