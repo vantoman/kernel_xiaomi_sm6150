@@ -19,6 +19,8 @@
 
 #include "../sdmmagpie-sde-display.dtsi"
 
+#include "sm6150-audio-overlay.dtsi"
+
 &soc {
 	/*
 	fpc1020 {
