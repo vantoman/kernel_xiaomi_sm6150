@@ -20,6 +20,7 @@
 #include "xiaomi/sdmmagpie-camera.dtsi"
 #include "xiaomi/sdmmagpie-pinctrl.dtsi"
 #include "xiaomi/sdmmagpie-regulator.dtsi"
+#include "xiaomi/sdmmagpie-sde.dtsi"
 
 / {
 	model = "Qualcomm Technologies, Inc. SDMMAGPIE SoC";
