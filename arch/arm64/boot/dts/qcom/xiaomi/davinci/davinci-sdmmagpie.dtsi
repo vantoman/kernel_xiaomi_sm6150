@@ -531,26 +531,25 @@ And public attribution of xiaomi platforms(like F3 and so and)
 				12 11 10 9 8 7 6 5 4 3 2 1 0>;
 	qcom,lut-patterns-camera = <0 1 3 5 8 10 12 15 18 22 26 32 38 44 50 60 72 82 90 96 98 99 100
 				99 98 96 90 82 72 60 50 44 38 32 26 22 18 15 12 10 8 5 3 1 0>;
-};
+	lpg2 {
+		qcom,lpg-chan-id = <2>;
+		qcom,ramp-step-ms = <70>;
+		qcom,ramp-pause-hi-count = <2>;
+		qcom,ramp-pause-lo-count = <30>;
+		qcom,ramp-low-index = <0>;
+		qcom,ramp-high-index = <26>;
+		qcom,ramp-from-low-to-high;
+		qcom,ramp-pattern-repeat;
+	};
 
-&pwm_lpg2 {
-	qcom,lpg-chan-id = <2>;
-	qcom,ramp-step-ms = <70>;
-	qcom,ramp-pause-hi-count = <2>;
-	qcom,ramp-pause-lo-count = <30>;
-	qcom,ramp-low-index = <0>;
-	qcom,ramp-high-index = <26>;
-	qcom,ramp-from-low-to-high;
-	qcom,ramp-pattern-repeat;
-};
-
-&pwm_lpg3 {
-	qcom,lpg-chan-id = <3>;
-	qcom,ramp-step-ms = <70>;
-	qcom,ramp-pause-hi-count = <2>;
-	qcom,ramp-pause-lo-count = <30>;
-	qcom,ramp-low-index = <0>;
-	qcom,ramp-high-index = <26>;
-	qcom,ramp-from-low-to-high;
-	qcom,ramp-pattern-repeat;
+	lpg3 {
+		qcom,lpg-chan-id = <3>;
+		qcom,ramp-step-ms = <70>;
+		qcom,ramp-pause-hi-count = <2>;
+		qcom,ramp-pause-lo-count = <30>;
+		qcom,ramp-low-index = <0>;
+		qcom,ramp-high-index = <26>;
+		qcom,ramp-from-low-to-high;
+		qcom,ramp-pattern-repeat;
+	};
 };
