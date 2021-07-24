@@ -591,16 +591,18 @@
 	};
 };
 
-&blue_led {
-	label = "white";
-};
+&pm6150l_rgb_led {
+	red {
+		status = "disabled";
+	};
 
-&green_led {
-	status = "disabled";
-};
+	green {
+		status = "disabled";
+	};
 
-&red_led {
-	status = "disabled";
+	blue {
+		label = "white";
+	};
 };
 
 &qusb_phy0 {
