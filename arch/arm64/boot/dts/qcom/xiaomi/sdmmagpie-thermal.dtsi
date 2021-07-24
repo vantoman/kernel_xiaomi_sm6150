@@ -1,0 +1,23 @@
+&thermal_zones {
+	xo-therm-adc {
+		status = "disabled";
+	};
+	rf-pa0-therm-adc {
+		status = "disabled";
+	};
+	rf-pa1-therm-adc  {
+		status = "disabled";
+	};
+	quiet-therm-adc {
+		status = "disabled";
+	};
+	conn-therm-adc {
+		status = "disabled";
+	};
+	camera-ftherm-adc {
+		status = "disabled";
+	};
+	nvm-therm-adc {
+		status = "disabled";
+	};
+};
