@@ -18,6 +18,7 @@
 #include "xiaomi/pm6150.dtsi"
 #include "xiaomi/pm6150l.dtsi"
 #include "xiaomi/sdmmagpie-camera.dtsi"
+#include "xiaomi/sdmmagpie-pinctrl.dtsi"
 
 / {
 	model = "Qualcomm Technologies, Inc. SDMMAGPIE SoC";
