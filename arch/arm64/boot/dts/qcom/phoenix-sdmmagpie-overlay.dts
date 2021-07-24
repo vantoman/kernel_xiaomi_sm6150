@@ -27,7 +27,3 @@
 	qcom,msm-id = <365 0x0>;
 	qcom,board-id = <43 0>;
 };
-
-&dsi_g7b_37_02_0a_video_display {
-	qcom,dsi-display-active;
-};
