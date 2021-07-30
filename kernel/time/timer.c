@@ -831,7 +831,8 @@ static inline struct timer_base *get_timer_cpu_base(u32 tflags, u32 cpu)
 	 * If the timer is deferrable and NO_HZ_COMMON is set then we need
 	 * to use the deferrable base.
 	 */
-	if (IS_ENABLED(CONFIG_NO_HZ_COMMON) && (tflags & TIMER_DEFERRABLE)) {
+	if (IS_ENABLED(CONFIG_NO_HZ_COMMON) && base->nohz_active &&
+	    (tflags & TIMER_DEFERRABLE)) {
 		base = &timer_base_deferrable;
 		if (tflags & TIMER_PINNED)
 			base = per_cpu_ptr(&timer_bases[BASE_DEF], cpu);
@@ -847,7 +848,8 @@ static inline struct timer_base *get_timer_this_cpu_base(u32 tflags)
 	 * If the timer is deferrable and NO_HZ_COMMON is set then we need
 	 * to use the deferrable base.
 	 */
-	if (IS_ENABLED(CONFIG_NO_HZ_COMMON) && (tflags & TIMER_DEFERRABLE)) {
+	if (IS_ENABLED(CONFIG_NO_HZ_COMMON) && base->nohz_active &&
+	    (tflags & TIMER_DEFERRABLE)) {
 		base = &timer_base_deferrable;
 		if (tflags & TIMER_PINNED)
 			base = this_cpu_ptr(&timer_bases[BASE_DEF]);
@@ -1675,8 +1677,7 @@ static __latent_entropy void run_timer_softirq(struct softirq_action *h)
 	struct timer_base *base = this_cpu_ptr(&timer_bases[BASE_STD]);
 
 	__run_timers(base);
-	if (IS_ENABLED(CONFIG_NO_HZ_COMMON)) {
-		__run_timers(this_cpu_ptr(&timer_bases[BASE_DEF]));
+	if (IS_ENABLED(CONFIG_NO_HZ_COMMON) && base->nohz_active) {
 		__run_timers(&timer_base_deferrable);
 	}
 }
