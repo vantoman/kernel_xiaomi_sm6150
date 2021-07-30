@@ -210,7 +210,6 @@ struct timer_base {
 } ____cacheline_aligned;
 
 static DEFINE_PER_CPU(struct timer_base, timer_bases[NR_BASES]);
-struct timer_base timer_base_deferrable;
 
 #if defined(CONFIG_SMP) && defined(CONFIG_NO_HZ_COMMON)
 unsigned int sysctl_timer_migration = 1;
@@ -234,9 +233,6 @@ void timers_update_migration(bool update_nohz)
 		per_cpu(timer_bases[BASE_DEF].nohz_active, cpu) = true;
 		per_cpu(hrtimer_bases.nohz_active, cpu) = true;
 	}
-
-	timer_base_deferrable.migration_enabled = on;
-	timer_base_deferrable.nohz_active = true;
 }
 
 int timer_migration_handler(struct ctl_table *table, int write,
@@ -832,11 +828,8 @@ static inline struct timer_base *get_timer_cpu_base(u32 tflags, u32 cpu)
 	 * to use the deferrable base.
 	 */
 	if (IS_ENABLED(CONFIG_NO_HZ_COMMON) && base->nohz_active &&
-	    (tflags & TIMER_DEFERRABLE)) {
-		base = &timer_base_deferrable;
-		if (tflags & TIMER_PINNED)
-			base = per_cpu_ptr(&timer_bases[BASE_DEF], cpu);
-	}
+	    (tflags & TIMER_DEFERRABLE))
+		base = per_cpu_ptr(&timer_bases[BASE_DEF], cpu);
 	return base;
 }
 
@@ -849,11 +842,8 @@ static inline struct timer_base *get_timer_this_cpu_base(u32 tflags)
 	 * to use the deferrable base.
 	 */
 	if (IS_ENABLED(CONFIG_NO_HZ_COMMON) && base->nohz_active &&
-	    (tflags & TIMER_DEFERRABLE)) {
-		base = &timer_base_deferrable;
-		if (tflags & TIMER_PINNED)
-			base = this_cpu_ptr(&timer_bases[BASE_DEF]);
-	}
+	    (tflags & TIMER_DEFERRABLE))
+		base = this_cpu_ptr(&timer_bases[BASE_DEF]);
 	return base;
 }
 
@@ -1677,9 +1667,8 @@ static __latent_entropy void run_timer_softirq(struct softirq_action *h)
 	struct timer_base *base = this_cpu_ptr(&timer_bases[BASE_STD]);
 
 	__run_timers(base);
-	if (IS_ENABLED(CONFIG_NO_HZ_COMMON) && base->nohz_active) {
-		__run_timers(&timer_base_deferrable);
-	}
+	if (IS_ENABLED(CONFIG_NO_HZ_COMMON) && base->nohz_active)
+		__run_timers(this_cpu_ptr(&timer_bases[BASE_DEF]));
 }
 
 /*
