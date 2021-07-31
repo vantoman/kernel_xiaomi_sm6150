@@ -17,6 +17,7 @@
 // Include non-overlayed xiaomi changes
 #include "xiaomi/pm6150.dtsi"
 #include "xiaomi/pm6150l.dtsi"
+#include "xiaomi/sdmmagpie.dtsi"
 #include "xiaomi/sdmmagpie-camera.dtsi"
 #include "xiaomi/sdmmagpie-pinctrl.dtsi"
 #include "xiaomi/sdmmagpie-regulator.dtsi"
@@ -37,4 +38,8 @@
 
 &sm6150_snd {
 	/delete-property/ fsa4480-i2c-handle;
+};
+
+&icnss {
+	/delete-property/ vdd-3.3-ch1-supply;
 };
