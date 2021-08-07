@@ -7239,8 +7239,7 @@ int afe_close(int port_id)
 		    (port_id == RT_PROXY_DAI_001_TX))
 			proxy_afe_instance[port_id & 0x1] = 0;
 		afe_close_done[port_id & 0x1] = true;
-		ret = -EINVAL;
-		goto fail_cmd;
+ 		return -EINVAL;
 	}
 	pr_debug("%s: port_id = 0x%x\n", __func__, port_id);
 	if ((port_id == RT_PROXY_DAI_001_RX) ||
