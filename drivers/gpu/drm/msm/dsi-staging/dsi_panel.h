@@ -265,6 +265,7 @@ struct dsi_panel {
 	int hbm_mode;
 	bool resend_ea;
 	bool resend_ea_hbm;
+        int cabc_mode;
 
 	struct brightness_alpha_pair *fod_dim_lut;
 	u32 fod_dim_lut_count;
@@ -439,5 +440,6 @@ int dsi_panel_idle(struct dsi_panel *panel);
 int dsi_panel_wakeup(struct dsi_panel *panel);
 int dsi_panel_switch_init(struct dsi_panel *panel);
 void dsi_panel_switch_destroy(struct dsi_panel *panel);
+int dsi_panel_apply_cabc_mode(struct dsi_panel *panel);
 
 #endif /* _DSI_PANEL_H_ */
