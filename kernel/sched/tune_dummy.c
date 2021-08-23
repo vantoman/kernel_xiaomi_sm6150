@@ -13,12 +13,15 @@ struct schedtune {
 	/* Hint to bias scheduling of tasks on that SchedTune CGroup
 	 * towards idle CPUs */
 	int prefer_idle;
+
+	int prefer_high_cap;
 };
 
 static struct schedtune
 root_schedtune = {
 	.boost	= 0,
 	.prefer_idle = 0,
+	.prefer_high_cap = 0,
 };
 
 static struct schedtune *allocated_group[BOOSTGROUPS_COUNT] = {
@@ -57,6 +60,19 @@ boost_write(struct cgroup_subsys_state *css, struct cftype *cft,
 	return 0;
 }
 
+static u64
+prefer_high_cap_read(struct cgroup_subsys_state *css, struct cftype *cft)
+{
+        return 0;
+}
+
+static int
+prefer_high_cap_write(struct cgroup_subsys_state *css, struct cftype *cft,
+            u64 prefer_high_cap)
+{
+        return 0;
+}
+
 static struct cftype files[] = {
 	{
 		.name = "boost",
@@ -68,6 +84,11 @@ static struct cftype files[] = {
 		.read_u64 = prefer_idle_read,
 		.write_u64 = prefer_idle_write,
 	},
+	{
+                .name = "prefer_high_cap",
+                .read_u64 = prefer_high_cap_read,
+                .write_u64 = prefer_high_cap_write,
+        },
 	{ }	/* terminate */
 };
 
