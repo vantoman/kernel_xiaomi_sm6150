@@ -1071,6 +1071,9 @@ void dsi_conn_enable_event(struct drm_connector *connector,
 			event_idx, &event_info, enable);
 }
 
+extern void dsi_display_panel_gamma_mode_change(struct dsi_display *display,
+			struct dsi_display_mode *adj_mode, bool force);
+
 int dsi_conn_post_kickoff(struct drm_connector *connector,
 	struct msm_display_conn_params *params)
 {
@@ -1122,6 +1125,8 @@ int dsi_conn_post_kickoff(struct drm_connector *connector,
 
 		c_bridge->dsi_mode.dsi_mode_flags &= ~DSI_MODE_FLAG_VRR;
 	}
+
+	dsi_display_panel_gamma_mode_change(display, &adj_mode, false);
 
 	/* ensure dynamic clk switch flag is reset */
 	c_bridge->dsi_mode.dsi_mode_flags &= ~DSI_MODE_FLAG_DYN_CLK;

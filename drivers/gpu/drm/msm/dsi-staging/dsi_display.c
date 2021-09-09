@@ -8034,6 +8034,8 @@ int dsi_display_post_enable(struct dsi_display *display)
 		dsi_display_clk_ctrl(display->dsi_clk_handle,
 			DSI_ALL_CLKS, DSI_CLK_OFF);
 
+	dsi_display_panel_gamma_mode_change(display, display->modes, true);
+
 	mutex_unlock(&display->display_lock);
 	return rc;
 }
@@ -8225,6 +8227,22 @@ static void __exit dsi_display_unregister(void)
 	platform_driver_unregister(&dsi_display_driver);
 	dsi_ctrl_drv_unregister();
 	dsi_phy_drv_unregister();
+}
+
+void dsi_display_panel_gamma_mode_change(struct dsi_display *display,
+			struct dsi_display_mode *adj_mode, bool force)
+{
+	u32 count = 0;
+	int rc = 0;
+	struct dsi_display_mode *cur_mode = NULL;
+
+	if (!display || !adj_mode || !display->panel) {
+		pr_err("Invalid params\n");
+		return;
+	}
+
+	dsi_panel_gamma_mode_change(display->panel, adj_mode, force);
+	return;
 }
 
 int dsi_display_read_panel(struct dsi_panel *panel, struct dsi_read_config *read_config)

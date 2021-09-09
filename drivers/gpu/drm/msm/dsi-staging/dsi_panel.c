@@ -2015,6 +2015,8 @@ const char *cmd_set_prop_map[DSI_CMD_SET_MAX] = {
 	"qcom,mdss-dsi-dispparam-cabcstillon-command",
 	"qcom,mdss-dsi-dispparam-cabcmovieon-command",
 	"qcom,mdss-dsi-dispparam-cabcoff-command",
+	"qcom,mdss-dsi-dispparam-bc-120hz-command",
+	"qcom,mdss-dsi-dispparam-bc-60hz-command",
 };
 
 const char *cmd_set_state_map[DSI_CMD_SET_MAX] = {
@@ -2057,6 +2059,8 @@ const char *cmd_set_state_map[DSI_CMD_SET_MAX] = {
 	"qcom,mdss-dsi-dispparam-cabcstillon-command-state",
 	"qcom,mdss-dsi-dispparam-cabcmovieon-command-state",
 	"qcom,mdss-dsi-dispparam-cabcoff-command-state",
+	"qcom,mdss-dsi-dispparam-bc-120hz-command-state",
+	"qcom,mdss-dsi-dispparam-bc-60hz-command-state",
 };
 
 static int dsi_panel_get_cmd_pkt_count(const char *data, u32 length, u32 *cnt)
@@ -5156,4 +5160,44 @@ int dsi_panel_wakeup(struct dsi_panel *panel)
 		return panel->funcs->wakeup(panel);
 
 	return 0;
+}
+
+void dsi_panel_gamma_mode_change(struct dsi_panel *panel,
+			struct dsi_display_mode *adj_mode, bool force) {
+
+	u32 count = 0;
+	int rc = 0;
+	struct dsi_display_mode *cur_mode = NULL;
+
+	mutex_lock(&panel->panel_lock);
+
+	if (panel->current_gamma == adj_mode->timing.refresh_rate && !force) {
+		goto error;
+	}
+
+	cur_mode = panel->cur_mode;
+	if (!cur_mode) {
+		goto error;
+    }
+
+	count = panel->cur_mode->priv_info->cmd_sets[DSI_CMD_SET_DISP_BC_120HZ].count;
+	if (!count || !panel->panel_initialized) {
+		pr_info("No need to change panel gamma\n");
+		goto error;
+	}
+
+	if (adj_mode->timing.refresh_rate == 120)
+		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_BC_120HZ);
+	else if (adj_mode->timing.refresh_rate == 60)
+		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_BC_60HZ);
+
+	if (rc)
+		pr_err("%s: send cmds failed...", __func__);
+	else
+		panel->current_gamma = adj_mode->timing.refresh_rate;
+		pr_info("%s: refresh_rate[%d]\n", __func__, adj_mode->timing.refresh_rate);
+
+error:
+	mutex_unlock(&panel->panel_lock);
+	return;
 }
