@@ -522,7 +522,7 @@ And public attribution of xiaomi platforms(like F3 and so and)
 &dsi_xiaomi_f4_41_06_0a_fhd_cmd {
 	qcom,panel-supply-entries = <&dsi_panel_pwr_supply_labibb_amoled>;
 	qcom,mdss-dsi-bl-pmic-control-type = "bl_ctrl_dcs";
-	qcom,mdss-dsi-bl-min-level = <2>;
+	qcom,mdss-dsi-bl-min-level = <8>;
 	qcom,mdss-dsi-bl-max-level = <2047>;
 	qcom,mdss-dsi-mode-sel-gpio-state = "single_port";
 	//qcom,panel-mode-gpio = <&tlmm 7 0>;
@@ -533,7 +533,7 @@ And public attribution of xiaomi platforms(like F3 and so and)
 &dsi_xiaomi_f4_36_02_0b_fhd_cmd {
 	qcom,panel-supply-entries = <&dsi_panel_pwr_supply_labibb_amoled>;
 	qcom,mdss-dsi-bl-pmic-control-type = "bl_ctrl_dcs";
-	qcom,mdss-dsi-bl-min-level = <2>;
+	qcom,mdss-dsi-bl-min-level = <8>;
 	qcom,mdss-dsi-bl-max-level = <2047>;
 	qcom,mdss-dsi-mode-sel-gpio-state = "single_port";
 	//qcom,panel-mode-gpio = <&tlmm 7 0>;
