@@ -5182,7 +5182,7 @@ void dsi_panel_gamma_mode_change(struct dsi_panel *panel,
 
 	count = panel->cur_mode->priv_info->cmd_sets[DSI_CMD_SET_DISP_BC_120HZ].count;
 	if (!count || !panel->panel_initialized) {
-		pr_info("No need to change panel gamma\n");
+		pr_debug("No need to change panel gamma\n");
 		goto error;
 	}
 
@@ -5192,7 +5192,7 @@ void dsi_panel_gamma_mode_change(struct dsi_panel *panel,
 		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_BC_60HZ);
 
 	if (rc)
-		pr_err("%s: send cmds failed...", __func__);
+		pr_debug("%s: send cmds failed...", __func__);
 	else
 		panel->current_gamma = adj_mode->timing.refresh_rate;
 		pr_info("%s: refresh_rate[%d]\n", __func__, adj_mode->timing.refresh_rate);
