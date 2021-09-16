@@ -10,7 +10,7 @@
 	} while(0)
 #define aw_dev_info(dev, format, ...) \
 	do { \
-		pr_info("[Awinic][%s]%s: " format "\n", dev_name(dev), __func__, ##__VA_ARGS__); \
+		pr_debug("[Awinic][%s]%s: " format "\n", dev_name(dev), __func__, ##__VA_ARGS__); \
 	} while(0)
 #define aw_dev_dbg(dev, format, ...) \
 	do { \
