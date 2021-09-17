@@ -6242,11 +6242,13 @@ int dsi_panel_enable(struct dsi_panel *panel)
 int dsi_panel_post_enable(struct dsi_panel *panel)
 {
 	int rc = 0;
+ 	u32 count;
 
 	if (!panel) {
 		pr_err("invalid params\n");
 		return -EINVAL;
 	}
+ 	count = panel->cur_mode->priv_info->cmd_sets[DSI_CMD_SET_DISP_BC_120HZ].count;
 
 	mutex_lock(&panel->panel_lock);
 
@@ -6256,6 +6258,28 @@ int dsi_panel_post_enable(struct dsi_panel *panel)
 		       panel->name, rc);
 		goto error;
 	}
+
+	if (count && (panel->cur_mode->timing.refresh_rate == 120)) {
+		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_BC_120HZ);
+		if (rc)
+			pr_err("[%s] failed to send DSI_CMD_SET_DISP_BC_120HZ cmd, rc=%d\n",
+					panel->name, rc);
+	}
+
+	if (panel->bl_config.xiaomi_f4_41_flag && panel->dc_enable && panel->dc_demura_threshold) {
+		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_DC_ON);
+		if (rc)
+			pr_err("[%s] failed to send DSI_CMD_SET_DISP_DC_ON cmd, rc=%d\n",
+					panel->name, rc);
+	}
+
+	if (panel->bl_config.xiaomi_f4_36_flag && panel->dc_enable) {
+		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_DC_ON);
+		if (rc)
+			pr_err("[%s] failed to send DSI_CMD_SET_DISP_DC_ON cmd, rc=%d\n",
+					panel->name, rc);
+	}
+
 error:
 	mutex_unlock(&panel->panel_lock);
 	return rc;
