@@ -12,6 +12,7 @@ menuconfig INPUT_TOUCHSCREEN
 if INPUT_TOUCHSCREEN
 source "drivers/input/touchscreen/xiaomi/Kconfig"
 source "drivers/input/touchscreen/focaltech_spi/Kconfig"
+source "drivers/input/touchscreen/gt9897t/Kconfig"
 
 config TOUCHSCREEN_TDDI_DBCLK
         bool "TDDI IC enable double click"
