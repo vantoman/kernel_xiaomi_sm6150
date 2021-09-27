@@ -22,7 +22,6 @@
 #include "xiaomi/sdmmagpie-pinctrl.dtsi"
 #include "xiaomi/sdmmagpie-regulator.dtsi"
 #include "xiaomi/sdmmagpie-sde.dtsi"
-#include "xiaomi/sdmmagpie-sde-display.dtsi"
 #include "xiaomi/sdmmagpie-thermal.dtsi"
 
 / {
