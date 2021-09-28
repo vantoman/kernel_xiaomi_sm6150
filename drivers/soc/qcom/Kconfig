@@ -966,6 +966,13 @@ config QCOM_SMP2P_SLEEPSTATE
 	  for the power state changes on the local processor. The notifications
 	  are sent through the smp2p framework.
 
+config SMP2P_SLEEPSTATE_TIME
+        int "SMP2P Sleepstate Timeout"
+        default 200
+        depends on QCOM_SMP2P
+        help
+          This option allows modifying smp2p sleepstate wakeup time.
+
 config QCOM_CDSP_RM
 	bool "CDSP request manager"
 	depends on QCOM_GLINK
