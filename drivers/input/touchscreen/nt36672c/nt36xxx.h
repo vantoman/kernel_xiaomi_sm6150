@@ -75,7 +75,6 @@
 
 //---Customerized func.---
 #define WAKEUP_GESTURE 1
-
 #if WAKEUP_GESTURE
 extern const uint16_t gesture_key_array[];
 #endif
