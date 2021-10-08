@@ -2357,6 +2357,10 @@ static int dsi_panel_parse_misc_features(struct dsi_panel *panel)
 {
 	struct dsi_parser_utils *utils = &panel->utils;
 
+#ifdef CONFIG_MACH_XIAOMI_TOCO
+	panel->ulps_feature_enabled = false;
+	panel->ulps_suspend_enabled = false;
+#else
 	panel->ulps_feature_enabled =
 		utils->read_bool(utils->data, "qcom,ulps-enabled");
 
@@ -2368,6 +2372,7 @@ static int dsi_panel_parse_misc_features(struct dsi_panel *panel)
 
 	pr_info("%s: ulps during suspend feature %s", __func__,
 		(panel->ulps_suspend_enabled ? "enabled" : "disabled"));
+#endif
 
 	panel->te_using_watchdog_timer = utils->read_bool(utils->data,
 					"qcom,mdss-dsi-te-using-wd");
