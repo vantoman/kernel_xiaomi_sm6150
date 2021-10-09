@@ -4791,7 +4791,8 @@ static int fts_interrupt_install(struct fts_ts_info *info)
 	/* disable interrupts in any case */
 	error = fts_disableInterrupt();
 	MI_TOUCH_LOGI(1, "%s %s: Interrupt Mode\n", tag, __func__);
-	if (request_threaded_irq(info->client->irq, NULL, fts_event_handler, info->board->irq_flags,
+	if (request_threaded_irq(info->client->irq, NULL, fts_event_handler,
+			 info->board->irq_flags| IRQF_PERF_SECOND_AFFINE,
 			 FTS_TS_DRV_NAME, info)) {
 		MI_TOUCH_LOGE(1, "%s %sRequest irq failed\n", tag, __func__);
 		kfree(info->event_dispatch_table);
