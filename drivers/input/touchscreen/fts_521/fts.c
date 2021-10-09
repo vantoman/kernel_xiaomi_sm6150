@@ -4380,7 +4380,6 @@ static void fts_ts_sleep_work(struct work_struct *work)
 			}
 		}
 	}
-	input_sync(info->input_dev);
 	info->irq_status = false;
 #ifdef CONFIG_TOUCHSCREEN_XIAOMI_TOUCHFEATURE
 	wake_up(&info->wait_queue);
@@ -4467,7 +4466,6 @@ static irqreturn_t fts_event_handler(int irq, void *ts_info)
 			}
 		}
 	}
-	input_sync(info->input_dev);
 	info->irq_status = false;
 #ifdef CONFIG_TOUCHSCREEN_XIAOMI_TOUCHFEATURE
 	wake_up(&info->wait_queue);
