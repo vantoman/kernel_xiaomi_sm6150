@@ -2676,7 +2676,7 @@ static ssize_t goodix_fw_version_info_read(struct file *file, char __user *buf,
 	if (hw_ops->read_version) {
 		ret = hw_ops->read_version(goodix_core_data, &chip_ver);
 		if (!ret) {
-			cnt = snprintf(&k_buf[0], PAGE_SIZE,
+			cnt = snprintf(&k_buf[0], sizeof(&k_buf[0]),
 				"patch_pid:%s\n",
 				chip_ver.patch_pid);
 			cnt += snprintf(&k_buf[cnt], PAGE_SIZE,
