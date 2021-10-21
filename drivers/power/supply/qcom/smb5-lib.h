@@ -132,7 +132,11 @@ enum print_reason {
 #define HIGH_NUM_PULSE_THR			12
 
 #define PD_UNVERIFED_CURRENT		4800000
+#ifdef CONFIG_K6_CHARGE
 #define PD_UNVERIFED_VOLTAGE		4450000
+#else
+#define PD_UNVERIFED_VOLTAGE		4450000
+#endif
 
 /* thermal micros */
 #define MAX_TEMP_LEVEL		16
@@ -196,8 +200,13 @@ enum print_reason {
 #define ROLE_REVERSAL_DELAY_MS		2000
 
 /* six pin new battery step charge micros */
+#ifdef CONFIG_K6_CHARGE
+#define MAX_STEP_ENTRIES			3
+#define MAX_COUNT_OF_IBAT_STEP			2
+#else
 #define MAX_STEP_ENTRIES			2
 #define MAX_COUNT_OF_IBAT_STEP			2
+#endif
 
 #define STEP_CHG_DELAYED_MONITOR_MS			15000
 #define STEP_CHG_DELAYED_QUICK_MONITOR_MS			5000

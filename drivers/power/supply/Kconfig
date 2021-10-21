@@ -611,6 +611,12 @@ config CHARGER_RT9455
 	help
 	  Say Y to enable support for Richtek RT9455 battery charger.
 
+config K6_CHARGE
+	bool
+	help
+	  Say Y to enable Xiaomi Redmi Note 10 Pro (K6/sweet) specific
+	  modifications.
+
 source "drivers/power/supply/qcom/Kconfig"
 source "drivers/power/supply/maxim/Kconfig"
 source "drivers/power/supply/maxim_k6/Kconfig"
