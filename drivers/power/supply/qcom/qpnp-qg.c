@@ -2093,9 +2093,14 @@ done:
 	return rc;
 }
 
-
+#ifdef CONFIG_K6_CHARGE
+#define FFC_CHG_TERM_SWD_CURRENT	-600
+#define FFC_CHG_TERM_NVT_CURRENT	-550
+#define FFC_BATT_FULL_CURRENT	920000
+#else
 #define FFC_CHG_TERM_CURRENT	-830
 #define FFC_BATT_FULL_CURRENT	1150000
+#endif
 #define LOW_TEMP_FFC_BATT_FULL_CURRENT	1480000
 #define HIGH_TEMP_FFC_BATT_FULL_CURRENT	1610000
 #define	LOW_TEMP_FFC_CHG_TERM_CURRENT	-980
@@ -2176,8 +2181,18 @@ static int qg_get_ffc_iterm_for_chg(struct qpnp_qg *chip)
 		else
 			ffc_terminal_current = HIGH_TEMP_FFC_CHG_TERM_CURRENT;
 	} else {
+#ifdef CONFIG_K6_CHARGE
+		if (is_batt_vendor_nvt){
+			ffc_terminal_current = FFC_CHG_TERM_NVT_CURRENT;
+			pr_err("ffc_terminal_current nvt is 550\n", rc);
+		}else{
+			ffc_terminal_current = FFC_CHG_TERM_SWD_CURRENT;
+			pr_err("ffc_terminal_current swd is 600\n", rc);
+		}
+#else
 		ffc_terminal_current = FFC_CHG_TERM_CURRENT;
 		pr_err("ffc_terminal_current other is 830\n", rc);
+#endif
 	}
 	return ffc_terminal_current;
 }
@@ -3481,8 +3496,13 @@ static int get_batt_id_ohm(struct qpnp_qg *chip, u32 *batt_id_ohm)
 static int qg_load_battery_profile(struct qpnp_qg *chip)
 {
 	struct device_node *node = chip->dev->of_node;
+#ifdef CONFIG_K6_CHARGE
+	struct device_node *profile_node;
+#else
 	struct device_node *batt_node, *profile_node;
-	int rc, tuple_len, len, i  = 0;
+#endif
+        int rc, tuple_len, len, i = 0;
+
 #ifdef CONFIG_BATT_VERIFY_BY_DS28E16
 	union power_supply_propval pval = {0, };
 	if (!chip->dt.qg_page0_unused) {
@@ -3493,11 +3513,20 @@ static int qg_load_battery_profile(struct qpnp_qg *chip)
 #else
 	int avail_age_level = 0;
 #endif
+
+#ifdef CONFIG_K6_CHARGE
+	chip->batt_node = of_find_node_by_name(node, "qcom,battery-data");
+	if (!chip->batt_node) {
+		pr_err("Batterydata not available\n");
+		return -ENXIO;
+	}
+#else
 	batt_node = of_find_node_by_name(node, "qcom,battery-data");
 	if (!batt_node) {
 		pr_err("Batterydata not available\n");
 		return -ENXIO;
 	}
+#endif
 
 #ifdef CONFIG_BATT_VERIFY_BY_DS28E16
 	if (!chip->dt.qg_page0_unused) {
@@ -3508,6 +3537,20 @@ static int qg_load_battery_profile(struct qpnp_qg *chip)
 				pr_err("qg_load_battery_profile : get romid error.\n");
 			}
 		}
+
+#ifdef CONFIG_K6_CHARGE
+		if (is_batt_vendor_swd) {
+			pr_err("is_batt_vendor_swd is %d\n", is_batt_vendor_swd);
+			profile_node = of_batterydata_get_best_profile(chip->batt_node,
+							chip->batt_id_ohm / 1000, "K6_sunwoda_5020mah");
+			chip->profile_judge_done = true;
+		} else if (is_batt_vendor_nvt) {
+			pr_err("is_batt_vendor_nvt is %d\n", is_batt_vendor_nvt);
+			profile_node = of_batterydata_get_best_profile(chip->batt_node,
+							chip->batt_id_ohm / 1000, "K6_nvt_5020mah");
+			chip->profile_judge_done = true;
+		}
+#endif
 
 #ifdef CONFIG_K9A_CHARGE
 		if (pval.intval == true) {
@@ -3521,7 +3564,7 @@ static int qg_load_battery_profile(struct qpnp_qg *chip)
 						chip->batt_id_ohm / 1000, "K9A_sunwoda_4250mah");
 					chip->profile_judge_done = true;
 				} else if ((pval.arrayval[0] == 'N') || (pval.arrayval[0] == 'A')) {
-					profile_node = of_batterydata_get_best_profile(batt_node,
+					profile_node = of_batterydata_get_best_profile(chip->batt_node,
 						chip->batt_id_ohm / 1000, "G7BNVTBM4P_4500mAh");
 					chip->profile_judge_done = true;
 				} else if ((pval.arrayval[0] == 'C') || (pval.arrayval[0] == 'V')) {
@@ -3532,16 +3575,22 @@ static int qg_load_battery_profile(struct qpnp_qg *chip)
 			}
 		}
 #endif
+
 		if (chip->profile_judge_done == false) {
 			if (chip->profile_loaded == false) {
+#ifdef CONFIG_K6_CHARGE
+				profile_node = of_batterydata_get_best_profile(chip->batt_node,
+					chip->batt_id_ohm / 1000, "K6_sunwoda_5020mah");
+#else
 				profile_node = of_batterydata_get_best_profile(batt_node,
 					chip->batt_id_ohm / 1000, "K9A_cosmx_4250mah");
+#endif
 			} else {
 				return 0;
 			}
 		}
 	} else {
-		profile_node = of_batterydata_get_best_profile(batt_node,
+		profile_node = of_batterydata_get_best_profile(chip->batt_node,
 			chip->batt_id_ohm / 1000, NULL);
 		if (IS_ERR(profile_node)) {
 			rc = PTR_ERR(profile_node);
