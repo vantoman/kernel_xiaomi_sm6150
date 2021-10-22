@@ -118,13 +118,9 @@ static inline bool is_userdebug(void)
 
 static inline bool is_unlocked(void)
 {
-	//static const char unlocked[] = "orange";
+	static const char unlocked[] = "orange";
 
-	//return !strncmp(verifiedbootstate, unlocked, sizeof(unlocked));
-
-	// this is local to dm-android-verity component, so tell the truth
-	// because it is used to disable verity and that may be desired
-	return 1;
+	return !strncmp(verifiedbootstate, unlocked, sizeof(unlocked));
 }
 
 static int read_block_dev(struct bio_read *payload, struct block_device *bdev,
