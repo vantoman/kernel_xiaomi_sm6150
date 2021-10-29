@@ -1933,7 +1933,9 @@ int cam_req_mgr_process_flush_req(void *priv, void *data)
 	struct cam_req_mgr_connected_device *device = NULL;
 	struct cam_req_mgr_flush_request     flush_req;
 	struct crm_task_payload             *task_data = NULL;
+#ifndef CONFIG_SPECTRA_CAMERA_UPGRADE
 	struct cam_req_mgr_req_tbl          *tbl = NULL;
+#endif
 
 	if (!data || !priv) {
 		CAM_ERR(CAM_CRM, "input args NULL %pK %pK", data, priv);
