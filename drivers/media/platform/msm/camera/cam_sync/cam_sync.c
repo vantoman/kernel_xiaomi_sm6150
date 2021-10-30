@@ -32,10 +32,15 @@ static bool trigger_cb_without_switch;
 void cam_sync_print_fence_table(void)
 {
 	int cnt;
+	bool print_fence_table;
 
 	for (cnt = 0; cnt < CAM_SYNC_MAX_OBJS; cnt++) {
+
 		spin_lock_bh(&sync_dev->row_spinlocks[cnt]);
-		if (test_bit(cnt, sync_dev->bitmap)) {
+		print_fence_table = test_bit(cnt, sync_dev->bitmap);
+		spin_unlock_bh(&sync_dev->row_spinlocks[cnt]);
+
+		if (print_fence_table) {
 			CAM_INFO(CAM_SYNC, "%d, %s, %d, %d, %d",
 				sync_dev->sync_table[cnt].sync_id,
 				sync_dev->sync_table[cnt].name,
@@ -43,7 +48,6 @@ void cam_sync_print_fence_table(void)
 				sync_dev->sync_table[cnt].state,
 				sync_dev->sync_table[cnt].ref_cnt);
 		}
-		spin_unlock_bh(&sync_dev->row_spinlocks[cnt]);
 	}
 }
 
