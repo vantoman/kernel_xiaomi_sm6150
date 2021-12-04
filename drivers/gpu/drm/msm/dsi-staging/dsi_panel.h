@@ -60,6 +60,11 @@ enum dsi_backlight_type {
 	DSI_BACKLIGHT_MAX,
 };
 
+enum dsi_doze_mode_type {
+	DSI_DOZE_LPM = 0,
+	DSI_DOZE_HBM,
+};
+
 enum bl_update_flag {
 	BL_UPDATE_DELAY_UNTIL_FIRST_FRAME,
 	BL_UPDATE_NONE,
@@ -249,6 +254,9 @@ struct dsi_panel {
 	bool sync_broadcast_en;
 	int power_mode;
 	enum dsi_panel_physical_type panel_type;
+
+	bool doze_enabled;
+	enum dsi_doze_mode_type doze_mode;
 
 	u32 panel_on_dimming_delay;
 	struct delayed_work cmds_work;
@@ -452,5 +460,9 @@ int dsi_panel_get_thermal_hbm_disabled(struct dsi_panel *panel,
 				bool *thermal_hbm_disabled);
 
 int dsi_panel_apply_hbm_mode(struct dsi_panel *panel);
+
+int dsi_panel_set_doze_status(struct dsi_panel *panel, bool status);
+
+int dsi_panel_set_doze_mode(struct dsi_panel *panel, enum dsi_doze_mode_type mode);
 
 #endif /* _DSI_PANEL_H_ */
