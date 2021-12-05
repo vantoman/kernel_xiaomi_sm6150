@@ -196,7 +196,6 @@ int goodix_cfg_bin_proc(void *data)
 			ts_err("get reg and cfg from cfg_bin FAILED, update fw then retry");
 			goodix_modules.core_data = core_data;
 			goodix_modules.core_exit = false;
-			complete_all(&goodix_modules.core_comp);
 			goto exit;
 		} else {
 			ts_err("get reg and cfg from cfg_bin FAILED, I2C com ERROR");
@@ -273,6 +272,10 @@ exit:
 	if (cfg_bin->bin_data) {
 		kfree(cfg_bin->bin_data);
 		cfg_bin->bin_data = NULL;
+	}
+	if (cfg_bin) {
+		kfree(cfg_bin);
+		cfg_bin = NULL;
 	}
 	return r;
 }
