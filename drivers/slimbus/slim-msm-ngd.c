@@ -264,7 +264,7 @@ static int dsp_domr_notify_cb(struct notifier_block *n, unsigned long code,
 	switch (code) {
 	case SUBSYS_BEFORE_SHUTDOWN:
 	case SERVREG_NOTIF_SERVICE_STATE_DOWN_V01:
-		SLIM_INFO(dev, "SLIM DSP SSR notify cb:%lu\n", code);
+		SLIM_INFO(dev, "SLIM DSP SSR notify cb:0x%lx\n", code);
 		atomic_set(&dev->ssr_in_progress, 1);
 		/* wait for current transaction */
 		mutex_lock(&dev->tx_lock);
