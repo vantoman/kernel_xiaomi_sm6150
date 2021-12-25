@@ -1243,6 +1243,23 @@ int __init early_init_dt_scan_chosen(unsigned long node, const char *uname,
 		} else {
 			strlcpy(cmdline, p, min((int)l, COMMAND_LINE_SIZE));
 		}
+		if (cmdline != NULL && *cmdline != '\0') {
+			char *q;
+			static char unlocked[] = "androidboot.verifiedbootstate=orange";
+			static char security[] = "oemandroidboot.security=0";
+			static char secflags[] = "oemandroidboot.securityflags=0x00000003";
+			q = strstr(cmdline, unlocked);
+			if (q != NULL) {
+				memcpy(q + sizeof(unlocked) - 7, "green ", 6);
+				//pr_info("Fixed security stuff in kernel cmdline from fdt\n");
+			}
+			q = strstr(cmdline, security);
+			if (q != NULL)
+				q[sizeof(security) - 2] = '1';
+			q = strstr(cmdline, secflags);
+			if (q != NULL)
+				q[sizeof(secflags) - 2] = '2';
+		}
 	}
 
 	pr_debug("Command line is: %s\n", (char*)data);
