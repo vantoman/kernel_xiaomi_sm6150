@@ -36,7 +36,9 @@
 #include <linux/interrupt.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
+#ifndef FPC_DRM_INTERFACE_WA
 #include <linux/msm_drm_notify.h>
+#endif
 #include <linux/mutex.h>
 #include <linux/of.h>
 #include <linux/of_gpio.h>
@@ -117,10 +119,14 @@ struct fpc1020_data {
 
 	atomic_t wakeup_enabled;	/* Used both in ISR and non-ISR */
 	int irqf;
+#ifndef FPC_DRM_INTERFACE_WA
 	struct notifier_block notifier;
+#endif
 	bool fb_black;
 	bool wait_finger_down;
+#ifndef FPC_DRM_INTERFACE_WA
 	struct work_struct work;
+#endif
 };
 
 static int reset_gpio_res(struct fpc1020_data *fpc1020);
@@ -898,6 +904,7 @@ static int fpc1020_request_named_gpio(struct fpc1020_data *fpc1020,
 	return 0;
 }
 
+#ifndef FPC_DRM_INTERFACE_WA
 static int fpc_fb_notif_callback(struct notifier_block *nb,
 				 unsigned long val, void *data)
 {
@@ -934,6 +941,7 @@ static int fpc_fb_notif_callback(struct notifier_block *nb,
 static struct notifier_block fpc_notif_block = {
 	.notifier_call = fpc_fb_notif_callback,
 };
+#endif
 
 static int fpc1020_probe(struct platform_device *pdev)
 {
@@ -1029,9 +1037,9 @@ static int fpc1020_probe(struct platform_device *pdev)
 	fpc1020->wait_finger_down = false;
 #ifndef FPC_DRM_INTERFACE_WA
 	INIT_WORK(&fpc1020->work, notification_work);
-#endif
 	fpc1020->notifier = fpc_notif_block;
 	msm_drm_register_client(&fpc1020->notifier);
+#endif
 
 	//rc = hw_reset(fpc1020);
 
@@ -1046,7 +1054,9 @@ static int fpc1020_remove(struct platform_device *pdev)
 {
 	struct fpc1020_data *fpc1020 = platform_get_drvdata(pdev);
 
+#ifndef FPC_DRM_INTERFACE_WA
 	msm_drm_unregister_client(&fpc1020->notifier);
+#endif
 	sysfs_remove_group(&pdev->dev.kobj, &attribute_group);
 	mutex_destroy(&fpc1020->lock);
 	wakeup_source_unregister(fpc1020->ttw_wl);
