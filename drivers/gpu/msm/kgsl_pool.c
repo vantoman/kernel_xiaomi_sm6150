@@ -63,42 +63,28 @@ _kgsl_get_pool_from_order(unsigned int order)
 	return NULL;
 }
 
-static void kgsl_pool_sync_for_device(struct device *dev, struct page *page,
-		size_t size)
-{
-	struct scatterlist sg;
-
-	/* The caller may choose not to specify a device on purpose */
-	if (!dev)
-		return;
-
-	sg_init_table(&sg, 1);
-	sg_set_page(&sg, page, size, 0);
-	sg_dma_address(&sg) = page_to_phys(page);
-
-	dma_sync_sg_for_device(dev, &sg, 1, DMA_BIDIRECTIONAL);
-}
-
 /* Map the page into kernel and zero it out */
 static void
-_kgsl_pool_zero_page(struct page *p, unsigned int pool_order,
-		struct device *dev)
+_kgsl_pool_zero_page(struct page *p, unsigned int pool_order)
 {
 	int i;
 
 	for (i = 0; i < (1 << pool_order); i++) {
 		struct page *page = nth_page(p, i);
+		void *addr = kmap_atomic(page);
 
-		clear_highpage(page);
+		memset(addr, 0, PAGE_SIZE);
+		dmac_flush_range(addr, addr + PAGE_SIZE);
+		kunmap_atomic(addr);
 	}
-
-	kgsl_pool_sync_for_device(dev, p, PAGE_SIZE << pool_order);
 }
 
 /* Add a page to specified pool */
 static void
 _kgsl_pool_add_page(struct kgsl_page_pool *pool, struct page *p)
 {
+	_kgsl_pool_zero_page(p, pool->pool_order);
+
 	spin_lock(&pool->list_lock);
 	list_add_tail(&p->lru, &pool->page_list);
 	pool->page_count++;
@@ -329,7 +315,7 @@ static int kgsl_pool_get_retry_order(unsigned int order)
  * Return total page count on success and negative value on failure
  */
 int kgsl_pool_alloc_page(int *page_size, struct page **pages,
-			unsigned int pages_len, unsigned int *align, struct device *dev)
+			unsigned int pages_len, unsigned int *align)
 {
 	int j;
 	int pcount = 0;
@@ -357,6 +343,7 @@ int kgsl_pool_alloc_page(int *page_size, struct page **pages,
 			} else
 				return -ENOMEM;
 		}
+		_kgsl_pool_zero_page(page, order);
 		goto done;
 	}
 
@@ -376,6 +363,7 @@ int kgsl_pool_alloc_page(int *page_size, struct page **pages,
 			page = alloc_pages(gfp_mask, order);
 			if (page == NULL)
 				return -ENOMEM;
+			_kgsl_pool_zero_page(page, order);
 			goto done;
 		}
 	}
@@ -405,11 +393,11 @@ int kgsl_pool_alloc_page(int *page_size, struct page **pages,
 			} else
 				return -ENOMEM;
 		}
+
+		_kgsl_pool_zero_page(page, order);
 	}
 
 done:
-	_kgsl_pool_zero_page(page, order, dev);
-
 	for (j = 0; j < (*page_size >> PAGE_SHIFT); j++) {
 		p = nth_page(page, j);
 		pages[pcount] = p;
