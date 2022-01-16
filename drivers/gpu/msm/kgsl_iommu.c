@@ -781,16 +781,16 @@ static struct kgsl_process_private *kgsl_iommu_identify_process(u64 ptbase)
 	struct kgsl_process_private *p = NULL;
 	struct kgsl_iommu_pt *iommu_pt;
 
-	spin_lock(&kgsl_driver.proclist_lock);
+	mutex_lock(&kgsl_driver.process_mutex);
 	list_for_each_entry(p, &kgsl_driver.process_list, list) {
 		iommu_pt = p->pagetable->priv;
 		if (iommu_pt->ttbr0 == ptbase) {
-			spin_unlock(&kgsl_driver.proclist_lock);
+			mutex_unlock(&kgsl_driver.process_mutex);
 			return p;
 		}
 	}
 
-	spin_unlock(&kgsl_driver.proclist_lock);
+	mutex_unlock(&kgsl_driver.process_mutex);
 	return p;
 }
 
