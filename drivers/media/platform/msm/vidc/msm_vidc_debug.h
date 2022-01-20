@@ -111,11 +111,7 @@ void msm_vidc_debugfs_update(struct msm_vidc_inst *inst,
 int msm_vidc_check_ratelimit(void);
 #else
 static int msm_vidc_debug = 0;
-EXPORT_SYMBOL(msm_vidc_debug);
-
 static int msm_vidc_debug_out = 0;
-EXPORT_SYMBOL(msm_vidc_debug_out);
-
 static int msm_vidc_fw_debug = 0x00;
 static int msm_vidc_fw_debug_mode = 0;
 static int msm_vidc_fw_low_power_mode = 1;
