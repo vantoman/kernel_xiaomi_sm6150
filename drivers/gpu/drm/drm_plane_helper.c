@@ -243,6 +243,7 @@ int drm_plane_helper_check_update(struct drm_plane *plane,
 		.crtc_w = drm_rect_width(dst),
 		.crtc_h = drm_rect_height(dst),
 		.rotation = rotation,
+		.visible = *visible,
 	};
 	int ret;
 
