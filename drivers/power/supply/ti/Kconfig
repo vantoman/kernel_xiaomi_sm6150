@@ -16,4 +16,11 @@ config K9A_CHARGE
 	help
 		K9A special modify.
 
+config CHARGER_LN8000
+	tristate "LionSemi LN8000 Battery Charger"
+	depends on I2C
+	select REGMAP_I2C
+	help
+	  Say Y to enable support for the LN8000 charger
+
 endmenu
