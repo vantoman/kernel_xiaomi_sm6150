@@ -1011,16 +1011,6 @@ static int psy_chg_set_bus_protection_for_qc3(struct ln8000_info *info, int hvdc
         info->vin_ovp_alarm_th = BUS_OVP_ALARM_FOR_QC;
         ln8000_set_iin_limit(info, BUS_OCP_FOR_QC_CLASS_B - 700000);
         info->iin_ocp_alarm_th = BUS_OCP_ALARM_FOR_QC_CLASS_B;
-	} else if (hvdcp3_type == HVDCP3P5_CLASSA_18W) {
-        ln8000_set_vac_ovp(info, BUS_OVP_FOR_QC);
-        info->vin_ovp_alarm_th = BUS_OVP_ALARM_FOR_QC;
-        ln8000_set_iin_limit(info, BUS_OCP_FOR_QC3P5_CLASS_A - 700000);
-        info->iin_ocp_alarm_th = BUS_OCP_ALARM_FOR_QC3P5_CLASS_A;
-	} else if (hvdcp3_type == HVDCP3P5_CLASSB_27W) {
-        ln8000_set_vac_ovp(info, BUS_OVP_FOR_QC);
-        info->vin_ovp_alarm_th = BUS_OVP_ALARM_FOR_QC;
-        ln8000_set_iin_limit(info, BUS_OCP_FOR_QC3P5_CLASS_B - 700000);
-        info->iin_ocp_alarm_th = BUS_OCP_ALARM_FOR_QC3P5_CLASS_B;
 	} else {
         ln8000_set_vac_ovp(info, info->pdata->bus_ovp_th);
         info->vin_ovp_alarm_th = info->pdata->bus_ovp_alarm_th;
