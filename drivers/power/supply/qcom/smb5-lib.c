@@ -876,33 +876,6 @@ int smb5_config_iterm(struct smb_charger *chg, int hi_thresh, int low_thresh)
 	return 0;
 }
 
-static int set_ln8000_fv(struct smb_charger *chg) {
-	int rc;
-	union power_supply_propval val;
-	if (!chg->cp_psy) {
-		chg->cp_psy = power_supply_get_by_name("bq2597x-standalone");
-		if (!chg->cp_psy){
-			chg->cp_psy = power_supply_get_by_name("ln8000");
-			if (!chg->cp_psy){
-				pr_err("cp_psy not found\n");
-				return 0;
-			}
-		}
-	}
-
-	rc = power_supply_get_property(chg->cp_psy,
-				POWER_SUPPLY_PROP_MODEL_NAME, &val);
-	if (rc < 0) {
-		pr_err("Error in getting charge IC name, rc=%d\n", rc);
-		return 0;
-	}
-
-	if (strcmp(val.strval, "ln8000") == 0) {
-		vote(chg->fv_votable, BATT_LN8000_VOTER, true, 4470000);
-	}
-	return 0;
-}
-
 int smblib_get_fastcharge_mode(struct smb_charger *chg)
 {
 	union power_supply_propval pval = {0,};
@@ -983,7 +956,6 @@ int smblib_set_fastcharge_mode(struct smb_charger *chg, bool enable)
 	if (enable) {
 		/* ffc need clear 4.4V non_fcc_vfloat_voter first */
 		vote(chg->fv_votable, NON_FFC_VFLOAT_VOTER, false, 0);
-		set_ln8000_fv(chg);
 		rc = power_supply_get_property(chg->bms_psy,
 				POWER_SUPPLY_PROP_FFC_CHG_TERMINATION_CURRENT, &pval);
 		if (rc < 0) {
