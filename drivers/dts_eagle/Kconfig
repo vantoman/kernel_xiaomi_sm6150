@@ -1,7 +1,7 @@
 config AINUR_DTS_SW
 	bool "Ainur DTS software driver"
 	depends on ARM || ARM64
-	default n
+	default y
 	help
 	  Driver port of DTS' android audio software-processed
 	  effect, which can be built side-by-side along with
