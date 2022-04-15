@@ -60,7 +60,7 @@
 				qcom,mdss-dsi-v-top-border = <0>;
 				qcom,mdss-dsi-v-bottom-border = <0>;
 				qcom,mdss-dsi-panel-clockrate = <652000000>;
-				qcom,mdss-dsi-panel-jitter = <0x5 0x1>;
+				qcom,mdss-dsi-panel-jitter = <0x2 0x1>;
 				qcom,mdss-mdp-transfer-time-us = <15700>;
 				qcom,mdss-dsi-on-command = [
 					/* VIDEO TRIM OFF*/
@@ -157,7 +157,7 @@
 				qcom,mdss-dsi-v-top-border = <0>;
 				qcom,mdss-dsi-v-bottom-border = <0>;
 				qcom,mdss-dsi-panel-clockrate = <652000000>;
-				qcom,mdss-dsi-panel-jitter = <0x5 0x1>;
+				qcom,mdss-dsi-panel-jitter = <0x2 0x1>;
 				qcom,mdss-mdp-transfer-time-us = <9500>;
 				qcom,mdss-dsi-on-command = [
 					/* VIDEO TRIM OFF*/
