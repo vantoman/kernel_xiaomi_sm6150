@@ -5237,6 +5237,7 @@ error:
 	return ret == 0 ? count : ret;
 }
 
+#ifdef CONFIG_MACH_XIAOMI_TOCO
 static ssize_t sysfs_dc_enable_read(struct device *dev,
 		struct device_attribute *attr, char *buf)
 {
@@ -5291,6 +5292,7 @@ error:
 	mutex_unlock(&display->display_lock);
 	return ret == 0 ? count : ret;
 }
+#endif
 
 static DEVICE_ATTR(doze_status, 0644,
                         sysfs_doze_status_read,
@@ -5307,17 +5309,19 @@ static DEVICE_ATTR(fod_ui, 0444,
 static DEVICE_ATTR(hbm, 0644,
 			sysfs_hbm_read,
 			sysfs_hbm_write);
-
-static DEVICE_ATTR(dc_enable, 0644,
+#ifdef CONFIG_MACH_XIAOMI_TOCO
+static DEVICE_ATTR(anti_flicker, 0644,
 			sysfs_dc_enable_read,
 			sysfs_dc_enable_write);
-
+#endif
 static struct attribute *display_fs_attrs[] = {
 	&dev_attr_doze_status.attr,
 	&dev_attr_doze_mode.attr,
 	&dev_attr_fod_ui.attr,
 	&dev_attr_hbm.attr,
-	&dev_attr_dc_enable.attr,
+#ifdef CONFIG_MACH_XIAOMI_TOCO
+	&dev_attr_anti_flicker.attr,
+#endif
 	NULL,
 };
 static struct attribute_group display_fs_attrs_group = {
