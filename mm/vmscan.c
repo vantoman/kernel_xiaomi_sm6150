@@ -1030,8 +1030,7 @@ static unsigned long shrink_page_list(struct list_head *page_list,
 			sc->nr_scanned++;
 
 		/* in case the page was found accessed by lru_gen_scan_around() */
-		if (lru_gen_enabled() && !skip_reference_check &&
-		    page_mapped(page) && PageReferenced(page))
+		if (lru_gen_enabled() && page_mapped(page) && PageReferenced(page))
 			goto keep_locked;
 
 		may_enter_fs = (sc->gfp_mask & __GFP_FS) ||
@@ -2876,7 +2875,7 @@ static bool should_skip_mm(struct mm_struct *mm, struct mm_walk_args *args)
 	}
 
 	pgtables = PTRS_PER_PTE * sizeof(pte_t) * atomic_long_read(&mm->nr_ptes);
-	pgtables += PTRS_PER_PMD * sizeof(pmd_t) * mm_nr_pmds(mm);
+	pgtables += PTRS_PER_PMD * sizeof(pmd_t) * mm_nr_pmds(mm);\
 
 	/* leave the legwork to the rmap if mappings are too sparse */
 	if (size < max(SWAP_CLUSTER_MAX, pgtables / PAGE_SIZE))
