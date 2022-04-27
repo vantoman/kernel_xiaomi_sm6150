@@ -44,33 +44,6 @@ static __always_inline void update_lru_size(struct lruvec *lruvec,
 #endif
 }
 
-static __always_inline void add_page_to_lru_list(struct page *page,
-				struct lruvec *lruvec)
-{
-        enum lru_list lru = page_lru(page);
-
-	update_lru_size(lruvec, lru, page_zonenum(page), hpage_nr_pages(page));
-	list_add(&page->lru, &lruvec->lists[lru]);
-}
-
-static __always_inline void add_page_to_lru_list_tail(struct page *page,
-				struct lruvec *lruvec)
-{
-        enum lru_list lru = page_lru(page);
-
-	update_lru_size(lruvec, lru, page_zonenum(page), hpage_nr_pages(page));
-	list_add_tail(&page->lru, &lruvec->lists[lru]);
-}
-
-static __always_inline void del_page_from_lru_list(struct page *page,
-				struct lruvec *lruvec)
-{
-        enum lru_list lru = page_lru(page);
-
-	list_del(&page->lru);
-	update_lru_size(lruvec, lru, page_zonenum(page), -hpage_nr_pages(page));
-}
-
 /**
  * __clear_page_lru_flags - clear page lru flags before releasing a page
  * @page: the page that was on lru and now has a zero reference
@@ -338,4 +311,39 @@ static inline void page_inc_usage(struct page *page)
 }
 
 #endif /* CONFIG_LRU_GEN */
+
+static __always_inline void add_page_to_lru_list(struct page *page,
+				struct lruvec *lruvec)
+{
+	enum lru_list lru = page_lru(page);
+
+	if (lru_gen_addition(page, lruvec, true))
+		return;
+
+	update_lru_size(lruvec, lru, page_zonenum(page), hpage_nr_pages(page));
+	list_add(&page->lru, &lruvec->lists[lru]);
+}
+
+static __always_inline void add_page_to_lru_list_tail(struct page *page,
+				struct lruvec *lruvec)
+{
+	enum lru_list lru = page_lru(page);
+
+	if (lru_gen_addition(page, lruvec, false))
+		return;
+
+	update_lru_size(lruvec, lru, page_zonenum(page), hpage_nr_pages(page));
+	list_add_tail(&page->lru, &lruvec->lists[lru]);
+}
+
+static __always_inline void del_page_from_lru_list(struct page *page,
+				struct lruvec *lruvec)
+{
+	if (lru_gen_deletion(page, lruvec))
+		return;
+
+	list_del(&page->lru);
+	update_lru_size(lruvec, page_lru(page), page_zonenum(page),
+			-hpage_nr_pages(page));
+}
 #endif

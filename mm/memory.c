@@ -4714,9 +4714,9 @@ int __handle_speculative_fault(struct mm_struct *mm, unsigned long address,
 		return VM_FAULT_RETRY;
 	}
 
-	mem_cgroup_enter_user_fault();
+	task_enter_user_fault();
 	ret = handle_pte_fault(&vmf);
-	mem_cgroup_exit_user_fault();
+	task_exit_user_fault();
 
 	/*
 	 * If there is no need to retry, don't return the vma to the caller.
