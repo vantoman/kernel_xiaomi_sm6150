@@ -261,11 +261,7 @@ static void usbpd_check_cp_psy(struct usbpd_pm *pdpm)
 		else
 			pdpm->cp_psy = power_supply_get_by_name("bq2597x-standalone");
 		if (!pdpm->cp_psy)
-		{
-			pdpm->cp_psy = power_supply_get_by_name("ln8000");
-			if (!pdpm->cp_psy)
-				pr_err("cp_psy not found\n");
-		}
+			pr_err("cp_psy not found\n");
 	}
 }
 
