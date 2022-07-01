@@ -43,7 +43,14 @@
 #include <linux/time.h>
 #include <linux/crypto.h>
 #include <crypto/internal/rng.h>
-#include <crypto/internal/jitterentropy.h>
+
+struct rand_data;
+int jent_read_entropy(struct rand_data *ec, unsigned char *data,
+		      unsigned int len);
+int jent_entropy_init(void);
+struct rand_data *jent_entropy_collector_alloc(unsigned int osr,
+					       unsigned int flags);
+void jent_entropy_collector_free(struct rand_data *entropy_collector);
 
 /***************************************************************************
  * Helper function
