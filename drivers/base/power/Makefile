@@ -11,3 +11,5 @@ CFLAGS_wakeup.o += -DCONFIG_DEBUG_FS
 endif
 
 ccflags-$(CONFIG_DEBUG_DRIVER) := -DDEBUG
+
+subdir-ccflags-y := $(call cc-disable-warning, int-conversion)
