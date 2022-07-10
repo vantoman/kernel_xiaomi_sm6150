@@ -33,6 +33,8 @@
 		qcom,mdss-dsi-te-using-te-pin;
 		qcom,mdss-dsi-tx-eot-append;
 		qcom,mdss-dsi-lp11-init;
+		qcom,ulps-enabled;
+		qcom,suspend-ulps-enabled;
 		qcom,mdss-dsi-bl-inverted-dbv;
 		qcom,bl-update-flag = "delay_until_first_frame";
 
