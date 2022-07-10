@@ -279,6 +279,8 @@ And public attribution of xiaomi platforms(like F3 and so and)
 			qcom,effect-id = <1>;
 			qcom,wf-vmax-mv = <3600>;
 			qcom,wf-pattern = [7e 3e];
+			qcom,wf-repeat-count = <2>;
+			qcom,wf-s-repeat-count = <1>;
 			qcom,wf-brake-pattern = [03 01 00 00];
 			qcom,wf-play-rate-us = <20000>;
 		};
