@@ -713,7 +713,7 @@ static int qcom_smp2p_remove(struct platform_device *pdev)
 	return 0;
 }
 
-static int qcom_smp2p_restore(struct device *dev)
+static int qcom_smp2p_resume(struct device *dev)
 {
 	int ret = 0;
 	struct qcom_smp2p *smp2p = dev_get_drvdata(dev);
@@ -750,7 +750,6 @@ static int qcom_smp2p_restore(struct device *dev)
 		}
 	}
 
-	enable_irq_wake(smp2p->irq);
 	/* Kick the outgoing edge after allocating entries */
 	qcom_smp2p_kick(smp2p);
 	return ret;
@@ -765,13 +764,12 @@ print_err:
 	return ret;
 }
 
-static int qcom_smp2p_freeze(struct device *dev)
+static int qcom_smp2p_suspend(struct device *dev)
 {
 	struct qcom_smp2p *smp2p = dev_get_drvdata(dev);
 	struct smp2p_entry *entry;
 	struct smp2p_entry *next_entry;
 
-	disable_irq_wake(smp2p->irq);
 	/* Walk through the out bound list and release state and entry */
 	list_for_each_entry_safe(entry, next_entry, &smp2p->outbound, node) {
 		qcom_smem_state_unregister(entry->state);
@@ -791,9 +789,8 @@ static int qcom_smp2p_freeze(struct device *dev)
 }
 
 static const struct dev_pm_ops qcom_smp2p_pm_ops = {
-	.freeze = qcom_smp2p_freeze,
-	.restore = qcom_smp2p_restore,
-	.thaw = qcom_smp2p_restore,
+	.freeze = qcom_smp2p_suspend,
+	.restore = qcom_smp2p_resume,
 };
 
 static const struct of_device_id qcom_smp2p_of_match[] = {
