@@ -5298,6 +5298,7 @@ static ssize_t sysfs_hbm_write(struct device *dev,
 {
 	struct dsi_display *display = dev_get_drvdata(dev);
 	int ret, hbm_mode;
+	int bl_lvl_before_hbm = display->panel->bl_config.bl_level;
 
 	if (!display->panel)
 		return -EINVAL;
@@ -5322,7 +5323,6 @@ static ssize_t sysfs_hbm_write(struct device *dev,
 		goto error;
 	}
 
-	int bl_lvl_before_hbm = display->panel->bl_config.bl_level;
 	ret = dsi_panel_apply_hbm_mode(display->panel);
 	if (ret)
 		pr_err("unable to set hbm mode\n");
