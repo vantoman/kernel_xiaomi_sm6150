@@ -45,19 +45,15 @@ static __always_inline void update_lru_size(struct lruvec *lruvec,
 }
 
 static __always_inline void add_page_to_lru_list(struct page *page,
-				struct lruvec *lruvec)
+				struct lruvec *lruvec, enum lru_list lru)
 {
-        enum lru_list lru = page_lru(page);
-
 	update_lru_size(lruvec, lru, page_zonenum(page), hpage_nr_pages(page));
 	list_add(&page->lru, &lruvec->lists[lru]);
 }
 
 static __always_inline void add_page_to_lru_list_tail(struct page *page,
-				struct lruvec *lruvec)
+				struct lruvec *lruvec, enum lru_list lru)
 {
-        enum lru_list lru = page_lru(page);
-
 	update_lru_size(lruvec, lru, page_zonenum(page), hpage_nr_pages(page));
 	list_add_tail(&page->lru, &lruvec->lists[lru]);
 }
