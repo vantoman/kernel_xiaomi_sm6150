@@ -1,0 +1,23 @@
+#
+# Focaltech Touchscreen driver configuration
+#
+
+config TOUCHSCREEN_FTS_CAF
+	tristate "Focaltech Touchscreen"
+	help
+	  Say Y here if you have Focaltech touch panel.
+	  If unsure, say N.
+
+config TOUCHSCREEN_FTS_DIRECTORY_CAF
+	string "Focaltech ts directory name"
+	default "focaltech_touch"
+	depends on TOUCHSCREEN_FTS_CAF
+
+config FTS_TRUSTED_TOUCH_CAF
+	bool "Focaltech Trusted Touch"
+	depends on TOUCHSCREEN_FTS_CAF
+	help
+	  Say Y here to enable Focaltech Trusted Touch.
+	  If unsure, say N.
+
+#endif
