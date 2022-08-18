@@ -6,12 +6,13 @@
 
 &firmware {
 	android {
+	        boot_devices = "soc/1d84000.ufshc";
 		vbmeta {
 			parts = "vbmeta,boot,system,vendor,dtbo,recovery";
 		};
 		fstab {
 			vendor {
-				fsmgr_flags = "wait,avb";
+				status = "disabled";
 			};
 		};
 	};
