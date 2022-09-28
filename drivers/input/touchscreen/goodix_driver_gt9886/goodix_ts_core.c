@@ -1568,13 +1568,14 @@ int goodix_ts_suspend_lock(struct goodix_ts_core *core_data, bool lock)
 				} else if (!core_data->double_wakeup && (core_data->fod_enabled || core_data->aod_status)) {
 					atomic_set(&core_data->suspend_stat, TP_GESTURE_FOD);
 				}
-				mutex_unlock(&goodix_modules.mutex);
 				ts_info("suspend_stat[%d]", atomic_read(&core_data->suspend_stat));
 				ts_info("Canceled by module:%s", ext_module->name);
-				if (!atomic_read(&core_data->suspend_stat))
+				if (!atomic_read(&core_data->suspend_stat)) {
 					ts_info("go suspend remaind work\n");
-				else
+				} else {
+					mutex_unlock(&goodix_modules.mutex);
 					goto out;
+				}
 			}
 		}
 	}
