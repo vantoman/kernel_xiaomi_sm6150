@@ -236,7 +236,7 @@ enum tp_suspend_stat {
 /* coordinate package */
 struct goodix_ts_coords {
 	int id;
-	unsigned int x, y, w, p, area, overlapping_area;
+	unsigned int x, y, w, area, overlapping_area;
 };
 
 /* touch event data */

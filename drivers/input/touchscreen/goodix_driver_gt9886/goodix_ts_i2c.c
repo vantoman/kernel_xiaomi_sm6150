@@ -1808,7 +1808,6 @@ static int goodix_touch_handler(struct goodix_ts_device *dev,
 			coords->y = buffer[i * BYTES_PER_COORD + 5] |
 							(buffer[i * BYTES_PER_COORD + 6] << 8);
 			coords->w = buffer[i * BYTES_PER_COORD + 7];
-			coords->p = coords->w;
 			coords->overlapping_area = buffer[8];
 			coords->area = buffer[i * BYTES_PER_COORD + 9];
 			coords++;
