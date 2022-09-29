@@ -58,7 +58,6 @@
 #define GOODIX_DRIVER_VERSION		"v1.2.0.1"
 #define GOODIX_BUS_RETRY_TIMES		3
 #define GOODIX_MAX_TOUCH			10
-#define GOODIX_MAX_PEN				1
 #define GOODIX_MAX_KEY				3
 #define GOODIX_PEN_MAX_KEY			2
 #define GOODIX_CFG_MAX_SIZE			1024
@@ -153,7 +152,6 @@ struct goodix_ts_board_data {
 	/*add by lishuai*/
 	unsigned int x2x;
 	unsigned int y2y;
-	bool pen_enable;
 	unsigned int tp_key_num;
 	/*add end*/
 
@@ -249,9 +247,6 @@ struct goodix_touch_data {
 	/* key */
 	u8 key_value;
 	bool have_key;
-	/*pen*/
-	struct goodix_ts_coords pen_coords[GOODIX_MAX_PEN];
-	bool pen_down;
 };
 
 /* request event data */
