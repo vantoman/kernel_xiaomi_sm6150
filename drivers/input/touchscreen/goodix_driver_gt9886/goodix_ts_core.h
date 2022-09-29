@@ -443,6 +443,7 @@ struct goodix_ts_core {
 
 	atomic_t irq_enabled;
 	atomic_t suspended;
+	atomic_t want_to_resume;
 
 	bool cfg_group_parsed;
 	struct attribute_group    attrs;
