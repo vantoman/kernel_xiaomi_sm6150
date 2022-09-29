@@ -1794,10 +1794,6 @@ static int goodix_touch_handler(struct goodix_ts_device *dev,
 				2 + BYTES_PER_COORD * max_touch_num,
 				touch_num);
 
-
-	/*clear buffer*/
-	memset(touch_data->coords, 0x00, sizeof(touch_data->coords));
-
 	if (likely(touch_num >= 1)) {
 		/*"0 ~ touch_num - 2" is finger, "touch_num - 1" may be a finger or a pen*/
 		/*process "0 ~ touch_num -2"*/
@@ -1811,6 +1807,10 @@ static int goodix_touch_handler(struct goodix_ts_device *dev,
 			coords->overlapping_area = buffer[8];
 			coords->area = buffer[i * BYTES_PER_COORD + 9];
 			coords++;
+		}
+		if (likely(i < max_touch_num)) {
+			// Report data end
+			coords->id = 0;
 		}
 	}
 
