@@ -403,8 +403,6 @@ static int gsx_gesture_ist(struct goodix_ts_core *core_data,
 	/*ts_debug("gsx_gesture_ist, core_data-suspend=%d",
 			atomic_read(&core_data->suspended));*/
 	/*ts_err("enter %s core_data->suspended=%d\n", __func__, atomic_read(&core_data->suspended));*/
-	if (atomic_read(&core_data->suspended) == 0)
-		return EVT_CONTINUE;
 
 	mutex_lock(&ts_dev->report_mutex);
 		/* get ic gesture state*/
