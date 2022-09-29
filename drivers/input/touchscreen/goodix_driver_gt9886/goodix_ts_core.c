@@ -1255,8 +1255,6 @@ static void goodix_ts_set_input_params(struct input_dev *input_dev,
 {
 	int i;
 
-	if (ts_bdata->swap_axis)
-		swap(ts_bdata->panel_max_x, ts_bdata->panel_max_y);
 	input_set_abs_params(input_dev, ABS_MT_POSITION_X,
 			0, ts_bdata->panel_max_x, 0, 0);
 	input_set_abs_params(input_dev, ABS_MT_POSITION_Y,

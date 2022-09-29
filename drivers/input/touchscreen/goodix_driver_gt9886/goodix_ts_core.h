@@ -121,7 +121,6 @@ struct goodix_module {
  * @irq_flag: irq trigger type
  * @power_on_delay_us: power on delay time (us)
  * @power_off_delay_us: power off delay time (us)
- * @swap_axis: whether swaw x y axis
  * @panel_max_id: max supported fingers
  * @panel_max_x/y/w/p: resolution and size
  * @panel_max_key: max supported keys
@@ -142,7 +141,6 @@ struct goodix_ts_board_data {
 	unsigned int power_on_delay_us;
 	unsigned int power_off_delay_us;
 
-	unsigned int swap_axis;
 	unsigned int panel_max_id; /*max touch id*/
 	unsigned int panel_max_x;
 	unsigned int panel_max_y;

@@ -130,9 +130,6 @@ static int goodix_parse_dt_resolution(struct device_node *node,
 	if (r)
 		err = -ENOENT;
 
-	board_data->swap_axis = of_property_read_bool(node,
-			"goodix,swap-axis");
-
 	board_data->x2x = of_property_read_bool(node,
 			"goodix,x2x");
 
@@ -1579,14 +1576,9 @@ static void goodix_swap_coords(struct goodix_ts_device *dev,
 		struct goodix_ts_coords *coords,
 		int touch_num)
 {
-	int i, temp;
+	int i;
 	struct goodix_ts_board_data *bdata = dev->board_data;
 	for (i = 0; i < touch_num; i++) {
-		if (bdata->swap_axis) {
-			temp = coords->x;
-			coords->x = coords->y;
-			coords->y = temp;
-		}
 		if (bdata->x2x)
 			coords->x = bdata->panel_max_x - coords->x;
 		if (bdata->y2y)
