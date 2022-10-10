@@ -734,7 +734,7 @@ static int goodix_ts_input_report(struct input_dev *dev,
 	mutex_lock(&ts_dev->report_mutex);
 	id = coords->id;
 	event_fod = (core_data->event_status & 0x88) == 0x88;
-	for (i = 0; i < ts_bdata->panel_max_id * 2; i++) {
+	for (i = 0; i < ts_bdata->panel_max_id; i++) {
 		if (touch_num && i == id) { /* this is a valid touch down event */
 			input_mt_slot(dev, id);
 			input_mt_report_slot_state(dev, MT_TOOL_FINGER, true);
