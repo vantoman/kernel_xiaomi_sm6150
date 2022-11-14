@@ -778,13 +778,15 @@ static int goodix_ts_input_report(struct input_dev *dev,
 		input_report_key(core_data->input_dev, BTN_INFO, 1);
 		/*input_report_key(core_data->input_dev, KEY_INFO, 1);*/
 		core_data->fod_pressed = true;
+		sysfs_notify(&core_data->gtp_touch_dev->kobj, NULL, "fp_state");
 		ts_info("BTN_INFO press");
 	} else if (core_data->fod_pressed && (core_data->event_status & 0x88) != 0x88) {
 		if (unlikely(!core_data->fod_test)) {
 			input_report_key(core_data->input_dev, BTN_INFO, 0);
 			/*input_report_key(core_data->input_dev, KEY_INFO, 0);*/
-			ts_info("BTN_INFO release");
 			core_data->fod_pressed = false;
+			sysfs_notify(&core_data->gtp_touch_dev->kobj, NULL, "fp_state");
+			ts_info("BTN_INFO release");
 		}
 	}
 	mutex_unlock(&ts_dev->report_mutex);
@@ -1227,6 +1229,19 @@ static DEVICE_ATTR(fod_test, (S_IRUGO | S_IWUSR | S_IWGRP),
 
 static DEVICE_ATTR(touch_suspend_notify, (S_IRUGO | S_IRGRP),
 			gtp_touch_suspend_notify_show, NULL);
+
+static ssize_t fp_state_show(struct device *dev,
+						struct device_attribute *attr, char *buf)
+{
+	struct goodix_ts_core *core_data = dev_get_drvdata(dev);
+	struct goodix_touch_data *touch_data =
+			&core_data->ts_event.event_data.touch_data;
+
+	return snprintf(buf, PAGE_SIZE, "%d,%d,%d\n",
+			touch_data->coords[0].x, touch_data->coords[0].y,
+			core_data->fod_pressed);
+}
+static DEVICE_ATTR_RO(fp_state);
 
 /**
  * goodix_input_set_params - set input parameters
@@ -2527,6 +2542,12 @@ static int goodix_ts_probe(struct platform_device *pdev)
 	if (sysfs_create_file(&core_data->gtp_touch_dev->kobj,
 				  &dev_attr_fod_test.attr)) {
 		ts_err("Failed to create fod_test sysfs group!");
+		goto out;
+	}
+
+	if (sysfs_create_file(&core_data->gtp_touch_dev->kobj,
+				  &dev_attr_fp_state.attr)) {
+		ts_err("Failed to create fp_state sysfs file!");
 		goto out;
 	}
 

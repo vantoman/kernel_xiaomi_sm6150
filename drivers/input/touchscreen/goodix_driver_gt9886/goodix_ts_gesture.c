@@ -453,6 +453,7 @@ static int gsx_gesture_ist(struct goodix_ts_core *core_data,
 			/*input_report_abs(core_data->input_dev, ABS_MT_TOUCH_MINOR, area);*/
 
 			core_data->fod_pressed = true;
+			sysfs_notify(&core_data->gtp_touch_dev->kobj, NULL, "fp_state");
 			__set_bit(0, &core_data->touch_id);
 
 
@@ -488,6 +489,7 @@ static int gsx_gesture_ist(struct goodix_ts_core *core_data,
 			input_sync(core_data->input_dev);
 			__clear_bit(0, &core_data->touch_id);
 			core_data->fod_pressed = false;
+			sysfs_notify(&core_data->gtp_touch_dev->kobj, NULL, "fp_state");
 			}
 			core_data->sleep_finger = 0;
 		}
