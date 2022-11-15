@@ -2146,6 +2146,9 @@ static int gtp_set_cur_value(int gtp_mode, int gtp_value)
 	}
 
 	if (gtp_mode == Touch_Fod_Enable && goodix_core_data) {
+		if (goodix_core_data->fod_status == gtp_value) {
+			return 0;
+		}
 		mutex_lock(&goodix_core_data->work_stat);
 		ts_info("locked work_stat mutex");
 		suspended = atomic_read(&goodix_core_data->suspended);
