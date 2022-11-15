@@ -8,6 +8,7 @@
 #define MIUS_SET_PARAMS_SIZE			114
 #define MIUS_ULTRASOUND_MODULE_RX			0x1000A210
 #define MIUS_ULTRASOUND_MODULE_TX			0x1000A211
+
 #define MI_ULTRASOUND_OPCODE				0x0FF10208
 
 /* This need to be updated for all platforms */
@@ -35,6 +36,7 @@ typedef struct afe_mi_ultrasound_state {
 	atomic_t *ptr_status;
 	atomic_t *ptr_state;
 	wait_queue_head_t *ptr_wait;
+	struct mutex *ptr_afe_apr_lock;
 	int timeout_ms;
 } afe_mi_ultrasound_state_t;
 

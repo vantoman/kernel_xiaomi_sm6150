@@ -25,6 +25,11 @@
 #include <dsp/apr_mius.h>
 #endif
 #include <ipc/apr_tal.h>
+/* for mius start */
+#ifdef CONFIG_US_PROXIMITY
+#include <dsp/apr_mius.h>
+#endif
+/* for mius end */
 #include "adsp_err.h"
 #include "q6afecal-hwdep.h"
 #ifdef CONFIG_SND_SOC_TFA9874_FOR_DAVI
@@ -1812,6 +1817,7 @@ afe_mi_ultrasound_state_t mius_afe = {
 	.ptr_status = &this_afe.status,
 	.ptr_state = &this_afe.state,
 	.ptr_wait = this_afe.wait,
+	.ptr_afe_apr_lock= &this_afe.afe_apr_lock,
 	.timeout_ms = TIMEOUT_MS,
 };
 EXPORT_SYMBOL(mius_afe);
