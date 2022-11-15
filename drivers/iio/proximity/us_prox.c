@@ -37,6 +37,34 @@
 
 #define US_PROX_IIO_NAME		"distance"
 
+extern void iio_device_unregister(struct iio_dev *indio_dev);
+extern void iio_device_free(struct iio_dev *dev);
+extern int __iio_device_register(struct iio_dev *indio_dev, struct module *this_mod);
+extern struct iio_dev *iio_device_alloc(int sizeof_priv);
+struct iio_buffer *iio_kfifo_allocate(void);
+void iio_kfifo_free(struct iio_buffer *r);
+struct iio_poll_func
+*iio_alloc_pollfunc(irqreturn_t (*h)(int irq, void *p),
+        irqreturn_t (*thread)(int irq, void *p),
+        int type,
+        struct iio_dev *indio_dev,
+        const char *fmt,
+        ...);
+int iio_trigger_buffer_setup(struct iio_dev *indio_dev,
+        irqreturn_t (*h)(int irq, void *p),
+        irqreturn_t (*thread)(int irq, void *p),
+        const struct iio_buffer_setup_ops *setup_ops);
+void iio_trigger_buffer_cleanup(struct iio_dev *indio_dev);
+int iio_triggered_buffer_postenable(struct iio_dev *indio_dev);
+int iio_triggered_buffer_predisable(struct iio_dev *indio_dev);
+void iio_dealloc_pollfunc(struct iio_poll_func *pf);
+
+
+static const struct iio_buffer_setup_ops iio_trigger_buffer_setup_ops = {
+    .postenable = &iio_triggered_buffer_postenable,
+    .predisable = &iio_triggered_buffer_predisable,
+};
+
 static struct us_prox_data *g_us_prox;
 
 struct us_prox_data {
@@ -190,6 +218,52 @@ static const struct iio_info us_proximity_info = {
 	.attrs = &us_prox_attribute_group,
 };
 
+int iio_trigger_buffer_setup(struct iio_dev *indio_dev,
+        irqreturn_t (*h)(int irq, void *p),
+        irqreturn_t (*thread)(int irq, void *p),
+        const struct iio_buffer_setup_ops *setup_ops)
+{
+    struct iio_buffer *buffer;
+    int ret;
+
+    buffer = iio_kfifo_allocate();
+    if (!buffer) {
+        ret = -ENOMEM;
+        goto error_ret;
+    }
+
+    iio_device_attach_buffer(indio_dev, buffer);
+
+    indio_dev->pollfunc = iio_alloc_pollfunc(h,
+            thread,
+            IRQF_ONESHOT,
+            indio_dev,
+            "%s_consumer%d",
+            indio_dev->name,
+            indio_dev->id);
+    if (indio_dev->pollfunc == NULL) {
+        ret = -ENOMEM;
+        goto error_kfifo_free;
+    }
+
+    /* Ring buffer functions - here trigger setup related */
+    if (setup_ops)
+        indio_dev->setup_ops = setup_ops;
+    else
+        indio_dev->setup_ops = &iio_trigger_buffer_setup_ops;
+
+    /* Flag that polled ring buffering is possible */
+    indio_dev->modes |= INDIO_BUFFER_TRIGGERED;
+
+    return 0;
+
+error_kfifo_free:
+    iio_kfifo_free(indio_dev->buffer);
+error_ret:
+    return ret;
+}
+
+
 static int us_proximity_iio_setup(struct us_prox_data *data)
 {
 	struct iio_dev *idev;
@@ -213,8 +287,7 @@ static int us_proximity_iio_setup(struct us_prox_data *data)
 
 	priv_data = iio_priv(idev);
 	*priv_data = data;
-
-	ret = iio_triggered_buffer_setup(idev, NULL, NULL,
+	ret = iio_trigger_buffer_setup(idev, NULL, NULL,
 					&us_buffer_setup_ops);
 	if (ret < 0)
 		goto free_iio_p;
@@ -234,11 +307,18 @@ free_trigger_p:
 	iio_trigger_unregister(idev->trig);
 	iio_trigger_free(idev->trig);
 free_buffer_p:
-	iio_triggered_buffer_cleanup(idev);
+	iio_trigger_buffer_cleanup(idev);
 free_iio_p:
 	data->prox_idev = NULL;
 	iio_device_free(idev);
 	return ret;
+}
+
+
+void iio_trigger_buffer_cleanup(struct iio_dev *indio_dev)
+{
+    iio_dealloc_pollfunc(indio_dev->pollfunc);
+    iio_kfifo_free(indio_dev->buffer);
 }
 
 static int us_proximity_teardown(struct us_prox_data *data)
@@ -246,7 +326,7 @@ static int us_proximity_teardown(struct us_prox_data *data)
 	iio_device_unregister(data->prox_idev);
 	iio_trigger_unregister(data->prox_idev->trig);
 	iio_trigger_free(data->prox_idev->trig);
-	iio_triggered_buffer_cleanup(data->prox_idev);
+	iio_trigger_buffer_cleanup(data->prox_idev);
 	iio_device_free(data->prox_idev);
 
 	return 0;
