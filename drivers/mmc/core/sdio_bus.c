@@ -273,7 +273,9 @@ static void sdio_release_func(struct device *dev)
 	 * If this device is embedded then we never allocated
 	 * cis tables for this func
 	 */
-	if (!func->card->host->embedded_sdio_data.funcs)
+	if (!func->card->host->embedded_sdio_data.funcs && !(func->card->quirks & MMC_QUIRK_NONSTD_SDIO))
+#else
+	if (!(func->card->quirks & MMC_QUIRK_NONSTD_SDIO))
 #endif
 		sdio_free_func_cis(func);
 
