@@ -335,6 +335,11 @@ int dsi_panel_get_phy_props(struct dsi_panel *panel,
 int dsi_panel_get_dfps_caps(struct dsi_panel *panel,
 			    struct dsi_dfps_capabilities *dfps_caps);
 
+#ifdef CONFIG_MACH_XIAOMI_SWEET
+void dsi_panel_gamma_mode_change(struct dsi_panel *panel,
+                        struct dsi_display_mode *adj_mode);
+#endif
+
 int dsi_panel_pre_prepare(struct dsi_panel *panel);
 
 int dsi_panel_set_lp1(struct dsi_panel *panel);
