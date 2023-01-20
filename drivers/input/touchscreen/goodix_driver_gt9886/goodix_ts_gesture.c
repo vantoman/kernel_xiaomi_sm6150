@@ -342,7 +342,6 @@ static int gsx_gesture_ist(struct goodix_ts_core *core_data,
 	struct goodix_ext_module *module)
 {
 	int ret;
-	int x, y, area, overlapping_area;
 	unsigned char clear_reg = 0;
 	unsigned char checksum = 0, temp_data[GSX_KEY_DATA_LEN];
 	struct goodix_ts_device *ts_dev = core_data->ts_dev;
