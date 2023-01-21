@@ -1428,7 +1428,7 @@ static int goodix_hw_init(struct goodix_ts_device *ts_dev)
 			ts_dev->chip_version.sensor_id);
 	if (r < 0)
 		ts_info("Cann't find customized parameters");
-	
+
 	ts_dev->normal_cfg->delay = 500;
 	/* send normal-cfg to firmware */
 	r = goodix_send_config(ts_dev, ts_dev->normal_cfg);
@@ -1665,7 +1665,7 @@ static int goodix_remap_trace_id(struct goodix_ts_device *dev,
 			}
 			offset += BYTES_PER_COORD;
 		}
-	
+
 	}
 
 	/*for (i = 0; i < touch_num; i++) {
@@ -1726,12 +1726,11 @@ static int goodix_touch_handler(struct goodix_ts_device *dev,
 	int max_touch_num = dev->board_data->panel_max_id;
 	unsigned char buffer[4 + BYTES_PER_COORD * max_touch_num];
 	unsigned char coord_sta;
-	int touch_num = 0, i, r;
+	int touch_num = 0, i;
 	unsigned char chksum = 0;
 
 	if (!pre_buf || pre_buf_len != (4 + BYTES_PER_COORD)) {
-		r = -EINVAL;
-		return r;
+		return -EINVAL;
 	}
 
 	/*copy data to buffer*/
@@ -1743,15 +1742,14 @@ static int goodix_touch_handler(struct goodix_ts_device *dev,
 	touch_num = coord_sta & 0x0F;
 
 	if (unlikely(touch_num > max_touch_num)) {
-		touch_num = -EINVAL;
-		goto exit_clean_sta;
+		return -EINVAL;
 	} else if (unlikely(touch_num > 1)) {
-		r = goodix_i2c_read_trans(dev,
+		int r = goodix_i2c_read_trans(dev,
 				dev->reg.coor + 4 + BYTES_PER_COORD,/*TS_REG_COORDS_BASE*/
 				&buffer[4 + BYTES_PER_COORD],
 				(touch_num - 1) * BYTES_PER_COORD);
 		if (unlikely(r < 0))
-			goto exit_clean_sta;
+			return r;
 	}
 
 	/* touch_num * BYTES_PER_COORD + 1(touch event state)
@@ -1765,8 +1763,7 @@ static int goodix_touch_handler(struct goodix_ts_device *dev,
 	}
 	if (unlikely(chksum != 0)) {
 		ts_err("Checksum error:%X, ic_type:%d", chksum, dev->ic_type);
-		r = -EINVAL;
-		goto exit_clean_sta;
+		return -EINVAL;
 	}
 
 	touch_data->have_key = false;/*clear variable*/
@@ -1820,13 +1817,8 @@ static int goodix_touch_handler(struct goodix_ts_device *dev,
 	touch_data->touch_num = touch_num;
 	/* mark this event as touch event */
 	ts_event->event_type = EVENT_TOUCH;
-	r = 0;
 
-exit_clean_sta:
-	/* handshake */
-	/*buffer[0] = 0x00;*/
-	/*goodix_i2c_write_trans(dev, dev->reg.coor, buffer, 1);*/
-	return r;
+	return 0;
 }
 
 static int goodix_event_handler(struct goodix_ts_device *dev,
@@ -2070,7 +2062,7 @@ static int goodix_i2c_probe(struct i2c_client *client,
 	ts_device->dev = &client->dev;
 	ts_device->board_data = ts_bdata;
 	ts_device->hw_ops = &hw_i2c_ops;
-	
+
 
 	/* ts core device */
 	goodix_pdev = kzalloc(sizeof(struct platform_device), GFP_KERNEL);
