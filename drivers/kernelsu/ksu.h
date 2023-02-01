@@ -3,7 +3,7 @@
 
 #include "linux/workqueue.h"
 
-#define KERNEL_SU_VERSION 12
+#define KERNEL_SU_VERSION 14
 
 #define KERNEL_SU_OPTION 0xDEADBEEF
 
@@ -15,6 +15,7 @@
 #define CMD_GET_ALLOW_LIST 5
 #define CMD_GET_DENY_LIST 6
 #define CMD_REPORT_EVENT 7
+#define CMD_SET_SEPOLICY 8
 
 #define EVENT_POST_FS_DATA 1
 #define EVENT_BOOT_COMPLETED 2
