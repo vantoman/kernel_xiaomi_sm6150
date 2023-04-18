@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2013-2016, 2018-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -106,7 +106,7 @@
  */
 #define MAX_SPATIAL_STREAM_ANY MAX_SPATIAL_STREAM_ANY_V2 /* DEPRECATED */
 
-/* defines to set Packet extension values whic can be 0 us, 8 usec or 16 usec */
+/* defines to set Packet extension values which can be 0, 8, or 16 usec */
 /* NOTE: Below values cannot be changed without breaking WMI Compatibility */
 #define MAX_HE_NSS               8
 #define MAX_HE_MODULATION        8
@@ -458,6 +458,10 @@ typedef struct {
     A_UINT32 low_5ghz_chan;
     A_UINT32 high_5ghz_chan;
     A_UINT32 wireless_modes_ext; /* REGDMN MODE ext */
+    A_UINT32 low_2ghz_chan_ext;
+    A_UINT32 high_2ghz_chan_ext;
+    A_UINT32 low_5ghz_chan_ext;
+    A_UINT32 high_5ghz_chan_ext;
 } HAL_REG_CAPABILITIES;
 
 #ifdef NUM_SPATIAL_STREAM
@@ -477,8 +481,8 @@ typedef struct {
 
 /*
  * Used to update rate-control logic with the status of the tx-completion.
- * In host-based implementation of the rate-control feature, this struture is used to
- * create the payload for HTT message/s from target to host.
+ * In host-based implementation of the rate-control feature, this structure
+ * is used to create the payload for HTT message/s from target to host.
  */
 #ifndef CONFIG_MOVE_RC_STRUCT_TO_MACCORE
   #if (NUM_SPATIAL_STREAM > 3)
@@ -680,7 +684,7 @@ typedef struct {
 #endif
 
 /**
- * strucutre describing host memory chunk.
+ * structure describing host memory chunk.
  */
 typedef struct {
    A_UINT32   tlv_header;     /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wlan_host_memory_chunk */
@@ -809,9 +813,9 @@ struct wlan_dbg_tx_stats_v1 {
     A_UINT32 sw_retry_failure;
     /* illegal rate phy errors  */
     A_UINT32 illgl_rate_phy_err;
-    /* wal pdev continous xretry */
+    /* wal pdev continuous xretry */
     A_UINT32 pdev_cont_xretry;
-    /* wal pdev continous xretry */
+    /* wal pdev continuous xretry */
     A_UINT32 pdev_tx_timeout;
     /* wal pdev resets  */
     A_UINT32 pdev_resets;
@@ -861,9 +865,9 @@ struct wlan_dbg_tx_stats_v2 {
     A_UINT32 sw_retry_failure;
     /* illegal rate phy errors  */
     A_UINT32 illgl_rate_phy_err;
-    /* wal pdev continous xretry */
+    /* wal pdev continuous xretry */
     A_UINT32 pdev_cont_xretry;
-    /* wal pdev continous xretry */
+    /* wal pdev continuous xretry */
     A_UINT32 pdev_tx_timeout;
     /* wal pdev resets  */
     A_UINT32 pdev_resets;
@@ -972,8 +976,7 @@ struct wlan_dbg_mem_stats {
 };
 
 struct wlan_dbg_peer_stats {
-
-	A_INT32 dummy; /* REMOVE THIS ONCE REAL PEER STAT COUNTERS ARE ADDED */
+    A_INT32 dummy; /* REMOVE THIS ONCE REAL PEER STAT COUNTERS ARE ADDED */
 };
 
 /*
@@ -1017,7 +1020,7 @@ typedef struct {
  * TEMPORARY: leave rssi_chain3 in place for AR900B builds until code using
  * rssi_chain3 has been converted to use wlan_dbg_rx_rate_info_v2_t.
  */
-	A_UINT32 rssi_chain3;
+    A_UINT32 rssi_chain3;
 } wlan_dbg_rx_rate_info_v1b_t;
 
 #if defined(AR900B)
@@ -1733,7 +1736,7 @@ typedef struct {
      */
     A_UINT32 link_info;
 /*  This TLV is followed by array of mlo_glb_link:
- *  mlo_glb_link will have mutiple instances equal to num of hw links
+ *  mlo_glb_link will have multiple instances equal to num of hw links
  *  received by no_of_link
  *      mlo_glb_link glb_link_info[];
  */
@@ -1779,7 +1782,7 @@ typedef struct {
      */
     A_UINT32 chip_info;
     /*  This TLV is followed by array of mlo_glb_per_chip_crash_info:
-     *  mlo_glb_per_chip_crash_info will have mutiple instances equal to num of partner chips
+     *  mlo_glb_per_chip_crash_info will have multiple instances equal to num of partner chips
      *  received by no_of_chips
      *  mlo_glb_per_chip_crash_info per_chip_crash_info[];
      */
