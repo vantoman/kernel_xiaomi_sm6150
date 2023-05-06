@@ -22,12 +22,7 @@ struct perm_data {
 
 static struct list_head allow_list;
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 5, 0)
 #define KERNEL_SU_ALLOWLIST "/data/adb/ksu/.allowlist"
-#else
-// filp_open return error if under encryption dir on Kernel4.4
-#define KERNEL_SU_ALLOWLIST "/data/user_de/.ksu_allowlist"
-#endif
 
 static struct work_struct ksu_save_work;
 static struct work_struct ksu_load_work;
@@ -69,6 +64,8 @@ bool ksu_allow_uid(uid_t uid, bool allow, bool persist)
 	p->uid = uid;
 	p->allow = allow;
 
+	pr_info("allow_uid: %d, allow: %d", uid, allow);
+
 	list_add_tail(&p->list, &allow_list);
 	result = true;
 
@@ -107,7 +104,7 @@ bool ksu_get_allow_list(int *array, int *length, bool allow)
 	int i = 0;
 	list_for_each (pos, &allow_list) {
 		p = list_entry(pos, struct perm_data, list);
-		pr_info("get_allow_list uid: %d allow: %d\n", p->uid, p->allow);
+		// pr_info("get_allow_list uid: %d allow: %d\n", p->uid, p->allow);
 		if (p->allow == allow) {
 			array[i++] = p->uid;
 		}
@@ -124,7 +121,7 @@ void do_persistent_allow_list(struct work_struct *work)
 	struct perm_data *p = NULL;
 	struct list_head *pos = NULL;
 	loff_t off = 0;
-
+	KWORKER_INSTALL_KEYRING();
 	struct file *fp =
 		filp_open(KERNEL_SU_ALLOWLIST, O_WRONLY | O_CREAT, 0644);
 
@@ -134,12 +131,12 @@ void do_persistent_allow_list(struct work_struct *work)
 	}
 
 	// store magic and version
-	if (kernel_write_compat(fp, &magic, sizeof(magic), &off) != sizeof(magic)) {
+	if (ksu_kernel_write_compat(fp, &magic, sizeof(magic), &off) != sizeof(magic)) {
 		pr_err("save_allow_list write magic failed.\n");
 		goto exit;
 	}
 
-	if (kernel_write_compat(fp, &version, sizeof(version), &off) !=
+	if (ksu_kernel_write_compat(fp, &version, sizeof(version), &off) !=
 	    sizeof(version)) {
 		pr_err("save_allow_list write version failed.\n");
 		goto exit;
@@ -149,8 +146,8 @@ void do_persistent_allow_list(struct work_struct *work)
 		p = list_entry(pos, struct perm_data, list);
 		pr_info("save allow list uid :%d, allow: %d\n", p->uid,
 			p->allow);
-		kernel_write_compat(fp, &p->uid, sizeof(p->uid), &off);
-		kernel_write_compat(fp, &p->allow, sizeof(p->allow), &off);
+		ksu_kernel_write_compat(fp, &p->uid, sizeof(p->uid), &off);
+		ksu_kernel_write_compat(fp, &p->allow, sizeof(p->allow), &off);
 	}
 
 exit:
@@ -164,21 +161,7 @@ void do_load_allow_list(struct work_struct *work)
 	struct file *fp = NULL;
 	u32 magic;
 	u32 version;
-
-	fp = filp_open("/data/adb", O_RDONLY, 0);
-	if (IS_ERR(fp)) {
-		int errno = PTR_ERR(fp);
-		pr_err("load_allow_list open '/data/adb': %d\n", PTR_ERR(fp));
-		if (errno == -ENOENT) {
-			msleep(2000);
-			ksu_queue_work(&ksu_load_work);
-			return;
-		} else {
-			pr_info("load_allow list dir exist now!");
-		}
-	} else {
-		filp_close(fp, 0);
-	}
+	KWORKER_INSTALL_KEYRING();
 
 	// load allowlist now!
 	fp = filp_open(KERNEL_SU_ALLOWLIST, O_RDONLY, 0);
@@ -200,13 +183,13 @@ void do_load_allow_list(struct work_struct *work)
 	}
 
 	// verify magic
-	if (kernel_read_compat(fp, &magic, sizeof(magic), &off) != sizeof(magic) ||
+	if (ksu_kernel_read_compat(fp, &magic, sizeof(magic), &off) != sizeof(magic) ||
 	    magic != FILE_MAGIC) {
 		pr_err("allowlist file invalid: %d!\n", magic);
 		goto exit;
 	}
 
-	if (kernel_read_compat(fp, &version, sizeof(version), &off) !=
+	if (ksu_kernel_read_compat(fp, &version, sizeof(version), &off) !=
 	    sizeof(version)) {
 		pr_err("allowlist read version: %d failed\n", version);
 		goto exit;
@@ -217,12 +200,12 @@ void do_load_allow_list(struct work_struct *work)
 	while (true) {
 		u32 uid;
 		bool allow = false;
-		ret = kernel_read_compat(fp, &uid, sizeof(uid), &off);
+		ret = ksu_kernel_read_compat(fp, &uid, sizeof(uid), &off);
 		if (ret <= 0) {
 			pr_info("load_allow_list read err: %d\n", ret);
 			break;
 		}
-		ret = kernel_read_compat(fp, &allow, sizeof(allow), &off);
+		ret = ksu_kernel_read_compat(fp, &allow, sizeof(allow), &off);
 
 		pr_info("load_allow_uid: %d, allow: %d\n", uid, allow);
 

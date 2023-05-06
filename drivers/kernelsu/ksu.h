@@ -3,7 +3,12 @@
 
 #include "linux/workqueue.h"
 
-#define KERNEL_SU_VERSION 15
+#ifndef KSU_GIT_VERSION
+#warning "KSU_GIT_VERSION not defined! It is better to make KernelSU a git submodule!"
+#define KERNEL_SU_VERSION (16)
+#else
+#define KERNEL_SU_VERSION (10000 + KSU_GIT_VERSION + 200) // major * 10000 + git version + 200 for historical reasons
+#endif
 
 #define KERNEL_SU_OPTION 0xDEADBEEF
 
@@ -16,6 +21,7 @@
 #define CMD_GET_DENY_LIST 6
 #define CMD_REPORT_EVENT 7
 #define CMD_SET_SEPOLICY 8
+#define CMD_CHECK_SAFEMODE 9
 
 #define EVENT_POST_FS_DATA 1
 #define EVENT_BOOT_COMPLETED 2
