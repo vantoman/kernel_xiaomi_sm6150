@@ -5151,7 +5151,7 @@ static ssize_t sysfs_doze_mode_write(struct device *dev,
 		return rc;
 	}
 
-	if (mode < DSI_DOZE_LPM || mode > DSI_DOZE_DARK) {
+	if (mode < DSI_DOZE_LPM || mode > DSI_DOZE_HBM) {
 		pr_err("%s: invalid value for doze mode\n", __func__);
 		return -EINVAL;
 	}
