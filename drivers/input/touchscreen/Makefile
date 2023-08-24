@@ -114,6 +114,7 @@ obj-$(CONFIG_TOUCHSCREEN_IQS5XX)	+= iqs5xx.o
 obj-$(CONFIG_TOUCHSCREEN_ST)	+= st/
 obj-$(CONFIG_TOUCHSCREEN_FTS_CAF)	+= focaltech_touch/
 obj-$(CONFIG_TOUCHSCREEN_TDDI_DBCLK) += double_click.o
+obj-$(CONFIG_TOUCHSCREEN_FTS_K6) += k6_focaltech_3658u/
 obj-$(CONFIG_TOUCHSCREEN_XIAOMI_TOUCHFEATURE) += xiaomi/
 obj-$(CONFIG_TOUCHSCREEN_FTS) += focaltech_spi/
 obj-$(CONFIG_TOUCHSCREEN_GOODIX_BRL) += gt9897t/
