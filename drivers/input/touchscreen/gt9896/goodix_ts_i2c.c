@@ -88,8 +88,6 @@ enum TS_SEND_CFG_REPLY {
 #define IRQ_HEAD_LEN_YS			8
 #define IRQ_HEAD_LEN_NOR		2
 
-static bool is_goodix_ts = false;
-
 int goodix_ts_core_init(void);
 #ifdef CONFIG_OF
 /**
@@ -327,7 +325,6 @@ static int goodix_ts_dev_confirm(struct goodix_ts_device *ts_dev)
 		mdelay(5);
 		if (!goodix_i2c_test(ts_dev)) {
 			msleep(95);
-			is_goodix_ts = true;
 			return 0;
 		}
 	}
@@ -2021,8 +2018,6 @@ static void __exit goodix_i2c_exit(void)
 
 late_initcall(goodix_i2c_init);
 module_exit(goodix_i2c_exit);
-
-module_param(is_goodix_ts, bool, 0644);
 
 MODULE_DESCRIPTION("Goodix Touchscreen Hardware Module");
 MODULE_AUTHOR("Goodix, Inc.");
